@@ -4,6 +4,7 @@ import heapq
 
 from CMA_Solver import *
 import CMA_Utils as util
+from CMA_Logging import logprint
 
 class Compiler():
     def compile(self, U, depth):
@@ -44,7 +45,7 @@ class CMA_Search_Compiler(Compiler):
         result = root.solve_for_unitary(U, self.error_func)
         best_value = self.error_func(U, result[0])
         best_pair = (result[0], root.path(result[1]))
-        print("New best! {} at depth 0".format(best_value))
+        logprint("New best! {} at depth 0".format(best_value))
         if depth == 0:
             return best_pair
 
@@ -52,7 +53,7 @@ class CMA_Search_Compiler(Compiler):
 
         while len(queue) > 0:
             _, current_depth, _, current_step = heapq.heappop(queue)
-            print("popped a node of depth {}".format(current_depth))
+            logprint("popped a node of depth {}".format(current_depth))
             new_steps = [current_step.appending(double_step, single_step) for double_step in double_steps]
 
             tiebreaker=0
@@ -61,7 +62,7 @@ class CMA_Search_Compiler(Compiler):
                 if current_value < best_value:
                     best_value = current_value
                     best_pair = (result[0], step.path(result[1]))
-                    print("New best! {} at depth {}".format(best_value, current_depth + 1))
+                    logprint("New best! {} at depth {}".format(best_value, current_depth + 1))
                     if best_value < self.threshold:
                         pool.close()
                         pool.terminate()
