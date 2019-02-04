@@ -40,6 +40,7 @@ class CMA_Search_Compiler(Compiler):
             raise NotImplementedError("Qu-{}-its haven't been implemented yet.".format(self.d))
 
         pool = Pool()
+        logprint("Creating a pool of {} workers".format(pool._processes))
 
         root = ProductStep(single_step)
         result = root.solve_for_unitary(U, self.error_func)
