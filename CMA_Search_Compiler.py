@@ -22,6 +22,7 @@ class CMA_Search_Compiler(Compiler):
         self.threshold = threshold
         self.error_func = error_func
         self.d = d
+        logprint("There are {} processors available to Pool.".format(cpu_count()))
 
     def compile(self, U, depth):
         n = np.log(np.shape(U)[0])/np.log(self.d)
