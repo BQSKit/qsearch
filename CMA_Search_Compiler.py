@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from functools import partial
 import heapq
 
@@ -39,7 +39,7 @@ class CMA_Search_Compiler(Compiler):
         else:
             raise NotImplementedError("Qu-{}-its haven't been implemented yet.".format(self.d))
 
-        pool = Pool()
+        pool = Pool(min(len(double_steps),cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
         root = ProductStep(single_step)
