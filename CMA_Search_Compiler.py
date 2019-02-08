@@ -18,11 +18,10 @@ def evaluate_step(step, U, error_func, error_target):
     return (step, step.solve_for_unitary(U, error_func, error_target))
 
 class CMA_Search_Compiler(Compiler):
-    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared):
+    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, gateset_single=None, gateset_multiple=None):
         self.threshold = threshold
         self.error_func = error_func
         self.d = d
-        logprint("There are {} processors available to Pool.".format(cpu_count()))
 
     def compile(self, U, depth):
         n = np.log(np.shape(U)[0])/np.log(self.d)
@@ -33,13 +32,15 @@ class CMA_Search_Compiler(Compiler):
 
         if self.d == 2:
             single_step = KroneckerStep(*[SingleQubitStep()]*n)
-            double_steps = generate_double_steps(CQubitStep(), n, self.d)
+            double_steps = generate_double_steps(CNOTStep(), n, self.d)
         elif self.d == 3:
             single_step = KroneckerStep(*[SingleQutritStep()]*n)
             double_steps = generate_double_steps(CPIPhaseStep(), n, self.d)
         else:
             raise NotImplementedError("Qu-{}-its haven't been implemented yet.".format(self.d))
 
+        logprint("There are {} processors available to Pool.".format(cpu_count()))
+        logprint("The branching factor is {}.".format(len(double_steps)))
         pool = Pool(min(len(double_steps),cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 

@@ -260,7 +260,7 @@ class CNOTStep(QuantumStep):
     _cnot = np.matrix([[1,0,0,0],
                        [0,1,0,0],
                        [0,0,0,1],
-                       [0,0,1,0]])
+                       [0,0,1,0]], dtype='complex128')
     def __init__(self):
         self._num_inputs = 0
         self._dits = 2
