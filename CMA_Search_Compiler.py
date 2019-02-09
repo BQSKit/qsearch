@@ -32,7 +32,7 @@ class CMA_Search_Compiler(Compiler):
 
         if self.d == 2:
             single_step = KroneckerStep(*[SingleQubitStep()]*n)
-            double_steps = generate_double_steps(CNOTStep(), n, self.d)
+            double_steps = generate_double_steps(CQubitStep(), n, self.d)
         elif self.d == 3:
             single_step = KroneckerStep(*[SingleQutritStep()]*n)
             double_steps = generate_double_steps(CPIPhaseStep(), n, self.d)

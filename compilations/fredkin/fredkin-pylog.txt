@@ -1,0 +1,23 @@
+2019-02-09 10:45:33.000417 > 	Circuit fredkin is of size (8, 8)
+2019-02-09 10:45:33.000626 > 	There are 12 processors available to Pool.
+2019-02-09 10:45:33.000967 > 	The branching factor is 2.
+2019-02-09 10:45:33.010841 > 	Creating a pool of 2 workers
+2019-02-09 10:45:36.528288 > 	New best! 0.2500000000000081 at depth 0
+2019-02-09 10:45:36.528483 > 	popped a node of depth 0
+2019-02-09 10:45:58.063333 > 	popped a node of depth 1
+2019-02-09 10:47:31.222514 > 	popped a node of depth 2
+2019-02-09 10:50:08.590365 > 	popped a node of depth 1
+2019-02-09 10:51:24.407380 > 	popped a node of depth 2
+2019-02-09 10:53:44.801345 > 	popped a node of depth 2
+2019-02-09 10:56:52.475496 > 	New best! 0.20943058495919276 at depth 3
+2019-02-09 10:56:52.475669 > 	popped a node of depth 3
+2019-02-09 11:03:42.700451 > 	New best! 0.14644660940793275 at depth 4
+2019-02-09 11:03:42.700686 > 	popped a node of depth 4
+2019-02-09 11:13:33.809586 > 	popped a node of depth 5
+2019-02-09 11:26:13.463084 > 	New best! 0.07612046749155743 at depth 6
+2019-02-09 11:26:13.463259 > 	popped a node of depth 6
+2019-02-09 11:39:24.555444 > 	New best! 0.07612046748878676 at depth 7
+2019-02-09 11:43:56.791063 > 	popped a node of depth 7
+2019-02-09 12:21:11.598200 > 	New best! 9.670042544485113e-14 at depth 8
+2019-02-09 12:21:11.629256 > 	fredkin compilation complete!
+

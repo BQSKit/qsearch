@@ -1,0 +1,27 @@
+2019-02-07 19:40:20.848525 > 	Circuit fredkin is of size (8, 8)
+2019-02-07 19:40:20.848754 > 	There are 12 processors available to Pool.
+2019-02-07 19:40:20.848851 > 	The branching factor is 2.
+2019-02-07 19:40:20.852305 > 	Creating a pool of 2 workers
+2019-02-07 19:40:25.094943 > 	New best! 0.25000000000000344 at depth 0
+2019-02-07 19:40:25.095077 > 	popped a node of depth 0
+2019-02-07 19:40:44.755062 > 	popped a node of depth 1
+2019-02-07 19:41:51.396681 > 	popped a node of depth 2
+2019-02-07 19:43:33.537612 > 	New best! 0.20943058495792843 at depth 3
+2019-02-07 19:43:45.276982 > 	popped a node of depth 3
+2019-02-07 19:47:02.774909 > 	popped a node of depth 4
+2019-02-07 19:51:31.658178 > 	popped a node of depth 5
+2019-02-07 19:59:21.062504 > 	popped a node of depth 6
+2019-02-07 20:08:09.599154 > 	popped a node of depth 7
+2019-02-07 20:24:49.348323 > 	popped a node of depth 8
+2019-02-07 20:48:25.054019 > 	popped a node of depth 9
+2019-02-07 21:24:19.506034 > 	popped a node of depth 10
+2019-02-07 22:00:04.064666 > 	popped a node of depth 11
+2019-02-07 22:54:42.790891 > 	popped a node of depth 12
+2019-02-08 00:48:47.323024 > 	popped a node of depth 13
+2019-02-08 02:18:33.565822 > 	popped a node of depth 14
+2019-02-08 04:07:06.233771 > 	popped a node of depth 15
+2019-02-08 06:57:32.278979 > 	popped a node of depth 16
+2019-02-08 08:52:43.903144 > 	popped a node of depth 17
+2019-02-08 10:39:30.100132 > 	popped a node of depth 18
+2019-02-08 13:57:06.165221 > 	popped a node of depth 19
+2019-02-08 17:17:41.893420 > 	popped a node of depth 20

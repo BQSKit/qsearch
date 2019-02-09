@@ -1,0 +1,24 @@
+2019-02-08 23:43:59.992112 > 	Circuit peres is of size (8, 8)
+2019-02-08 23:43:59.992332 > 	There are 12 processors available to Pool.
+2019-02-08 23:43:59.992430 > 	The branching factor is 2.
+2019-02-08 23:44:00.003226 > 	Creating a pool of 2 workers
+2019-02-08 23:44:04.658357 > 	New best! 0.4279385971823221 at depth 0
+2019-02-08 23:44:04.658643 > 	popped a node of depth 0
+2019-02-08 23:44:22.323520 > 	New best! 0.209430584957914 at depth 1
+2019-02-08 23:44:22.782252 > 	popped a node of depth 1
+2019-02-08 23:45:13.528084 > 	popped a node of depth 2
+2019-02-08 23:47:01.873944 > 	popped a node of depth 2
+2019-02-08 23:48:44.062529 > 	New best! 0.1464466094067669 at depth 3
+2019-02-08 23:48:44.062703 > 	popped a node of depth 3
+2019-02-08 23:52:26.267637 > 	popped a node of depth 4
+2019-02-08 23:56:53.676836 > 	popped a node of depth 5
+2019-02-09 00:04:47.400380 > 	popped a node of depth 5
+2019-02-09 00:11:36.372889 > 	New best! 0.0761204674888154 at depth 6
+2019-02-09 00:12:53.462498 > 	popped a node of depth 6
+2019-02-09 00:22:44.097569 > 	New best! 0.07612046748881496 at depth 7
+2019-02-09 00:27:26.132678 > 	popped a node of depth 7
+2019-02-09 00:38:41.987380 > 	New best! 0.07612046748879187 at depth 8
+2019-02-09 00:40:05.846049 > 	popped a node of depth 8
+2019-02-09 00:57:09.348916 > 	New best! 1.4777068457760834e-13 at depth 9
+2019-02-09 00:57:09.452646 > 	peres compilation complete!
+

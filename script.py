@@ -27,9 +27,9 @@ def run_compilation(target, name):
 
 
 # add things to do down here
-run_compilation(gates.qft(4), "qft2")
-run_compilation(gates.toffoli, "toffoli")
+#run_compilation(gates.qft(4), "qft2")
+#run_compilation(gates.toffoli, "toffoli")
 run_compilation(gates.fredkin, "fredkin")
-run_compilation(gates.peres, "peres")
-run_compilation(gates.qft(8), "qft3")
+#run_compilation(gates.peres, "peres")
+#run_compilation(gates.qft(8), "qft3")
 
