@@ -47,7 +47,7 @@ class CMA_Search_Compiler(Compiler):
         root = ProductStep(single_step)
         result = root.solve_for_unitary(U, self.error_func)
         best_value = self.error_func(U, result[0])
-        best_pair = (result[0], root.path(result[1]))
+        best_pair = (result[0], root, result[1])
         logprint("New best! {} at depth 0".format(best_value))
         if depth == 0:
             return best_pair
@@ -64,7 +64,7 @@ class CMA_Search_Compiler(Compiler):
                 current_value = self.error_func(U, result[0])
                 if current_value < best_value:
                     best_value = current_value
-                    best_pair = (result[0], step.path(result[1]))
+                    best_pair = (result[0], step, result[1])
                     logprint("New best! {} at depth {}".format(best_value, current_depth + 1))
                     if best_value < self.threshold:
                         pool.close()

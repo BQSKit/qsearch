@@ -15,15 +15,17 @@ def run_compilation(target, name):
     logprint("Circuit {} is of size {}".format(name, np.shape(target)))
 
     compiler = comp.CMA_Search_Compiler(threshold=1e-10)
-    result, path = compiler.compile(target, 32)
+    result, structure, vector = compiler.compile(target, 32)
     logprint("{} compilation complete!\n".format(name))
     
     with open("{}/{}-target.txt".format(directory, name), "w") as outtarget:
         outtarget.write(repr(target))
     with open("{}/{}-final.txt".format(directory, name),"w") as outmat:
         outmat.write(repr(result))
-    with open("{}/{}-path.txt".format(directory, name),"w") as outpath:
-        outpath.write(repr(path))
+    with open("{}/{}-structure.txt".format(directory, name),"w") as outpath:
+        outpath.write(repr(structure))
+    with open("{}/{}-vector.txt".format(directory, name),"w") as outpath:
+        outpath.write(repr(vector))
 
 
 # add things to do down here
