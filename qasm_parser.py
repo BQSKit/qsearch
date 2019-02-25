@@ -1,4 +1,4 @@
-import CMA_Solver as solver
+import SC_Circuits as circuits
 import QASM_Gates as gates
 import parse
 
@@ -42,7 +42,7 @@ def parse_qasm(infile):
                     print("weird gate: {}".format(line))
                 step = gates.step_X
                 I = gates.step_I
-                steps.append(solver.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
+                steps.append(circuits.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
 
             if element == "H":
                 if next(elements) != "|":
@@ -53,7 +53,7 @@ def parse_qasm(infile):
                     print("weird gate: {}".format(line))
                 step = gates.step_H
                 I = gates.step_I
-                steps.append(solver.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
+                steps.append(circuits.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
 
             if element == "CX":
                 if next(elements) != "|" or next(elements) != "(":
@@ -68,7 +68,7 @@ def parse_qasm(infile):
                     break
                 step = gates.step_CX
                 I = gates.step_I
-                steps.append(solver.KroneckerStep(*([I] * (ifrom - mindex) + [step] + [I] * (maxdex - ito))))
+                steps.append(circuits.KroneckerStep(*([I] * (ifrom - mindex) + [step] + [I] * (maxdex - ito))))
 
             if "Rx" in element:
                 angle = float(parse.parse("Rx({:g})", element)[0])
@@ -80,7 +80,7 @@ def parse_qasm(infile):
                     print("weird gate: {}".format(line))
                 step = gates.step_RX
                 I = gates.step_I
-                steps.append(solver.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
+                steps.append(circuits.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
                 vector.append(angle)
 
 
@@ -94,12 +94,12 @@ def parse_qasm(infile):
                     print("weird gate: {}".format(line))
                 step = gates.step_RZ
                 I = gates.step_I
-                steps.append(solver.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
+                steps.append(circuits.KroneckerStep(*([I] * (index - mindex) + [step] + [I] * (maxdex - index))))
                 vector.append(angle)
 
-        circuit = solver.ProductStep(*steps)
-        result = circuit.matrix(vector)
-        return (result, circuit)
+        fianl_circuit = circuits.ProductStep(*steps)
+        result = circuits.matrix(vector)
+        return (result, final_circuit)
 
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import cma
 
-import CMA_Utils as util
+import SC_Utils as util
 
 class QuantumStep:
     def __init__(self):
@@ -26,17 +26,12 @@ class QuantumStep:
     def __deepcopy__(self, memo):
         return self
 
-    def solve_for_unitary(self, U, error_func=util.matrix_distance_squared, error_target=0.01):
-        eval_func = lambda v: error_func(U, self.matrix(v))
-        xopt, _ = cma.fmin2(eval_func, 'np.random.rand({})*np.pi'.format(self._num_inputs), np.pi/4, {'verb_disp':0, 'verb_log':0}, restarts=2)
-        return (self.matrix(xopt), xopt)
-
     def __repr__(self):
         return "QuantumStep()"
 
 
 class IdentityStep:  
-    def __init__(self, n, dits=1):
+    def __init__(self, n=2, dits=1):
         self._num_inputs=0
         self._I = np.matrix(np.eye(n), dtype='complex128')
         self._dits = dits
@@ -51,7 +46,7 @@ class IdentityStep:
         return ""
 
     def __repr__(self):
-        return "IdentityStep()"
+        return "IdentityStep({})".format(n)
     
 
 
@@ -277,7 +272,7 @@ class CNOTStep(QuantumStep):
     def __repr__(self):
         return "CNOTStep()"
 
-class CQubitStep(QuantumStep):
+class CRZStep(QuantumStep):
     _cnr = np.matrix([[1,0,0,0],
                        [0,1,0,0],
                        [0,0,0.5+0.5j,0.5-0.5j],

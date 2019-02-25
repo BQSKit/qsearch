@@ -1,18 +1,18 @@
 import numpy as np
-import CMA_Solver as solver
-import CMA_Utils as util
+import SC_Circuits as circuits
+import SC_Utils as util
 
 gate_X = np.matrix([[0,1],[1,0]], dtype='complex128')
 gate_H = np.matrix([[1/np.sqrt(2), 1/np.sqrt(2)],[1/np.sqrt(2), -1/np.sqrt(2)]], dtype='complex128')
 gate_CX = util.cnot
 
-step_X = solver.UStep(gate_X, name="X")
-step_H = solver.UStep(gate_H, name="H")
-step_CX = solver.CNOTStep()
-step_I = solver.IdentityStep(2)
+step_X = circuits.UStep(gate_X, name="X")
+step_H = circuits.UStep(gate_H, name="H")
+step_CX = circuits.CNOTStep()
+step_I = circuits.IdentityStep(2)
 
 
-class RZStep(solver.QuantumStep):
+class RZStep(circuits.QuantumStep):
     def __init__(self):
         self._num_inputs = 1
         self._dits = 1
@@ -29,7 +29,7 @@ class RZStep(solver.QuantumStep):
     def __repr__(self):
         return "RZStep()"
 
-class RXStep(solver.QuantumStep):
+class RXStep(circuits.QuantumStep):
     def __init__(self):
         self._num_inputs = 1
         self._dits = 1
@@ -46,7 +46,7 @@ class RXStep(solver.QuantumStep):
     def __repr__(self):
         return "RXStep()"
 
-class RYStep(solver.QuantumStep):
+class RYStep(circuits.QuantumStep):
     def __init__(self):
         self._num_inputs = 1
         self._dits = 1
