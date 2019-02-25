@@ -283,8 +283,8 @@ class CRZStep(QuantumStep):
         self._dits = 2
 
     def matrix(self, v):
-        U = np.dot(CQubitStep._cnr, np.kron(CQubitStep._I, util.rot_z(v[0]))) # TODO fix this line
-        return np.dot(U, CQubitStep._cnr)
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, util.rot_z(v[0]))) # TODO fix this line
+        return np.dot(U, CRZStep._cnr)
 
     def path(self, v):
         return ["CQ", v]
@@ -408,7 +408,7 @@ class ProductStep(QuantumStep):
     def __repr__(self):
         return "ProductStep({})".format(repr(self._substeps)[1:-1])
 
-
+# WARNING: This is considered legacy code and may be deleted in the future, along with the path() function of the QuantumStep class.
 def decode_path(path, d=2, args=None):
     if args is None:
         args = dict()

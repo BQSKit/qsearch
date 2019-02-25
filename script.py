@@ -6,10 +6,11 @@ from qasm_parser import parse_qasm
 import SC_Search_Compiler as comp
 import SC_Utils as util
 import SC_Sample_Gates as gates
+import SC_Gatesets as gatesets
 from SC_Logging import logprint
 import SC_Logging as logger
 
-def run_compilation(target, name, force=False):
+def run_compilation(target, name, gateset=gatesets.Default(), force=False):
     directory = "compilations-DEBUG/{}".format(name)
     if os.path.exists(directory) and force:
         shutil.rmtree(directory)
@@ -17,7 +18,7 @@ def run_compilation(target, name, force=False):
     logger.output_file = "{}/{}-pylog.txt".format(directory,name)
     logprint("Circuit {} is of size {}".format(name, np.shape(target)))
 
-    compiler = comp.Search_Compiler(threshold=1e-10)
+    compiler = comp.Search_Compiler(threshold=1e-10, gateset=gateset)
     result, structure, vector = compiler.compile(target, 32)
     logprint("{} compilation complete!\n".format(name))
     
@@ -51,5 +52,5 @@ mirogate = np.matrix([
     [s,0,0,0,0,0,0,c]
     ], dtype='complex128')
 
-run_compilation(gates.qft(4), "test", force=True)
+run_compilation(gates.qft(4), "test", gateset=gatesets.QubitCRZLinear(), force=True)
 
