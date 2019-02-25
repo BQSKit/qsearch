@@ -35,6 +35,7 @@ class IdentityStep:
         self._num_inputs=0
         self._I = np.matrix(np.eye(n), dtype='complex128')
         self._dits = dits
+        self._n = n
 
     def matrix(self, v):
         return self._I
@@ -46,7 +47,7 @@ class IdentityStep:
         return ""
 
     def __repr__(self):
-        return "IdentityStep({})".format(n)
+        return "IdentityStep({})".format(self._n)
     
 
 
@@ -100,19 +101,23 @@ class UStep(QuantumStep):
         if self.name is None:
             return ["CUSTOM", self._U]
         else:
-            return [name]
+            return [self.name]
 
     def assemble(self, v, i=0):
         if self.name is None:
             return "UNKNOWN q{}".format(i)
-        else:
+        elif self._dits == 1:
             return "{} q{}".format(self.name, i)
+        else:
+            return "{}".format(self.name)
 
     def __repr__(self):
         if self.name is None:
             return "UStep({})".format(repr(self._U))
-        else:
+        elif self._dits == 1:
             return "UStep({}, name={})".format(repr(self._U), repr(self.name))
+        else:
+            return "UStep({}, name={}, dits={}".format(repr(self._U), repr(self.name), repr(self._dits))
 
 class CUStep(QuantumStep):
     def __init__(self, U, name=None, flipped=False):

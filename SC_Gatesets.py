@@ -43,6 +43,15 @@ class QubitCRZLinear(Gateset):
     def search_layers(self, n, d):
         return linear_topology(CRZStep(), n, d)
 
+
+class QubitCNOTRing(Gateset):
+    def pad_layer(self, n, d):
+        return fill_row(SingleQubitStep(), n)
+
+    def search_layers(self, n, d):
+        return [UStep(gates.arbitrary_cnot(n, i, (i+1)%n), name="CNOT q{} q{}".format(i, (i+1)%n), dits=n) for i in range(0, n)]
+
+
 class QutritCPIPhaseLinear(Gateset):
     def pad_layer(self, n, d):
         return fill_row(SingleQutritStep(), n)
