@@ -1,0 +1,13 @@
+2019-02-26 18:08:03.721286 > 	Circuit qft2 is of size (4, 4)
+2019-02-26 18:08:03.721553 > 	There are 12 processors available to Pool.
+2019-02-26 18:08:03.721725 > 	The branching factor is 1.
+2019-02-26 18:08:03.734748 > 	Creating a pool of 1 workers
+2019-02-26 18:08:05.775938 > 	New best! 0.5000000000000041 at depth 0
+2019-02-26 18:08:05.776133 > 	Popped a node with score: 0.5000000000000041 at depth: 0
+2019-02-26 18:08:18.153909 > 	New best! score: 0.34671851756225636 at depth: 1
+2019-02-26 18:08:18.154116 > 	Popped a node with score: 0.34671851756225636 at depth: 1
+2019-02-26 18:08:50.490087 > 	New best! score: 0.07612046748914347 at depth: 2
+2019-02-26 18:08:50.490280 > 	Popped a node with score: 0.07612046748914347 at depth: 2
+2019-02-26 18:09:34.507118 > 	New best! score: 3.3306690738754696e-14 at depth: 3
+2019-02-26 18:09:34.602350 > 	qft2 compilation complete!
+

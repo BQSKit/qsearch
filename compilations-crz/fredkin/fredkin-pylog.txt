@@ -1,0 +1,23 @@
+2019-02-26 18:40:24.425004 > 	Circuit fredkin is of size (8, 8)
+2019-02-26 18:40:24.425216 > 	There are 12 processors available to Pool.
+2019-02-26 18:40:24.425612 > 	The branching factor is 2.
+2019-02-26 18:40:24.433598 > 	Creating a pool of 2 workers
+2019-02-26 18:40:29.511330 > 	New best! 0.25000000000001177 at depth 0
+2019-02-26 18:40:29.511794 > 	Popped a node with score: 0.25000000000001177 at depth: 0
+2019-02-26 18:40:51.944547 > 	Popped a node with score: 0.2500000000000243 at depth: 1
+2019-02-26 18:42:41.053258 > 	Popped a node with score: 0.25000000000003075 at depth: 1
+2019-02-26 18:44:41.051871 > 	Popped a node with score: 0.2500000000001167 at depth: 2
+2019-02-26 18:47:26.520028 > 	Popped a node with score: 0.25000000000004086 at depth: 3
+2019-02-26 18:52:23.243004 > 	New best! score: 0.20943058495877442 at depth: 4
+2019-02-26 18:52:47.299317 > 	Popped a node with score: 0.20943058495877442 at depth: 4
+2019-02-26 19:01:03.450246 > 	New best! score: 0.20943058495846134 at depth: 5
+2019-02-26 19:03:01.531900 > 	New best! score: 0.14644660940761567 at depth: 5
+2019-02-26 19:03:01.532080 > 	Popped a node with score: 0.14644660940761567 at depth: 5
+2019-02-26 19:17:08.145981 > 	New best! score: 0.1464466094069119 at depth: 6
+2019-02-26 19:17:52.133237 > 	Popped a node with score: 0.1464466094069119 at depth: 6
+2019-02-26 19:42:27.235614 > 	Popped a node with score: 0.14644660940698107 at depth: 7
+2019-02-26 19:56:51.599712 > 	New best! score: 0.07612046748881296 at depth: 8
+2019-02-26 20:03:09.048184 > 	Popped a node with score: 0.07612046748881296 at depth: 8
+2019-02-26 20:42:46.808950 > 	New best! score: 3.1961100432909006e-12 at depth: 9
+2019-02-26 20:42:46.850632 > 	fredkin compilation complete!
+

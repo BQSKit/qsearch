@@ -1,0 +1,13 @@
+2019-02-26 20:42:46.856024 > 	Circuit miro is of size (8, 8)
+2019-02-26 20:42:46.856321 > 	There are 12 processors available to Pool.
+2019-02-26 20:42:46.856436 > 	The branching factor is 2.
+2019-02-26 20:42:46.860411 > 	Creating a pool of 2 workers
+2019-02-26 20:42:51.570337 > 	New best! 0.13397459621558072 at depth 0
+2019-02-26 20:42:51.570671 > 	Popped a node with score: 0.13397459621558072 at depth: 0
+2019-02-26 20:43:17.611603 > 	New best! score: 0.13397459621556984 at depth: 1
+2019-02-26 20:43:17.612137 > 	Popped a node with score: 0.13397459621556984 at depth: 1
+2019-02-26 20:44:44.425692 > 	Popped a node with score: 0.1339745962155886 at depth: 1
+2019-02-26 20:46:29.800009 > 	Popped a node with score: 0.13397459621561836 at depth: 2
+2019-02-26 20:50:12.253149 > 	New best! score: 2.4843460622037128e-12 at depth: 3
+2019-02-26 20:50:12.291352 > 	miro compilation complete!
+
