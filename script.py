@@ -10,10 +10,15 @@ import SC_Gatesets as gatesets
 from SC_Logging import logprint
 import SC_Logging as logger
 
-def run_compilation(target, name, gateset=gatesets.Default(), force=False):
-    directory = "compilations-DEBUG/{}".format(name)
-    if os.path.exists(directory) and force:
-        shutil.rmtree(directory)
+def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=True, force=False):
+    directory = "compilations-cnot/{}".format(name)
+    if os.path.exists(directory):
+        if force:
+            shutil.rmtree(directory)
+        else:
+            print("ERROR: File already exists at {}".format(directory))
+            return
+
     os.makedirs(directory)
     logger.output_file = "{}/{}-pylog.txt".format(directory,name)
     logprint("Circuit {} is of size {}".format(name, np.shape(target)))
@@ -30,14 +35,17 @@ def run_compilation(target, name, gateset=gatesets.Default(), force=False):
         outpath.write(repr(structure))
     with open("{}/{}-vector.txt".format(directory, name),"w") as outpath:
         outpath.write(repr(vector))
+    if assemble:
+        with open("{}/{}-qasm.txt".format(directory, name),"w") as outpath:
+            outpath.write(structure.assemble(vector))
 
 
 # add things to do down here
-#run_compilation(gates.qft(4), "qft2")
-#run_compilation(gates.toffoli, "toffoli")
-#run_compilation(gates.fredkin, "fredkin")
-#run_compilation(gates.peres, "peres")
-#run_compilation(gates.qft(8), "qft3")
+run_compilation(gates.qft(4), "qft2")
+run_compilation(gates.toffoli, "toffoli")
+run_compilation(gates.fredkin, "fredkin")
+run_compilation(gates.peres, "peres")
+run_compilation(gates.qft(8), "qft3")
 theta = np.pi/3
 c = np.cos(theta/2)
 s = -1j*np.sin(theta/2)
@@ -52,5 +60,5 @@ mirogate = np.matrix([
     [s,0,0,0,0,0,0,c]
     ], dtype='complex128')
 
-run_compilation(gates.qft(4), "test", gateset=gatesets.QubitCRZLinear(), force=True)
+run_compilation(mirogate, "miro")
 
