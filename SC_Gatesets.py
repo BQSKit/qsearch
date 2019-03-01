@@ -63,6 +63,9 @@ class QubitCNOTRing(Gateset):
         return fill_row(self.single_step, n)
 
     def search_layers(self, n, d):
+        if n == 2:
+            return [ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step))] # prevents the creation of an extra cnot placement in the 2 qubit case
+
         steps = []
         for i in range(0, n):
             cnot = UStep(gates.arbitrary_cnot(n, i, (i+1)%n), name="CNOT q{} q{}".format(i, (i+1)%n), dits=n)
