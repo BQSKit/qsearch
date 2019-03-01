@@ -31,7 +31,7 @@ class Search_Compiler(Compiler):
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
         n = int(n)
 
-        pad_layer = self.gateset.pad_layer(n, self.d)
+        initial_layer = self.gateset.initial_layer(n, self.d)
         search_layers = self.gateset.search_layers(n, self.d)
 
         logprint("There are {} processors available to Pool.".format(cpu_count()))
@@ -39,7 +39,7 @@ class Search_Compiler(Compiler):
         pool = Pool(min(len(search_layers),cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
-        root = ProductStep(pad_layer)
+        root = ProductStep(initial_layer)
         result = self.solver.solve_for_unitary(root, U, self.error_func)
         best_value = self.error_func(U, result[0])
         best_pair = (result[0], root, result[1])
@@ -52,7 +52,7 @@ class Search_Compiler(Compiler):
         while len(queue) > 0:
             popped_value, current_depth, _, current_step = heapq.heappop(queue)
             logprint("Popped a node with score: {} at depth: {}".format(popped_value, current_depth))
-            new_steps = [current_step.appending(search_layer, pad_layer) for search_layer in search_layers]
+            new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
 
             tiebreaker=0
             for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
