@@ -30,7 +30,6 @@ class Gateset():
         return [] # NOTES: Returns a LIST of gates
 
 
-
 class QubitCNOTLinear(Gateset):
     def __init__(self):
         self.single_step = SingleQubitStep()

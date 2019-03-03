@@ -3,15 +3,19 @@ import os
 import shutil
 
 from qasm_parser import parse_qasm
-import SC_Search_Compiler as comp
+import SC_Search_Compiler as search_comp
+import SC_Step_Compiler as step_comp
+import SC_Widened_Search_Compiler as wide_comp
 import SC_Utils as util
 import SC_Sample_Gates as gates
 import SC_Gatesets as gatesets
 from SC_Logging import logprint
 import SC_Logging as logger
 
-def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=True, force=False):
-    directory = "compilations-cnot/{}".format(name)
+Compiler_Class = wide_comp.Widened_Search_Compiler
+
+def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=True, force=True):
+    directory = "compilations-cnot-wide-compiler/{}".format(name)
     if os.path.exists(directory):
         if force:
             shutil.rmtree(directory)
@@ -23,7 +27,7 @@ def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=T
     logger.output_file = "{}/{}-pylog.txt".format(directory,name)
     logprint("Circuit {} is of size {}".format(name, np.shape(target)))
 
-    compiler = comp.Search_Compiler(threshold=1e-10, gateset=gateset)
+    compiler = Compiler_Class(threshold=1e-10, gateset=gateset)
     result, structure, vector = compiler.compile(target, 32)
     logprint("{} compilation complete!\n".format(name))
     
@@ -41,10 +45,10 @@ def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=T
 
 
 # add things to do down here
-run_compilation(gates.qft(4), "qft2")
-run_compilation(gates.toffoli, "toffoli")
-run_compilation(gates.fredkin, "fredkin")
-run_compilation(gates.peres, "peres")
+#run_compilation(gates.qft(4), "qft2")
+#run_compilation(gates.toffoli, "toffoli")
+#run_compilation(gates.fredkin, "fredkin")
+#run_compilation(gates.peres, "peres")
 run_compilation(gates.qft(8), "qft3")
 theta = np.pi/3
 c = np.cos(theta/2)
