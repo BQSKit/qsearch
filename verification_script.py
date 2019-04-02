@@ -16,11 +16,13 @@ print("Running with 100 random vectors...")
 n = np.shape(original)[0]
 verbose = False
 total = 0
+mins = 10
+maxs = -10
 if len(argv) > 3:
     verbose = argv[3] == "-v"
 for _ in range(0, 100):
     v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
-    v = v / np.linalg.norm(v) 
+    v = v / sum(np.multiply(v, np.conj(v)))
 
     # apply the matrices
     fv1 = np.ravel(np.dot(original, v))
@@ -36,6 +38,10 @@ for _ in range(0, 100):
     diff = 1-sum(np.abs(p1 - p2))
     print("Vector Match: {}%".format(diff * 100))
     total += diff
+    if diff > maxs:
+        maxs = diff
+    if diff < mins:
+        mins = diff
 
-print("\n\nMatrix Match: {}%".format(total))
+print("\n\nMatrix Match: {}%\t\tMax: {}%  Min: {}%".format(total, maxs * 100, mins * 100))
 
