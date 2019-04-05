@@ -81,6 +81,35 @@ class QubitCNOTRing(Gateset):
             steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
         return steps
 
+class QubitCRZRing(Gateset):
+    def __init__(self):
+        self.single_step = SingleQubitStep()
+        self.I = IdentityStep(2)
+
+    def initial_layer(self, n, d):
+        return fill_row(self.single_step, n)
+
+    def search_layers(self, n, d):
+        if n == 2:
+            return [ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step))]
+
+        steps = []
+        crz_step = CRZStep()
+        for i in range(0, n):
+            double_step = RemapStep(crz_step, n, i, (i+1)%n, name="CRZ", d=d)
+            single_steps = []
+            if i+1 == n:
+                single_steps.append(self.single_step)
+                single_steps.extend([self.I]*(n-2))
+                single_steps.append(self.single_step)
+            else:
+                single_steps.extend([self.I]*i)
+                single_steps.extend([self.single_step, self.single_step])
+                single_steps.extend([self.I]*(n-i-2))
+
+            steps.append(ProductStep(double_step, KroneckerStep(*single_steps)))
+        return steps
+
 
 class QutritCPIPhaseLinear(Gateset):
     def __init__(self):

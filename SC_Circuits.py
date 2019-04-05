@@ -300,6 +300,50 @@ class CRZStep(QuantumStep):
     def __repr__(self):
         return "CQubitStep()"
 
+class RemapStep(QuantumStep):
+
+    def __init__(self, step, dits, source, target, name=None, d=2):
+        self._step = step
+        self._source = source
+        self._target = target
+        self._dits = dits
+        self._d = d
+        self._name = name
+        self._num_inputs = step._num_inputs
+        def g(a,b):
+            def f(i,j):
+                i_v = []
+                j_v = []
+                for k in range(0, dits):
+                    i_v.append(i%d)
+                    j_v.append(j%d)
+                    i = i // d
+                    j = j // d
+                j_v[b], j_v[a] = j_v[a], j_v[b]
+                eq = np.equal(i_v, j_v)
+                return np.all(eq, axis=0)
+            return f
+        targetswap = target if source == 1 else 1
+        swap_source = np.matrix(np.fromfunction(g(0,source), (d**dits,d**dits)), dtype='complex128')
+        swap_target = np.matrix(np.fromfunction(g(targetswap, target), (d**dits,d**dits)), dtype='complex128')
+        self._prefix = np.dot(swap_source, swap_target)
+        self._postfix = np.dot(swap_target, swap_source)
+
+
+    def matrix(self, v):
+       return util.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self._dits-2))), self._postfix)
+
+    def assemble(self, v, i=0):
+        if name == None:
+            return "REMAP q{} q{} [{}]".format(self._source, self._target, self._step.assemble(v, i))
+        else:
+            return "{} q{} q{}".format(self._name, self._source, self._target)
+
+    def __repr__(self):
+        return "RemapStep({}, {}, {}, {}, name={}, d={})".format(self._step, self._dits, self._source, self._target, self._name, self._d)
+
+
+
 class CNOTRootStep(QuantumStep):
     _cnr = np.matrix([[1,0,0,0],
                        [0,1,0,0],

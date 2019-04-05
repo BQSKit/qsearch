@@ -17,8 +17,8 @@ from SC_CMA_Solver import BFGS_Solver
 
 Compiler_Class = search_comp.Search_Compiler
 
-def run_compilation(target, name, gateset=gatesets.QubitCNOTRing(), assemble=True, debug=True):
-    directory = "compilations-cnot/{}".format(name)
+def run_compilation(target, name, gateset=gatesets.QubitCRZRing(), assemble=True, debug=False):
+    directory = "compilations-crz-ring/{}".format(name)
     force = False
     if debug:
         directory = "compilations-DEBUG/{}".format(name)
@@ -62,7 +62,7 @@ run_compilation(gates.qft(4), "qft2")
 run_compilation(gates.toffoli, "toffoli")
 run_compilation(gates.fredkin, "fredkin")
 run_compilation(gates.peres, "peres")
-run_compilation(gates.qft(8), "qft3-ring")
+run_compilation(gates.qft(8), "qft3")
 #run_compilation(gates.qft(8), "qft3-line", gateset=gatesets.QubitCNOTLinear())
 theta = np.pi/3
 c = np.cos(theta/2)
