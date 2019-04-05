@@ -1,0 +1,15 @@
+2019-04-05 02:31:26.239108 > 	Circuit HHL is of size (8, 8)
+2019-04-05 02:31:26.239837 > 	There are 12 processors available to Pool.
+2019-04-05 02:31:26.240003 > 	The branching factor is 3.
+2019-04-05 02:31:26.244826 > 	Creating a pool of 3 workers
+2019-04-05 02:31:30.040981 > 	New best! 0.5380602337443645 at depth 0
+2019-04-05 02:31:30.041163 > 	Popped a node with score: 0.5380602337443645 at depth: 0 with branch index: 0
+2019-04-05 02:31:47.164282 > 	New best! score: 0.34671851756182204 at depth: 1 with branch index: 2
+2019-04-05 02:31:49.956778 > 	Popped a node with score: 0.34671851756182204 at depth: 1 with branch index: 2
+2019-04-05 02:32:23.812640 > 	New best! score: 0.07612046748872103 at depth: 2 with branch index: 0
+2019-04-05 02:32:26.139688 > 	Popped a node with score: 0.07612046748872103 at depth: 2 with branch index: 0
+2019-04-05 02:33:56.321216 > 	Popped a node with score: 0.07612046748873369 at depth: 3 with branch index: 0
+2019-04-05 02:35:39.163593 > 	Popped a node with score: 0.07612046748872203 at depth: 4 with branch index: 1
+2019-04-05 02:38:29.388960 > 	New best! score: 1.1546319456101628e-14 at depth: 5 with branch index: 1
+2019-04-05 02:38:29.493718 > 	HHL compilation complete!  Duration: 423.2417062709992
+

@@ -1,0 +1,27 @@
+2019-04-05 02:02:50.226765 > 	Circuit qft3-ring is of size (8, 8)
+2019-04-05 02:02:50.228075 > 	There are 12 processors available to Pool.
+2019-04-05 02:02:50.228261 > 	The branching factor is 3.
+2019-04-05 02:02:50.234079 > 	Creating a pool of 3 workers
+2019-04-05 02:02:54.375743 > 	New best! 0.5669872981077854 at depth 0
+2019-04-05 02:02:54.375924 > 	Popped a node with score: 0.5669872981077854 at depth: 0 with branch index: 0
+2019-04-05 02:03:12.470450 > 	New best! score: 0.5170370868555154 at depth: 1 with branch index: 1
+2019-04-05 02:03:12.634222 > 	New best! score: 0.5170370868554726 at depth: 1 with branch index: 0
+2019-04-05 02:03:13.534171 > 	New best! score: 0.49816369631955826 at depth: 1 with branch index: 2
+2019-04-05 02:03:13.534359 > 	Popped a node with score: 0.49816369631955826 at depth: 1 with branch index: 2
+2019-04-05 02:03:51.184171 > 	New best! score: 0.29029629324390394 at depth: 2 with branch index: 2
+2019-04-05 02:04:02.300275 > 	Popped a node with score: 0.29029629324390394 at depth: 2 with branch index: 2
+2019-04-05 02:05:06.718515 > 	New best! score: 0.29029629324390105 at depth: 3 with branch index: 0
+2019-04-05 02:05:15.471419 > 	New best! score: 0.14644660940677579 at depth: 3 with branch index: 2
+2019-04-05 02:05:15.471649 > 	Popped a node with score: 0.14644660940677579 at depth: 3 with branch index: 2
+2019-04-05 02:06:59.528143 > 	New best! score: 0.1464466094067599 at depth: 4 with branch index: 2
+2019-04-05 02:07:04.208017 > 	New best! score: 0.14644660940673848 at depth: 4 with branch index: 0
+2019-04-05 02:07:08.074061 > 	Popped a node with score: 0.14644660940673848 at depth: 4 with branch index: 0
+2019-04-05 02:09:57.662787 > 	New best! score: 0.07612046748874524 at depth: 5 with branch index: 0
+2019-04-05 02:10:30.653200 > 	Popped a node with score: 0.07612046748874524 at depth: 5 with branch index: 0
+2019-04-05 02:15:34.874607 > 	Popped a node with score: 0.07612046748875012 at depth: 6 with branch index: 2
+2019-04-05 02:21:16.524035 > 	New best! score: 0.07612046748874368 at depth: 7 with branch index: 0
+2019-04-05 02:24:26.135130 > 	Popped a node with score: 0.07612046748874368 at depth: 7 with branch index: 0
+2019-04-05 02:30:36.088034 > 	New best! score: 0.03407417371098076 at depth: 8 with branch index: 2
+2019-04-05 02:31:26.212533 > 	New best! score: 7.704947790898586e-14 at depth: 8 with branch index: 1
+2019-04-05 02:31:26.230145 > 	qft3-ring compilation complete!  Duration: 1715.9943418019993
+

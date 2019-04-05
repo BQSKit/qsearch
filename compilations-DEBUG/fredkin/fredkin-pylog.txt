@@ -1,0 +1,32 @@
+2019-04-04 22:48:09.581110 > 	Circuit fredkin is of size (8, 8)
+2019-04-04 22:48:09.582079 > 	There are 12 processors available to Pool.
+2019-04-04 22:48:09.582195 > 	The branching factor is 3.
+2019-04-04 22:48:09.587114 > 	Creating a pool of 3 workers
+2019-04-04 22:48:14.364219 > 	New best! 0.25000000000000344 at depth 0
+2019-04-04 22:48:14.364394 > 	Popped a node with score: 0.25000000000000344 at depth: 0 with branch index: 0
+2019-04-04 22:48:34.276176 > 	Popped a node with score: 0.3964466094067369 at depth: 1 with branch index: 2
+2019-04-04 22:49:21.045349 > 	Popped a node with score: 0.25000000000002087 at depth: 2 with branch index: 0
+2019-04-04 22:50:31.704906 > 	Popped a node with score: 0.25000000000002076 at depth: 3 with branch index: 0
+2019-04-04 22:52:22.130047 > 	Popped a node with score: 0.25000000000001943 at depth: 4 with branch index: 0
+2019-04-04 22:56:01.478663 > 	Popped a node with score: 0.25000000000003064 at depth: 4 with branch index: 2
+2019-04-04 22:59:19.910336 > 	Popped a node with score: 0.2500000000000334 at depth: 2 with branch index: 2
+2019-04-04 23:00:28.052868 > 	Popped a node with score: 0.250000000000005 at depth: 3 with branch index: 2
+2019-04-04 23:02:19.809895 > 	Popped a node with score: 0.2500000000000221 at depth: 3 with branch index: 0
+2019-04-04 23:04:17.676626 > 	Popped a node with score: 0.2500000000000362 at depth: 4 with branch index: 0
+2019-04-04 23:06:49.752690 > 	Popped a node with score: 0.25000000000001465 at depth: 5 with branch index: 2
+2019-04-04 23:11:25.091057 > 	Popped a node with score: 0.25000000000004163 at depth: 5 with branch index: 0
+2019-04-04 23:15:14.665056 > 	Popped a node with score: 0.25000000000002676 at depth: 6 with branch index: 0
+2019-04-04 23:20:27.759631 > 	Popped a node with score: 0.2500000000000492 at depth: 6 with branch index: 0
+2019-04-04 23:24:48.307598 > 	New best! score: 0.20943058495795885 at depth: 7 with branch index: 1
+2019-04-04 23:25:14.281504 > 	Popped a node with score: 0.20943058495795885 at depth: 7 with branch index: 1
+2019-04-04 23:31:14.790695 > 	New best! score: 0.14644660940679477 at depth: 8 with branch index: 1
+2019-04-04 23:35:35.762016 > 	Popped a node with score: 0.14644660940679477 at depth: 8 with branch index: 1
+2019-04-04 23:55:46.517606 > 	Popped a node with score: 0.14644660940681742 at depth: 9 with branch index: 1
+2019-04-05 00:14:06.383715 > 	New best! score: 0.1464466094067587 at depth: 10 with branch index: 1
+2019-04-05 00:14:42.080333 > 	Popped a node with score: 0.1464466094067587 at depth: 10 with branch index: 1
+2019-04-05 00:47:48.747104 > 	Popped a node with score: 0.14644660940681975 at depth: 9 with branch index: 0
+2019-04-05 01:00:15.224533 > 	New best! score: 0.07612046748891321 at depth: 10 with branch index: 2
+2019-04-05 01:09:16.388033 > 	Popped a node with score: 0.07612046748891321 at depth: 10 with branch index: 2
+2019-04-05 01:21:45.789016 > 	New best! score: 4.96269692007445e-14 at depth: 11 with branch index: 1
+2019-04-05 01:21:45.818093 > 	fredkin compilation complete!  Duration: 9216.12691299
+

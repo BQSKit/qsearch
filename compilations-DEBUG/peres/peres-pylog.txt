@@ -1,0 +1,26 @@
+2019-04-05 01:21:45.825516 > 	Circuit peres is of size (8, 8)
+2019-04-05 01:21:45.826557 > 	There are 12 processors available to Pool.
+2019-04-05 01:21:45.826680 > 	The branching factor is 3.
+2019-04-05 01:21:45.831738 > 	Creating a pool of 3 workers
+2019-04-05 01:21:50.273935 > 	New best! 0.4279385971823235 at depth 0
+2019-04-05 01:21:50.274089 > 	Popped a node with score: 0.4279385971823235 at depth: 0 with branch index: 0
+2019-04-05 01:22:07.753262 > 	New best! score: 0.3675444679663533 at depth: 1 with branch index: 1
+2019-04-05 01:22:08.504143 > 	New best! score: 0.20943058495794875 at depth: 1 with branch index: 0
+2019-04-05 01:22:08.504335 > 	Popped a node with score: 0.20943058495794875 at depth: 1 with branch index: 0
+2019-04-05 01:22:42.812446 > 	New best! score: 0.20943058495793432 at depth: 2 with branch index: 2
+2019-04-05 01:22:44.664632 > 	New best! score: 0.209430584957921 at depth: 2 with branch index: 1
+2019-04-05 01:22:45.382080 > 	New best! score: 0.20943058495791855 at depth: 2 with branch index: 0
+2019-04-05 01:22:45.382287 > 	Popped a node with score: 0.20943058495791855 at depth: 2 with branch index: 0
+2019-04-05 01:23:45.300518 > 	New best! score: 0.20943058495791045 at depth: 3 with branch index: 2
+2019-04-05 01:23:53.813509 > 	Popped a node with score: 0.20943058495791045 at depth: 3 with branch index: 2
+2019-04-05 01:25:36.530493 > 	New best! score: 0.1464466094067719 at depth: 4 with branch index: 2
+2019-04-05 01:25:48.000971 > 	Popped a node with score: 0.1464466094067719 at depth: 4 with branch index: 2
+2019-04-05 01:28:01.502929 > 	New best! score: 0.14644660940674425 at depth: 5 with branch index: 2
+2019-04-05 01:28:29.060876 > 	Popped a node with score: 0.14644660940674425 at depth: 5 with branch index: 2
+2019-04-05 01:32:19.339736 > 	Popped a node with score: 0.14644660940675425 at depth: 6 with branch index: 0
+2019-04-05 01:37:49.859312 > 	New best! score: 0.07612046748874646 at depth: 7 with branch index: 2
+2019-04-05 01:42:20.258284 > 	Popped a node with score: 0.07612046748874646 at depth: 7 with branch index: 2
+2019-04-05 01:54:03.423278 > 	Popped a node with score: 0.07612046748874868 at depth: 8 with branch index: 0
+2019-04-05 02:02:50.156483 > 	New best! score: 4.574118861455645e-14 at depth: 9 with branch index: 1
+2019-04-05 02:02:50.217691 > 	peres compilation complete!  Duration: 2464.3620213390004
+
