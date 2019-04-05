@@ -117,7 +117,7 @@ class UStep(QuantumStep):
         elif self._dits == 1:
             return "UStep({}, name={})".format(repr(self._U), repr(self.name))
         else:
-            return "UStep({}, name={}, dits={}".format(repr(self._U), repr(self.name), repr(self._dits))
+            return "UStep({}, name={}, dits={})".format(repr(self._U), repr(self.name), repr(self._dits))
 
 class CUStep(QuantumStep):
     def __init__(self, U, name=None, flipped=False):

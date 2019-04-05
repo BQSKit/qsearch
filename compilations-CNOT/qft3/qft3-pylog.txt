@@ -1,23 +1,29 @@
-2019-02-09 00:57:09.456449 > 	Circuit qft3 is of size (8, 8)
-2019-02-09 00:57:09.456717 > 	There are 12 processors available to Pool.
-2019-02-09 00:57:09.456827 > 	The branching factor is 2.
-2019-02-09 00:57:09.460360 > 	Creating a pool of 2 workers
-2019-02-09 00:57:13.406973 > 	New best! 0.5669872981077833 at depth 0
-2019-02-09 00:57:13.407175 > 	popped a node of depth 0
-2019-02-09 00:57:31.392165 > 	New best! 0.5170370868554919 at depth 1
-2019-02-09 00:57:32.508435 > 	New best! 0.5170370868554854 at depth 1
-2019-02-09 00:57:32.508572 > 	popped a node of depth 1
-2019-02-09 00:58:23.580302 > 	New best! 0.5000000000000107 at depth 2
-2019-02-09 00:58:27.054407 > 	popped a node of depth 2
-2019-02-09 01:00:39.451750 > 	popped a node of depth 3
-2019-02-09 01:04:35.901837 > 	New best! 0.39939412894492266 at depth 4
-2019-02-09 01:05:22.001590 > 	popped a node of depth 4
-2019-02-09 01:12:45.819622 > 	New best! 0.35927113806468347 at depth 5
-2019-02-09 01:12:45.819780 > 	popped a node of depth 5
-2019-02-09 01:24:14.254236 > 	New best! 0.15061503151302713 at depth 6
-2019-02-09 01:24:14.254387 > 	popped a node of depth 6
-2019-02-09 01:40:17.928347 > 	New best! 0.09387255364714364 at depth 7
-2019-02-09 01:45:23.481448 > 	popped a node of depth 7
-2019-02-09 02:00:08.162476 > 	New best! 1.6919798895287386e-13 at depth 8
-2019-02-09 02:00:08.188811 > 	qft3 compilation complete!
+2019-04-04 02:13:07.168494 > 	Circuit qft3 is of size (8, 8)
+2019-04-04 02:13:07.168755 > 	There are 12 processors available to Pool.
+2019-04-04 02:13:07.168878 > 	The branching factor is 2.
+2019-04-04 02:13:07.176531 > 	Creating a pool of 2 workers
+2019-04-04 02:13:11.369510 > 	New best! 0.5669872981077863 at depth 0
+2019-04-04 02:13:11.369659 > 	Popped a node with score: 0.5669872981077863 at depth: 0
+2019-04-04 02:13:23.807136 > 	New best! score: 0.5170370868554759 at depth: 1
+2019-04-04 02:13:23.808069 > 	New best! score: 0.5170370868554701 at depth: 1
+2019-04-04 02:13:23.808208 > 	Popped a node with score: 0.5170370868554701 at depth: 1
+2019-04-04 02:13:57.872480 > 	New best! score: 0.5096073597984027 at depth: 2
+2019-04-04 02:14:08.636056 > 	New best! score: 0.5000000000000376 at depth: 2
+2019-04-04 02:14:08.636272 > 	Popped a node with score: 0.5000000000000376 at depth: 2
+2019-04-04 02:15:05.501871 > 	New best! score: 0.5000000000000347 at depth: 3
+2019-04-04 02:15:42.531990 > 	New best! score: 0.5000000000000143 at depth: 3
+2019-04-04 02:15:42.532145 > 	Popped a node with score: 0.5000000000000143 at depth: 3
+2019-04-04 02:17:21.571664 > 	Popped a node with score: 0.5000000000000347 at depth: 3
+2019-04-04 02:19:37.913964 > 	New best! score: 0.4568162990727723 at depth: 4
+2019-04-04 02:19:37.914125 > 	Popped a node with score: 0.4568162990727723 at depth: 4
+2019-04-04 02:22:40.166311 > 	New best! score: 0.41206219879048644 at depth: 5
+2019-04-04 02:22:45.963278 > 	New best! score: 0.3592711380647068 at depth: 5
+2019-04-04 02:22:45.964490 > 	Popped a node with score: 0.3592711380647068 at depth: 5
+2019-04-04 02:27:47.250213 > 	New best! score: 0.2318222432886864 at depth: 6
+2019-04-04 02:31:00.419058 > 	Popped a node with score: 0.2318222432886864 at depth: 6
+2019-04-04 02:36:24.341845 > 	New best! score: 0.1685303876974713 at depth: 7
+2019-04-04 02:38:19.836747 > 	New best! score: 0.09387255364726288 at depth: 7
+2019-04-04 02:38:19.837761 > 	Popped a node with score: 0.09387255364726288 at depth: 7
+2019-04-04 02:44:19.015140 > 	New best! score: 2.5091040356528538e-14 at depth: 8
+2019-04-04 02:44:19.103727 > 	qft3 compilation complete!  Duration: 1871.9118245519999
 

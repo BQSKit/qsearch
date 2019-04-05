@@ -81,6 +81,7 @@ class QubitCNOTRing(Gateset):
             steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
         return steps
 
+
 class QutritCPIPhaseLinear(Gateset):
     def __init__(self):
         self.single_step = SingleQutritStep()

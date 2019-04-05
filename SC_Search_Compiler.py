@@ -40,6 +40,7 @@ class Search_Compiler(Compiler):
         logprint("Creating a pool of {} workers".format(pool._processes))
 
         root = ProductStep(initial_layer)
+        root.index = 0
         result = self.solver.solve_for_unitary(root, U, self.error_func)
         best_value = self.error_func(U, result[0])
         best_pair = (result[0], root, result[1])
@@ -51,8 +52,10 @@ class Search_Compiler(Compiler):
 
         while len(queue) > 0:
             popped_value, current_depth, _, current_step = heapq.heappop(queue)
-            logprint("Popped a node with score: {} at depth: {}".format(popped_value, current_depth))
+            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value, current_depth, current_step.index))
             new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
+            for i in range(0, len(new_steps)):
+                new_steps[i].index = i
 
             tiebreaker=0
             for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
@@ -60,7 +63,7 @@ class Search_Compiler(Compiler):
                 if current_value < best_value:
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
-                    logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
+                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
                     if best_value < self.threshold:
                         pool.close()
                         pool.terminate()
