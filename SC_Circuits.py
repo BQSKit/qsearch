@@ -334,7 +334,7 @@ class RemapStep(QuantumStep):
        return util.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self._dits-2))), self._postfix)
 
     def assemble(self, v, i=0):
-        if name == None:
+        if self._name == None:
             return "REMAP q{} q{} [{}]".format(self._source, self._target, self._step.assemble(v, i))
         else:
             return "{} q{} q{}".format(self._name, self._source, self._target)
