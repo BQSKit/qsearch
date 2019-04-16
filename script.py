@@ -17,7 +17,7 @@ from SC_CMA_Solver import BFGS_Solver
 
 Compiler_Class = search_comp.Search_Compiler
 
-def run_compilation(target, name, gateset=gatesets.QubitCRZRing(), assemble=True, debug=False):
+def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=False, debug=True):
     directory = "compilations-crz-ring/{}".format(name)
     force = False
     if debug:
@@ -58,10 +58,10 @@ def run_compilation(target, name, gateset=gatesets.QubitCRZRing(), assemble=True
 
 
 # add things to do down here
-run_compilation(gates.qft(4), "qft2")
-run_compilation(gates.toffoli, "toffoli")
-run_compilation(gates.fredkin, "fredkin")
-run_compilation(gates.peres, "peres")
+#run_compilation(gates.qft(4), "qft2")
+#run_compilation(gates.toffoli, "toffoli")
+#run_compilation(gates.fredkin, "fredkin")
+#run_compilation(gates.peres, "peres")
 run_compilation(gates.qft(8), "qft3")
 #run_compilation(gates.qft(8), "qft3-line", gateset=gatesets.QubitCNOTLinear())
 theta = np.pi/3
@@ -124,5 +124,5 @@ circuit = circuit.appending(KroneckerStep(SWAP,I))
 
 
 HHL = circuit.matrix([])
-run_compilation(HHL, "HHL")
+#run_compilation(HHL, "HHL")
 

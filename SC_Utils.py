@@ -44,6 +44,11 @@ def rot_y(theta):
     return np.matrix([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
 
+def re_rot_z(theta, old_z):
+    old_z[0,0] = np.exp(-1j*theta/2)
+    old_z[1,1] = np.exp(1j*theta/2)
+
+
 # copied from qnl_analysis.SimTools
 def Q1_unitary(x):
     return matrix_product(rot_z(x[0]), rot_x(np.pi/2), rot_z(np.pi + x[1]), rot_x(np.pi/2), rot_z(x[2] - np.pi))

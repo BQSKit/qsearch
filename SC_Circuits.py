@@ -56,8 +56,18 @@ class SingleQubitStep(QuantumStep):
         self._num_inputs = 3
         self._dits = 1
 
+        self._x90 = util.rot_x(np.pi/2)
+        self._rot_z = util.rot_z(0)
+        self._out = np.matrix(np.eye(2), dtype='complex128')
+        
     def matrix(self, v):
-        return util.Q1_unitary(v)
+        util.re_rot_z(v[0], self._rot_z)
+        self._out = np.dot(self._rot_z, self._x90, out=self._out)
+        util.re_rot_z(v[1] + np.pi, self._rot_z)
+        self._out = np.dot(self._out, self._rot_z, out=self._out)
+        self._out = np.dot(self._out, self._x90, out=self._out)
+        util.re_rot_z(v[2]-np.pi, self._rot_z)
+        return np.dot(self._out, self._rot_z)
 
     def path(self, v):
         return ["QUBIT", list(v)]
