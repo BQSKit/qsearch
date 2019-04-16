@@ -1,5 +1,6 @@
 from multiprocessing import Pool, cpu_count
 from functools import partial
+from timeit import default_timer as timer
 import heapq
 
 from SC_Circuits import *
@@ -52,6 +53,7 @@ class Search_Compiler(Compiler):
 
         while len(queue) > 0:
             popped_value, current_depth, _, current_step = heapq.heappop(queue)
+            then = timer()
             logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value, current_depth, current_step.index))
             new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
             for i in range(0, len(new_steps)):
@@ -72,6 +74,7 @@ class Search_Compiler(Compiler):
                 if current_depth + 1 < depth:
                     heapq.heappush(queue, (current_value, current_depth+1, tiebreaker, step))
                     tiebreaker+=1
+            logprint("Layer completed after {} seconds".format(timer() - then))
 
         pool.close()
         pool.terminate()
