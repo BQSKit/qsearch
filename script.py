@@ -3,21 +3,15 @@ import os
 import shutil
 from timeit import default_timer as timer
 
+import search_compiler as sc
+from search_compiler import sample_gates as gates
+import search_compiler.logging as logging
+
 from qasm_parser import parse_qasm
-import SC_Search_Compiler as search_comp
-import SC_Step_Compiler as step_comp
-import SC_Widened_Search_Compiler as wide_comp
-import SC_Utils as util
-import SC_Sample_Gates as gates
-import SC_Gatesets as gatesets
-from SC_Logging import logprint
-import SC_Logging as logger
 
-from SC_CMA_Solver import BFGS_Solver
+Compiler_Class = sc.SearchCompiler
 
-Compiler_Class = search_comp.Search_Compiler
-
-def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=False, debug=True):
+def run_compilation(target, name, gateset=sc.gatesets.QubitCNOTLinear(), assemble=False, debug=True):
     directory = "compilations-crz-ring/{}".format(name)
     force = False
     if debug:
@@ -31,14 +25,14 @@ def run_compilation(target, name, gateset=gatesets.QubitCNOTLinear(), assemble=F
             return
 
     os.makedirs(directory)
-    logger.output_file = "{}/{}-pylog.txt".format(directory,name)
-    logprint("Circuit {} is of size {}".format(name, np.shape(target)))
+    logging.output_file = "{}/{}-pylog.txt".format(directory,name)
+    logging.logprint("Circuit {} is of size {}".format(name, np.shape(target)))
 
     compiler = Compiler_Class(threshold=1e-10, gateset=gateset)
     start = timer()
     result, structure, vector = compiler.compile(target, 32)
     end = timer()
-    logprint("{} compilation complete!  Duration: {}\n".format(name, end-start))
+    logging.logprint("{} compilation complete!  Duration: {}\n".format(name, end-start))
     
     with open("{}/{}-target.txt".format(directory, name), "w") as outtarget:
         outtarget.write(repr(target))

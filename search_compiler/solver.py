@@ -1,8 +1,8 @@
 import numpy as np
 import cma
 
-import SC_Circuits as circuits
-import SC_Utils as util
+from . import circuits as circuits
+from . import utils as util
 
 
 class CMA_Solver():

@@ -1,5 +1,5 @@
-import SC_Circuits as circuits
-import QASM_Gates as gates
+import search_compiler.circuits as circuits
+import search_compiler.qasm_gates as gates
 import parse
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 import cma
 
-import SC_Utils as util
+from . import utils as util
 
 class QuantumStep:
     def __init__(self):

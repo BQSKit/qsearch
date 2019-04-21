@@ -1,6 +1,6 @@
 import numpy as np
-import SC_Circuits as circuits
-import SC_Utils as util
+from . import circuits as circuits
+from . import utils as util
 
 gate_X = np.matrix([[0,1],[1,0]], dtype='complex128')
 gate_H = np.matrix([[1/np.sqrt(2), 1/np.sqrt(2)],[1/np.sqrt(2), -1/np.sqrt(2)]], dtype='complex128')

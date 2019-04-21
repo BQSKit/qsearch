@@ -1,7 +1,7 @@
-import SC_Utils as util
-import SC_Sample_Gates as gates
-from SC_Logging import logprint
-from SC_Circuits import *
+from . import utils as util
+from . import sample_gates as gates
+from .logging import logprint
+from .circuits import *
 
 # Commonly used functions for generating gatesets
 def linear_topology(double_step, single_step, n, d, identity_step=None):
@@ -126,3 +126,4 @@ class QutritCPIPhaseLinear(Gateset):
 DefaultQubit = QubitCNOTLinear
 DefaultQutrit = QutritCPIPhaseLinear
 Default = DefaultQubit
+

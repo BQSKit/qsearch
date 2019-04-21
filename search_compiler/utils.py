@@ -50,6 +50,6 @@ def re_rot_z(theta, old_z):
 
 
 # copied from qnl_analysis.SimTools
-def Q1_unitary(x):
+def q1_unitary(x):
     return matrix_product(rot_z(x[0]), rot_x(np.pi/2), rot_z(np.pi + x[1]), rot_x(np.pi/2), rot_z(x[2] - np.pi))
 
