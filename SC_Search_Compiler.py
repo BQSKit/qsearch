@@ -14,8 +14,8 @@ class Compiler():
     def compile(self, U, depth):
         return (U, None, None)
 
-def evaluate_step(step, U, error_func, solver):
-    return (step, solver.solve_for_unitary(step, U, error_func))
+def evaluate_step(step, U, error_func, solver, initial_guess=None):
+    return (step, solver.solve_for_unitary(step, U, error_func, initial_guess))
 
 class Search_Compiler(Compiler):
     def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, gateset=gatesets.Default(), solver=CMA_Solver()):
@@ -49,18 +49,17 @@ class Search_Compiler(Compiler):
         if depth == 0:
             return best_pair
 
-        queue = [(best_value, 0, 0, root)]
-
+        queue = [(best_value, 0, -1, result[1], root)]
+        tiebreaker = 0
         while len(queue) > 0:
-            popped_value, current_depth, _, current_step = heapq.heappop(queue)
+            popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
             then = timer()
             logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value, current_depth, current_step.index))
             new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
             for i in range(0, len(new_steps)):
                 new_steps[i].index = i
 
-            tiebreaker=0
-            for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
+            for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, initial_guess=current_vector), new_steps):
                 current_value = self.error_func(U, result[0])
                 if current_value < best_value:
                     best_value = current_value
@@ -72,7 +71,7 @@ class Search_Compiler(Compiler):
                         queue = []
                         break
                 if current_depth + 1 < depth:
-                    heapq.heappush(queue, (current_value, current_depth+1, tiebreaker, step))
+                    heapq.heappush(queue, (current_value, current_depth+1, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
 
