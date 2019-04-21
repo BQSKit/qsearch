@@ -10,7 +10,7 @@ def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
     result = np.eye(LU[0].shape[0])
     for U in LU:
-        result = np.dot(result, U)
+        result = np.dot(result, U, out=result)
     return result
 
 def matrix_kron(*LU):
