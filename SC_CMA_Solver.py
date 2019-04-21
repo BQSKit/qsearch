@@ -8,11 +8,11 @@ import SC_Utils as util
 class CMA_Solver():
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared, initial_guess=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
-        if initial_guess == None:
+        if initial_guess is None:
             initial_guess = 'np.random.rand({})*4*np.pi'.format(circuit._num_inputs)
         else:
             print("WARNING: Experimental inital guess configuration active")
-            inital_guess = 'np.array({})+ np.array(np.random.rand({})*4*np.pi)'.format(repr(inital_guess), circuit._num_inputs - len(initial_guess))
+            initial_guess = 'np.concatenate((np.array({}), np.array(np.random.rand({})*4*np.pi)))'.format(repr(initial_guess), circuit._num_inputs - len(initial_guess))
         xopt, _ = cma.fmin2(eval_func, initial_guess, np.pi/4, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,np.pi*4]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
