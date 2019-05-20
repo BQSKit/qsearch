@@ -50,6 +50,7 @@ class SearchCompiler(Compiler):
             return best_pair
 
         queue = [(best_value, 0, -1, result[1], root)]
+        best_depth = 0
         tiebreaker = 0
         while len(queue) > 0:
             popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
@@ -61,9 +62,11 @@ class SearchCompiler(Compiler):
 
             for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, initial_guess=current_vector), new_steps):
                 current_value = self.error_func(U, result[0])
+                logprint("{}\t{}".format(current_value, current_depthi+1), custom="heuristic-test")
                 if current_value < best_value:
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
+                    best_depth = current_depth + 1
                     logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
                     if best_value < self.threshold:
                         pool.close()
@@ -71,13 +74,14 @@ class SearchCompiler(Compiler):
                         queue = []
                         break
                 if current_depth + 1 < depth:
-                    heapq.heappush(queue, (current_value, current_depth+1, tiebreaker, result[1], step))
+                    heapq.heappush(queue, (current_value+current_depth+1, current_depth+1, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
 
         pool.close()
         pool.terminate()
         pool.join()
+        logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
         return best_pair
 
 

@@ -11,8 +11,8 @@ from qasm_parser import parse_qasm
 
 Compiler_Class = sc.SearchCompiler
 
-def run_compilation(target, name, gateset=sc.gatesets.QubitCNOTLinear(), assemble=False, debug=True):
-    directory = "compilations-crz-ring/{}".format(name)
+def run_compilation(target, name, gateset=sc.gatesets.QubitCNOTLinear(), assemble=False, debug=False):
+    directory = "compilations-cnot-astar/{}".format(name)
     force = False
     if debug:
         directory = "compilations-DEBUG/{}".format(name)
@@ -25,10 +25,10 @@ def run_compilation(target, name, gateset=sc.gatesets.QubitCNOTLinear(), assembl
             return
 
     os.makedirs(directory)
-    logging.output_file = "{}/{}-pylog.txt".format(directory,name)
+    logging.output_file = "{}/{}".format(directory,name)
     logging.logprint("Circuit {} is of size {}".format(name, np.shape(target)))
 
-    compiler = Compiler_Class(threshold=1e-10, gateset=gateset)
+    compiler = Compiler_Class(threshold=1e-10, gateset=gateset, error_func=sc.util.astar_heuristic)
     start = timer()
     result, structure, vector = compiler.compile(target, 32)
     end = timer()
@@ -52,10 +52,10 @@ def run_compilation(target, name, gateset=sc.gatesets.QubitCNOTLinear(), assembl
 
 
 # add things to do down here
-#run_compilation(gates.qft(4), "qft2")
-#run_compilation(gates.toffoli, "toffoli")
-#run_compilation(gates.fredkin, "fredkin")
-#run_compilation(gates.peres, "peres")
+run_compilation(gates.qft(4), "qft2")
+run_compilation(gates.toffoli, "toffoli")
+run_compilation(gates.fredkin, "fredkin")
+run_compilation(gates.peres, "peres")
 run_compilation(gates.qft(8), "qft3")
 #run_compilation(gates.qft(8), "qft3-line", gateset=gatesets.QubitCNOTLinear())
 theta = np.pi/3
@@ -72,7 +72,7 @@ mirogate = np.matrix([
     [s,0,0,0,0,0,0,c]
     ], dtype='complex128')
 
-#run_compilation(mirogate, "miro")
+run_compilation(mirogate, "miro")
 
 
 # HHL
@@ -118,5 +118,5 @@ circuit = circuit.appending(KroneckerStep(SWAP,I))
 
 
 HHL = circuit.matrix([])
-#run_compilation(HHL, "HHL")
+run_compilation(HHL, "HHL")
 
