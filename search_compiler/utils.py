@@ -57,3 +57,42 @@ def re_rot_z(theta, old_z):
 def q1_unitary(x):
     return matrix_product(rot_z(x[0]), rot_x(np.pi/2), rot_z(np.pi + x[1]), rot_x(np.pi/2), rot_z(x[2] - np.pi))
 
+def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
+    """Using the parameterization found in https://journals.aps.org/prd/pdf/10.1103/PhysRevD.38.1994,
+        this method constructs an arbitrary single_qutrit unitary operation.
+
+        Arguments:
+        qutrit_params: a list of eight parameters, in the following order
+            Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5
+        The formula for the matrix is:
+            u11 = cos[Theta_1]*cos[Theta_2]*exp[i*Phi_1]
+            u12 = sin[Theta_1]*exp[i*Phi_3]
+            u13 = cos[Theta_1]*sin[Theta_2]*exp[i*Phi_4]
+            u21 = sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_4 - i*Phi_5] -
+                    sin[Theta_1]*cos[Theta_2]*cos[Theta_3]*exp[i*Phi_1+i*Phi_2-i*Phi_3]
+            u22 = cos[Theta_1]*cos[Theta_3]*exp[i*Phi_2]
+            u23 = -cos[Theta_2]*sin[Theta_3]*exp[-i*Phi_1 - i*Phi_5] -
+                    sin[Theta_1]*sin[Theta_2]*cos[Theta_3]*exp[i*Phi_2 - i*Phi_3 + i*Phi_4]
+            u31 = -sin[Theta_1]*cos[Theta_2]*sin[Theta_3]*exp[i*Phi_1 - i*Phi_3 + i*Phi_5]
+                    - sin[Theta_2]*cos[Theta_3]*exp[-i*Phi_2-i*Phi_4]
+            u32 = cos[Theta_1]*sin[Theta_3]*exp[i*Phi_5]
+            u33 = cos[Theta_2]*cos[Theta_3]*exp[-i*Phi_1 - i*Phi_2] -
+                    sin[Theta_1]*sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_3 + i*Phi_4 + i*Phi_5]
+
+
+    """
+
+    # construct unitary, element by element
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    evaluated_unitary = np.matrix([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    return evaluated_unitary
