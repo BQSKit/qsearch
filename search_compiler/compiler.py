@@ -55,14 +55,14 @@ class SearchCompiler(Compiler):
         while len(queue) > 0:
             popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
             then = timer()
-            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value, current_depth, current_step.index))
+            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value - current_depth, current_depth, current_step.index))
             new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
             for i in range(0, len(new_steps)):
                 new_steps[i].index = i
 
             for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, initial_guess=current_vector), new_steps):
                 current_value = self.error_func(U, result[0])
-                logprint("{}\t{}".format(current_value, current_depthi+1), custom="heuristic-test")
+                logprint("{}\t{}".format(current_value, current_depth+1), custom="heuristic-test")
                 if current_value < best_value:
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
