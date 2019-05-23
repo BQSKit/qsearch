@@ -45,7 +45,7 @@ class SearchCompiler(Compiler):
         result = self.solver.solve_for_unitary(root, U, self.error_func)
         best_value = self.error_func(U, result[0])
         best_pair = (result[0], root, result[1])
-        logprint("New best! {} at depth 0".format(best_value))
+        logprint("New best! {} at depth 0".format(best_value/10))
         if depth == 0:
             return best_pair
 
@@ -55,7 +55,7 @@ class SearchCompiler(Compiler):
         while len(queue) > 0:
             popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
             then = timer()
-            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format(popped_value - current_depth, current_depth, current_step.index))
+            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((popped_value - current_depth)/10, current_depth, current_step.index))
             new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
             for i in range(0, len(new_steps)):
                 new_steps[i].index = i
@@ -67,7 +67,7 @@ class SearchCompiler(Compiler):
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
-                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
+                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value/10, current_depth + 1, step.index))
                     if best_value < self.threshold:
                         pool.close()
                         pool.terminate()
@@ -81,6 +81,7 @@ class SearchCompiler(Compiler):
         pool.close()
         pool.terminate()
         pool.join()
+        logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
         logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
         return best_pair
 
