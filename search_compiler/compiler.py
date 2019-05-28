@@ -9,6 +9,7 @@ from . import gatesets as gatesets
 from .solver import CMA_Solver
 from . import utils as utils
 from .logging import logprint
+from . import checkpoint
 
 class Compiler():
     def compile(self, U, depth):
@@ -40,18 +41,28 @@ class SearchCompiler(Compiler):
         pool = Pool(min(len(search_layers),cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
-        root = ProductStep(initial_layer)
-        root.index = 0
-        result = self.solver.solve_for_unitary(root, U, self.error_func)
-        best_value = self.error_func(U, result[0])
-        best_pair = (result[0], root, result[1])
-        logprint("New best! {} at depth 0".format(best_value/10))
-        if depth == 0:
-            return best_pair
-
-        queue = [(best_value, 0, -1, result[1], root)]
+        recovered_state = checkpoint.recover()
+        queue = []
         best_depth = 0
+        best_value = 0
+        best_pair  = 0
         tiebreaker = 0
+        if recovered_state == None:
+            root = ProductStep(initial_layer)
+            root.index = 0
+            result = self.solver.solve_for_unitary(root, U, self.error_func)
+            best_value = self.error_func(U, result[0])
+            best_pair = (result[0], root, result[1])
+            logprint("New best! {} at depth 0".format(best_value/10))
+            if depth == 0:
+                return best_pair
+
+            queue = [(best_value, 0, -1, result[1], root)]
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker))
+        else:
+            queue, best_depth, best_value, best_pair, tiebreaker = recovered_state
+            logprint("Recovered state with best result {} at depth {}".format(best_value/10, best_depth))
+
         while len(queue) > 0:
             popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
             then = timer()
@@ -77,12 +88,15 @@ class SearchCompiler(Compiler):
                     heapq.heappush(queue, (current_value+current_depth+1, current_depth+1, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker))
+
 
         pool.close()
         pool.terminate()
         pool.join()
         logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
         logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
+        checkpoint.delete()
         return best_pair
 
 
