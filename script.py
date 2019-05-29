@@ -10,7 +10,5 @@ project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
 project.add_compilation("qft3", gates.qft(8), handle_existing="ignore")
 project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
 
-project.status()
 project.run()
-project.status()
 
