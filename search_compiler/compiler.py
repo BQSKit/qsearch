@@ -26,7 +26,7 @@ class SearchCompiler(Compiler):
         self.gateset = gateset
         self.solver = solver
 
-    def compile(self, U, depth):
+    def compile(self, U, depth=None, statefile=None):
         n = np.log(np.shape(U)[0])/np.log(self.d)
 
         if self.d**n != np.shape(U)[0]:
@@ -41,7 +41,7 @@ class SearchCompiler(Compiler):
         pool = Pool(min(len(search_layers),cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
-        recovered_state = checkpoint.recover()
+        recovered_state = checkpoint.recover(statefile)
         queue = []
         best_depth = 0
         best_value = 0
@@ -58,7 +58,7 @@ class SearchCompiler(Compiler):
                 return best_pair
 
             queue = [(best_value, 0, -1, result[1], root)]
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker))
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker = recovered_state
             logprint("Recovered state with best result {} at depth {}".format(best_value/10, best_depth))
@@ -84,11 +84,11 @@ class SearchCompiler(Compiler):
                         pool.terminate()
                         queue = []
                         break
-                if current_depth + 1 < depth:
+                if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (current_value+current_depth+1, current_depth+1, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker))
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
 
 
         pool.close()
@@ -96,7 +96,8 @@ class SearchCompiler(Compiler):
         pool.join()
         logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
         logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
-        checkpoint.delete()
+        if statefile == None:
+            checkpoint.delete()
         return best_pair
 
 

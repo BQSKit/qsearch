@@ -1,0 +1,12 @@
+### MAIN USAGE INSTRUCIONS ###
+
+The main purpose of this library is to compile unitary matrices to a given gateset via the search compiler.  This is done using a Compiler object (usually a SearchCompiler)
+
+import search_compiler
+compiler = search_compiler.SearchCompiler()
+result, structure, vector = compiler.compile(target, depth=32)
+
+This will compile the given unitary matrix (target) and will search for a solution of up to a depth of 32 CNOTs.  It returns three values: the implemented matrix (which will be approximately equal to the target matrix), the structure of the circuit (in the form of QuantumStep classes), and a vector that specifies the parameters for the quantum steps.  This can be assembled to another form using the assemble() function of QuantumStep classes.
+
+assembly = structure.assemble(v)
+

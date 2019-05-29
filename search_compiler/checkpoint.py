@@ -1,25 +1,34 @@
 import pickle
 import os
 
-tmp = "./compiler_checkpoint.obj"
+tmp = ".compiler_checkpoint.obj"
 
-def save(state):
-    with open(tmp, "wb") as tmpfile:
+def save(state, filepath=None):
+    loc = filepath
+    if loc is None:
+        loc = tmp
+    with open(loc, "wb") as tmpfile:
         pickle.dump(state, tmpfile, pickle.HIGHEST_PROTOCOL)
 
-def recover():
+def recover(filepath=None):
+    loc = filepath
+    if loc is None:
+        loc = tmp
     try:
-        with open(tmp, "rb") as tmpfile:
+        with open(loc, "rb") as tmpfile:
 
             return pickle.load(tmpfile)
 
     except Exception:
-        delete()
+        delete(loc)
         return None
 
-def delete():
+def delete(filepath):
+    loc = filepath
+    if loc is None:
+        loc = tmp
     try:
-        os.remove(tmp)
+        os.remove(loc)
     except Exception:
         pass
 
