@@ -124,7 +124,7 @@ class Project:
 
 
     def complete(self):
-        for name, in self._compilations:
+        for name in self._compilations:
             s = self.compilation_status(name)
             if s == PROJECT_STATUS_PROGRESS or s == PROJECT_STATUS_NOTBEGUN:
                 return False
