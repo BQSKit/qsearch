@@ -10,3 +10,12 @@ This will compile the given unitary matrix (target) and will search for a soluti
 
 assembly = structure.assemble(v)
 
+
+You can also use the Project api to manage compiling several unitaries with the same compiler settings.
+
+myproject = search_compiler.Project("path-to-project-folder") # this opens a project or creates a new one at the given location
+myproject.configure_compiler("threshold", 1e-11) # configure compiler options.  Currently supports: threshold, gateset, error_func
+myproject.add_compilation("name", U) # adds a new compilation to the list with the given unitary and name
+
+myproject.run() # starts running all of the compilations with the specified options
+
