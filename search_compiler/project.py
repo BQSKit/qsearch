@@ -21,7 +21,7 @@ class Project:
                 self._compilations, self._compiler_config = pickle.load(projfile)
         except Exception:
             self._compilations = dict()
-            self.compiler_config = dict()
+            self._compiler_config = dict()
 
     def _save(self):
         with open(self._projpath, "wb") as projfile:
