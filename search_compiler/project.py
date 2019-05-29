@@ -2,8 +2,8 @@ import os
 import shutil
 import pickle
 from .compiler import SearchCompiler
-from . import gatesets
-from . import logging, checkpoint, utils
+from .solver import CMA_Solver
+from . import logging, checkpoint, utils, gatesets
 
 PROJECT_STATUS_PROGRESS = 1
 PROJECT_STATUS_COMPLETE = 2
@@ -86,7 +86,8 @@ class Project:
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.astar_heuristic)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func)
+        solver = self._config("solver", CMA_Solver())
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, solver=solver)
         self.status()
         for name in self._compilations:
             U, params = self._compilations[name]
