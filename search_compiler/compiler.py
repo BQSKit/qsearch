@@ -70,6 +70,11 @@ class SearchCompiler(Compiler):
             logprint("Recovered state with best result {} at depth {}".format(best_value/10, best_depth))
 
         while len(queue) > 0:
+            if best_value < self.threshold:
+                pool.close()
+                pool.terminate()
+                queue = []
+                break
             popped = []
             for _ in range(0, beams):
                 if len(queue) == 0:
@@ -92,11 +97,6 @@ class SearchCompiler(Compiler):
                     best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
                     logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value/10, current_depth + 1, step.index))
-                    if best_value < self.threshold:
-                        pool.close()
-                        pool.terminate()
-                        queue = []
-                        break
                 if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (current_value+current_depth+1, current_depth+1, tiebreaker, result[1], step))
                     tiebreaker+=1
