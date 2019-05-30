@@ -7,9 +7,8 @@ from .circuits import *
 
 from . import gatesets as gatesets
 from .solver import CMA_Solver
-from . import utils as utils
 from .logging import logprint
-from . import checkpoint
+from . import checkpoint, utils, heuristics
 
 class Compiler():
     def compile(self, U, depth):
@@ -20,9 +19,10 @@ def evaluate_step(tup, U, error_func, solver):
     return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, gateset=gatesets.Default(), solver=CMA_Solver(), beams=1):
+    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=CMA_Solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
+        self.heuristic = heuristic
         self.d = d
         self.gateset = gateset
         self.solver = solver
@@ -31,6 +31,7 @@ class SearchCompiler(Compiler):
             self.beams = 1
 
     def compile(self, U, depth=None, statefile=None):
+        h = self.heuristic
         n = np.log(np.shape(U)[0])/np.log(self.d)
 
         if self.d**n != np.shape(U)[0]:
@@ -63,7 +64,9 @@ class SearchCompiler(Compiler):
             if depth == 0:
                 return best_pair
 
-            queue = [(best_value, 0, -1, result[1], root)]
+            queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
+            #         heuristic      depth  distance tiebreaker vector structure
+            #             0            1      2         3         4        5
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker = recovered_state
@@ -81,11 +84,10 @@ class SearchCompiler(Compiler):
                     break
                 tup = heapq.heappop(queue)
                 popped.append(tup)
-                logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[0] - tup[1])/10, tup[1], tup[4].index))
+                logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[2]), tup[1], tup[5].index))
 
-            #popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
             then = timer()
-            new_steps = [(current_tup[4].appending(search_layer), current_tup[1], current_tup[3]) for search_layer in search_layers for current_tup in popped]
+            new_steps = [(current_tup[5].appending(search_layer), current_tup[1], current_tup[4]) for search_layer in search_layers for current_tup in popped]
             for i in range(0, len(new_steps)):
                 new_steps[i][0].index = i
 
@@ -98,7 +100,7 @@ class SearchCompiler(Compiler):
                     best_depth = current_depth + 1
                     logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value/10, current_depth + 1, step.index))
                 if depth is None or current_depth + 1 < depth:
-                    heapq.heappush(queue, (current_value+current_depth+1, current_depth+1, tiebreaker, result[1], step))
+                    heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)

@@ -6,7 +6,7 @@ import shutil
 import pickle
 from .compiler import SearchCompiler
 from .solver import CMA_Solver
-from . import logging, checkpoint, utils, gatesets
+from . import logging, checkpoint, utils, gatesets, heuristics
 
 PROJECT_STATUS_PROGRESS = 1
 PROJECT_STATUS_COMPLETE = 2
@@ -81,17 +81,26 @@ class Project:
         shutil.rmtree(self.directory)
         os.makedirs(self.directory)
         self._compilations = dict()
-        self.compiler_config = dict()
+        self._compiler_config = dict()
         self._save()
 
 
     def run(self):
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
-        error_func = self._config("error_func", utils.astar_heuristic)
+        error_func = self._config("error_func", utils.matrix_distance_squared)
+        heuristic = heuristics.astar
+        if "search_type" in self._compiler_config:
+            st = self._compiler_config["search_type"]
+            if st == "breadth":
+                heuristic = heuristics.breadth
+            elif st == "greedy":
+                heuristic = heuristics.greedy
+
+        heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", CMA_Solver())
         beams = self._config("beams", 1)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, solver=solver, beams=beams)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, params = self._compilations[name]

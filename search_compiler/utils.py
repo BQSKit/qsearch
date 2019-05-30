@@ -1,5 +1,4 @@
 import numpy as np
-from . import heuristic as h
 
 cnot = np.matrix([[1,0,0,0],
                   [0,1,0,0],
@@ -31,9 +30,6 @@ def matrix_distance_squared(A,B):
     return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.H))) / A.shape[0]
-
-def astar_heuristic(A,B):
-    return h.heuristic(matrix_distance_squared(A,B))
 
 def matrix_distance(A,B):
     return np.sqrt(matrix_distance_squared(A,B))
