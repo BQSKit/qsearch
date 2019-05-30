@@ -1,3 +1,5 @@
+import numpy as np
+from numpy import matrix, array
 import os
 import shutil
 import pickle
@@ -99,7 +101,7 @@ class Project:
             if self.compilation_status(name) == PROJECT_STATUS_COMPLETE:
                 continue
 
-            logging.output_file = os.path.join(folder, "{}-log.txt".format(name))
+            logging.output_file = os.path.join(folder, name)
             logging.logprint("Starting compilation of {}".format(name))
             result, structure, vector = compiler.compile(U, depth=None, statefile=os.path.join(folder, ".checkpoint"))
             logging.logprint("Finished compilation of {}".format(name))
@@ -156,4 +158,58 @@ class Project:
             return PROJECT_STATUS_COMPLETE
         else:
             return PROJECT_STATUS_NOTBEGUN
+
+
+    def verify_result(self, name, count=1000):
+        check = False
+        folder = os.path.join(self.directory, name)
+        s = self.compilation_status(name)
+        if s == PROJECT_STATUS_COMPLETE:
+            check = True
+        elif s == PROJECT_STATUS_DEBUGING:
+            if os.path.exists(os.path.join(folder, "{}-final.txt")) and os.path.exists(os.path.join(folder, "{}-target.txt")):
+                check = True
+
+        if check == False:
+            print("The compilation {} has not been completed.  Please run the project to finish the compilation.")
+            return
+
+        original, _ = self._compilations[name]
+        final = []
+        with open(os.path.join(folder, "{}-final.txt".format(name))) as f:
+            final = eval(f.read())
+
+        dist = utils.matrix_distance_squared(original, final)
+        print("Distance squared: {}".format(dist))
+        
+        total = 0.0
+        mins = 10.0
+        maxs = -10.0
+        n = np.shape(original)[0]
+
+        for _ in range(0, count):
+            v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
+            v = v / sum(np.multiply(v, np.conj(v)))
+
+            fv1 = np.ravel(np.dot(original, v))
+            fv2 = np.ravel(np.dot(final, v))
+
+            p1 = np.real(np.multiply(fv1, np.conj(fv1)))
+            p2 = np.real(np.multiply(fv2, np.conj(fv2)))
+
+            diff = 1-sum(np.abs(p1-p2))
+
+            total += diff
+            if diff > maxs:
+                maxs = diff
+            if diff < mins:
+                mins = diff
+
+        print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0/count, mins*100.0))
+
+
+
+
+
+
 
