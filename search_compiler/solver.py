@@ -12,8 +12,8 @@ class CMA_Solver():
             initial_guess = 'np.random.rand({})*4*np.pi'.format(circuit._num_inputs)
         else:
             print("WARNING: Experimental inital guess configuration active")
-            initial_guess = 'np.concatenate((np.array({}), np.array(np.random.rand({})*4*np.pi)))'.format(repr(initial_guess), circuit._num_inputs - len(initial_guess))
-        xopt, _ = cma.fmin2(eval_func, initial_guess, np.pi/4, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,np.pi*4]}, restarts=2)
+            initial_guess = 'np.concatenate((np.array({}), np.array(np.random.rand({})*2*np.pi)))'.format(repr(initial_guess), circuit._num_inputs - len(initial_guess))
+        xopt, _ = cma.fmin2(eval_func, initial_guess, np.pi/4, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,np.pi*2]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
 
