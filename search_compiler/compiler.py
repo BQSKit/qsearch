@@ -42,6 +42,8 @@ class SearchCompiler(Compiler):
 
         logprint("There are {} processors available to Pool.".format(cpu_count()))
         logprint("The branching factor is {}.".format(len(search_layers)))
+        if self.beams > 1:
+            logprint("The beam factor is {}.".format(self.beams))
         pool = Pool(min(len(search_layers)*self.beams,cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
@@ -69,10 +71,10 @@ class SearchCompiler(Compiler):
 
         while len(queue) > 0:
             popped = []
-            for _ in range(0, self.beams):
+            for _ in range(0, beams):
                 if len(queue) == 0:
                     break
-                tup = heapq.heappop(queue)
+                tup = heapq.heappop(queu)
                 popped.append(tup)
                 logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[0] - tup[1])/10, tup[1], tup[4].index))
 
@@ -80,7 +82,7 @@ class SearchCompiler(Compiler):
             then = timer()
             new_steps = [(current_tup[4].appending(search_layer), current_tup[1], current_tup[3]) for search_layer in search_layers for current_tup in popped]
             for i in range(0, len(new_steps)):
-                new_steps[i][0].index = i
+                new_steps[i].index = i
 
             for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
                 current_value = self.error_func(U, result[0])
