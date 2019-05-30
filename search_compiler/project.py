@@ -89,7 +89,8 @@ class Project:
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.astar_heuristic)
         solver = self._config("solver", CMA_Solver())
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, solver=solver)
+        beams = self._config("beams", 1)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, params = self._compilations[name]

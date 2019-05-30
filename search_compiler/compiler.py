@@ -15,16 +15,20 @@ class Compiler():
     def compile(self, U, depth):
         return (U, None, None)
 
-def evaluate_step(step, U, error_func, solver, initial_guess=None):
-    return (step, solver.solve_for_unitary(step, U, error_func, initial_guess))
+def evaluate_step(tup, U, error_func, solver):
+    step, depth, initial_guess = tup
+    return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, gateset=gatesets.Default(), solver=CMA_Solver()):
+    def __init__(self, threshold=0.01, d=2, error_func=util.matrix_distance_squared, gateset=gatesets.Default(), solver=CMA_Solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
         self.d = d
         self.gateset = gateset
         self.solver = solver
+        self.beams = int(beams)
+        if beams < 1:
+            self.beams = 1
 
     def compile(self, U, depth=None, statefile=None):
         n = np.log(np.shape(U)[0])/np.log(self.d)
@@ -38,7 +42,7 @@ class SearchCompiler(Compiler):
 
         logprint("There are {} processors available to Pool.".format(cpu_count()))
         logprint("The branching factor is {}.".format(len(search_layers)))
-        pool = Pool(min(len(search_layers),cpu_count()))
+        pool = Pool(min(len(search_layers)*self.beams,cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
@@ -64,14 +68,21 @@ class SearchCompiler(Compiler):
             logprint("Recovered state with best result {} at depth {}".format(best_value/10, best_depth))
 
         while len(queue) > 0:
-            popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
-            then = timer()
-            logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((popped_value - current_depth)/10, current_depth, current_step.index))
-            new_steps = [current_step.appending(search_layer) for search_layer in search_layers]
-            for i in range(0, len(new_steps)):
-                new_steps[i].index = i
+            popped = []
+            for _ in range(0, self.beams):
+                if len(queue) == 0:
+                    break
+                tup = heapq.heappop(queue)
+                popped.append(tup)
+                logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[0] - tup[1])/10, tup[1], tup[4].index))
 
-            for step, result in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, initial_guess=current_vector), new_steps):
+            #popped_value, current_depth, _, current_vector, current_step = heapq.heappop(queue)
+            then = timer()
+            new_steps = [(current_tup[4].appending(search_layer), current_tup[1], current_tup[3]) for search_layer in search_layers for current_tup in popped]
+            for i in range(0, len(new_steps)):
+                new_steps[i][0].index = i
+
+            for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
                 current_value = self.error_func(U, result[0])
                 logprint("{}\t{}".format(current_value, current_depth+1), custom="heuristic-test")
                 if current_value < best_value:
