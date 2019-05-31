@@ -27,8 +27,6 @@ class SearchCompiler(Compiler):
         self.gateset = gateset
         self.solver = solver
         self.beams = int(beams)
-        if beams < 1:
-            self.beams = 1
 
     def compile(self, U, depth=None, statefile=None):
         h = self.heuristic
@@ -43,9 +41,14 @@ class SearchCompiler(Compiler):
 
         logprint("There are {} processors available to Pool.".format(cpu_count()))
         logprint("The branching factor is {}.".format(len(search_layers)))
-        if self.beams > 1:
-            logprint("The beam factor is {}.".format(self.beams))
-        pool = Pool(min(len(search_layers)*self.beams,cpu_count()))
+        beams = self.beams
+        if self.beams < 1 and len(search_layers) > 0:
+            beams = int(cpu_count() // len(search_layers))
+        if beams < 1:
+            beams = 1
+        if beams > 1:
+            logprint("The beam factor is {}.".format(beams))
+        pool = Pool(min(len(search_layers)*beams,cpu_count()))
         logprint("Creating a pool of {} workers".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
@@ -79,7 +82,7 @@ class SearchCompiler(Compiler):
                 queue = []
                 break
             popped = []
-            for _ in range(0, self.beams):
+            for _ in range(0, beams):
                 if len(queue) == 0:
                     break
                 tup = heapq.heappop(queue)
