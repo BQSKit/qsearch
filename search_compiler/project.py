@@ -61,6 +61,8 @@ class Project:
                     warn("This project contains compilations which have been completed or have been started.  Changing the compiler configuration will delete the existing progress.  Call configure_compiler with the 'force' option set to True to reset these compilations and reconfigure the compiler.", RuntimeWarning, stacklevel=2)
                     self.status()
                     return
+        else:
+            for name in self._compilations:
                 U, cdict = self._compilations[name]
                 self.add_compilation(name, U, debug=cdict["debug"], handle_existing="overwrite")
 
