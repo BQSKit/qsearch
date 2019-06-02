@@ -97,7 +97,7 @@ class SearchCompiler(Compiler):
             for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
                 current_value = self.error_func(U, result[0])
                 logprint("{}\t{}".format(current_value, current_depth+1), custom="heuristic-test")
-                if current_value < best_value:
+                if (current_value < best_value and (best_value >= self.threshold or current_depth + 1 <= best_depth)) or (current_value < self.threshold and current_depth + 1 < best_depth):
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
