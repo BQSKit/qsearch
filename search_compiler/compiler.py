@@ -81,7 +81,7 @@ class SearchCompiler(Compiler):
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker = recovered_state
-            logprint("Recovered state with best result {} at depth {}".format(best_value/10, best_depth))
+            logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         while len(queue) > 0:
             if best_value < self.threshold:
@@ -109,7 +109,7 @@ class SearchCompiler(Compiler):
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
-                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value/10, current_depth + 1, step.index))
+                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
                 if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
