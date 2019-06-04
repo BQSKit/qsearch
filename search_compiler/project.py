@@ -100,7 +100,7 @@ class Project:
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", CMA_Solver())
         beams = self._config("beams", 1)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
+        compiler = SearchCompiler(threshold=threshold, d=d, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]
