@@ -22,7 +22,7 @@ class Project:
         try:
             with open(self.path, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
-        except Exception:
+        except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
 
@@ -89,6 +89,7 @@ class Project:
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.matrix_distance_squared)
         heuristic = heuristics.astar
+        d = self._config("d", 2)
         if "search_type" in self._compiler_config:
             st = self._compiler_config["search_type"]
             if st == "breadth":
@@ -109,7 +110,7 @@ class Project:
             if self.compilation_status(name) == PROJECT_STATUS_COMPLETE:
                 continue
 
-            logging.output_file = os.path.splitext(self.path)[0] + "-{}-log.txt".format(name)
+            logging.output_file = os.path.splitext(self.path)[0] + "-{}".format(name)
             logging.logprint("Starting compilation of {}".format(name))
             result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))

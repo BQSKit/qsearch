@@ -12,6 +12,7 @@ from . import checkpoint, utils, heuristics
 
 class Compiler():
     def compile(self, U, depth):
+        raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None, None)
 
 def evaluate_step(tup, U, error_func, solver):
@@ -30,7 +31,7 @@ class SearchCompiler(Compiler):
 
     def compile(self, U, depth=None, statefile=None):
         h = self.heuristic
-        n = np.log(np.shape(U)[0])/np.log(self.d)
+        n = int(np.round(np.log(np.shape(U)[0])/np.log(self.d)))
 
         if self.d**n != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
@@ -38,6 +39,13 @@ class SearchCompiler(Compiler):
 
         initial_layer = self.gateset.initial_layer(n, self.d)
         search_layers = self.gateset.search_layers(n, self.d)
+
+        if len(search_layers) <= 0:
+            print("This gateset has no branching factor so only an initial optimization will be run.")
+            root = initial_layer
+            result = self.solver.solve_for_unitary(root, U, self.error_func)
+            return (result[0], root, result[1])
+
 
         logprint("There are {} processors available to Pool.".format(cpu_count()))
         logprint("The branching factor is {}.".format(len(search_layers)))
