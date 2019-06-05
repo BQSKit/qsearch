@@ -12,7 +12,7 @@ def plot_quantum_circuit(gates,inits={},labels=[],plot_labels=True,**kwargs):
               defined in terms of labels. 
     inits     Initialization list of gates, optional
     
-    kwargs    Can override plot_parameters
+   kwargs    Can override plot_parameters
     """
     plot_params = dict(scale = 1.0,fontsize = 14.0, linewidth = 1.0, 
                          control_radius = 0.05, not_radius = 0.15, 
@@ -68,10 +68,21 @@ def measured_wires(l,labels,schedule=False):
     return measured
 
 def draw_gates(ax,l,labels,gate_grid,wire_grid,plot_params,measured={},schedule=False):
+    locs = dict()
+    for label in labels:
+        locs[label] = 0
     for i,gate in enumerate_gates(l,schedule=schedule):
-        draw_target(ax,i,gate,labels,gate_grid,wire_grid,plot_params)
+        used = set(gate[1:])
+        bigi = 0
+        for use in used:
+            if locs[use] > bigi:
+                bigi = locs[use]
+        for use in used:
+            locs[use] = bigi + 1
+
+        draw_target(ax,bigi,gate,labels,gate_grid,wire_grid,plot_params)
         if len(gate) > 2: # Controlled
-            draw_controls(ax,i,gate,labels,gate_grid,wire_grid,plot_params,measured)
+            draw_controls(ax,bigi,gate,labels,gate_grid,wire_grid,plot_params,measured)
     return
 
 def draw_controls(ax,i,gate,labels,gate_grid,wire_grid,plot_params,measured={}):
