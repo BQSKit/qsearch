@@ -47,11 +47,8 @@ class IdentityStep(QuantumStep):
     def matrix(self, v):
         return self._I
 
-    def path(self, v):
-        return ["IDENTITY"]
-
     def assemble(self, v, i=0):
-        return ""
+        return []
 
     def __repr__(self):
         return "IdentityStep({})".format(self._n)
@@ -78,12 +75,15 @@ class SingleQubitStep(QuantumStep):
         utils.re_rot_z(v[2]-np.pi, self._rot_z)
         return np.dot(self._out, self._rot_z)
 
-    def path(self, v):
-        return ["QUBIT", list(v)]
-
     def assemble(self, v, i=0):
-        # once you are done with the basics, expand this into its several steps
-        return "Z({}) q{}\nX(pi/2) q{}\nZ({}) q{}\nX(pi/2) q{}\nZ({}) q{}\n".format(v[0], i, i, v[1] + np.pi, i, i, v[2]-np.pi, i)
+        # late use IBM's parameterization and convert to ZXZXZ in post processing
+        out = []
+        out.append(("Z", (i), (v[0])))
+        out.append(("X", (i), (np.pi/2)))
+        out.append(("Z", (i), (v[1] + np.pi)))
+        out.append(("X", (i), (np.pi/2)))
+        out.append(("Z", (i), (v[1] + np.pi)))
+        return out
 
     def _draw_assemble(self, i=0):
         return [("U", "q{}".format(i))] 
@@ -100,11 +100,8 @@ class SingleQutritStep(QuantumStep):
     def matrix(self, v):
         return utils.qt_arb_rot(*v)
 
-    def path(self, v):
-        return ["QUTRIT", list(v)]
-
     def assemble(self, v, i=0):
-        return "U({}, {}, {}, {}, {}, {}, {}, {}) q{}".format(*v, i)
+        return [("U3", (i), tuple(v))]
     
     def __repr__(self):
         return "SingleQutritStep()"
@@ -119,19 +116,11 @@ class UStep(QuantumStep):
     def matrix(self, v):
         return self._U
 
-    def path(self, v):
-        if self.name is None:
-            return ["CUSTOM", self._U]
-        else:
-            return [self.name]
-
     def assemble(self, v, i=0):
         if self.name is None:
-            return "UNKNOWN q{}".format(i)
-        elif self._dits == 1:
-            return "{} q{}".format(self.name, i)
+            return [("UNKNOWN", (i), ())]
         else:
-            return "{}".format(self.name)
+            return [(self.name, (i), ())]
 
     def __repr__(self):
         if self.name is None:
@@ -157,12 +146,6 @@ class CUStep(QuantumStep):
     def matrix(self, v):
         return self._CU
 
-    def path(self, v):
-        if self.name is None:
-            return [("FLIPPED " if self.flipped else "") + "C-CUSTOM", self._U]
-        else:
-            return [self.name]
-
     def assemble(self, v, i=0):
         first = i+1 if self.flipped else i
         second = i if self.flipped else i+1
@@ -182,9 +165,6 @@ class InvertStep(QuantumStep):
 
     def matrix(self, v):
         return self._step.matrix(v).H
-
-    def path(self, v):
-        return ["INVERTED", self._step.path(v)]
 
     def assemble(self, v, i=0):
         return "REVERSE {\n" + self._step.assemble(v, i) + "\n}"
@@ -212,11 +192,8 @@ class CSUMStep(QuantumStep):
     def matrix(self, v):
         return CSUMStep._csum
 
-    def path(self, v):
-        return ["CSUM"]
-
     def assemble(self, v, i=0):
-        return "CSUM q{} q{}".format(i, i+1)
+        return [("CSUM", (i, i+1), ())]
 
     def __repr__(self):
         return "CSUMStep()"
@@ -240,11 +217,8 @@ class CPIStep(QuantumStep):
     def matrix(self, v):
         return CPIStep._cpi
 
-    def path(self, v):
-        return ["CPI"]
-
     def assemble(self, v, i=0):
-        return "CPI q{} q{}".format(i, i+1)
+        return [("CPI", (i, i+1), ())]
 
     def __repr__(self):
         return "CPIStep()"
@@ -269,11 +243,8 @@ class CPIPhaseStep(QuantumStep):
     def matrix(self, v):
         return self._cpi
 
-    def path(self, v):
-        return ["CPI+"]
-
     def assemble(self, v, i=0):
-        return "CPI- q{} q{}".format(i, i+1)
+        return [("CPI-", (i, i+1), ())]
 
     def __repr__(self):
         return "CPIPhaseStep()"
@@ -290,11 +261,8 @@ class CNOTStep(QuantumStep):
     def matrix(self, v):
         return CNOTStep._cnot
 
-    def path(self, v):
-        return ["CNOT"]
-
     def assemble(self, v, i=0):
-        return "CNOT q{} q{}".format(i, i+1)
+        return [("CNOT", (i, i+1), ())]
 
     def _draw_assemble(self, i=0):
         return [("CNOT", "q{}".format(i+1), "q{}".format(i))]
@@ -316,11 +284,9 @@ class CRZStep(QuantumStep):
         U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, utils.rot_z(v[0]))) # TODO fix this line
         return np.dot(U, CRZStep._cnr)
 
-    def path(self, v):
-        return ["CQ", v]
-
     def assemble(self, v, i=0):
-        return "CNOTROOT q{} q{}\nZ({}) q{}\nCNOTROOT q{} q{}".format(i, i+1, v[0], i+1, i, i+1)
+        raise NotImplementedError("I haven't implemented CRZ assemble.  Probably just delete and rely on sqrtcnot and z as separate gates.")
+        #return "CNOTROOT q{} q{}\nZ({}) q{}\nCNOTROOT q{} q{}".format(i, i+1, v[0], i+1, i, i+1)
 
     def _draw_assemble(Self, i=0):
         return [("CRZ", "q{}".format(i+1), "q{}".format(i))]
@@ -362,6 +328,7 @@ class RemapStep(QuantumStep):
        return utils.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self._dits-2))), self._postfix)
 
     def assemble(self, v, i=0):
+        raise NotImplementedError("This whole class should probably be redone, and this can be rewritten then")
         if self._name == None:
             return "REMAP q{} q{} [{}]".format(self._source, self._target, self._step.assemble(v, i))
         else:
@@ -384,11 +351,8 @@ class CNOTRootStep(QuantumStep):
     def matrix(self, v):
         return CNOTRootStep._cnr
 
-    def path(self, v):
-        return ["CNOTROOT"]
-
     def assemble(self, v, i=0):
-        return "CNOTROOT q{} q{}".format(i, i+1)
+        return [("sqrt(CNOT)", (i, i+1), ())]
 
     def __repr__(self):
         return "CNOTRootStep()"
@@ -411,25 +375,14 @@ class KroneckerStep(QuantumStep):
             U = np.kron(U, matrix)
         return U
 
-    def path(self, v):
-        paths = ["KRON"]
-        index = 0
-        for step in self._substeps:
-            p = step.path(v[index:index+step._num_inputs])
-            paths.append(p)
-            index += step._num_inputs
-        return paths
-
     def assemble(self, v, i=0):
-        outstr = ""
+        out = []
         index = 0
         for step in self._substeps:
-            outstr += step.assemble(v[index:index+step._num_inputs], i) + "\n"
+            out += step.assemble(v[index:index+step._num_inputs], i)
             index += step._num_inputs
             i += step._dits
-
-        return outstr
-
+        return out
 
     def appending(self, step):
         return KroneckerStep(*self._substeps, step)
@@ -465,23 +418,13 @@ class ProductStep(QuantumStep):
             U = np.matmul(U, matrix)
         return U
 
-    def path(self, v):
-        paths = ["PRODUCT"]
-        index = 0
-        for step in self._substeps:
-            p = step.path(v[index:index+step._num_inputs])
-            paths.append(p)
-            index += step._num_inputs
-        return paths
-
     def assemble(self, v, i=0):
-        outstr = ""
+        out = []
         index = 0
         for step in self._substeps:
-            outstr += step.assemble(v[index:index+step._num_inputs], i) + "\n"
+            out += step.assemble(v[index:index+step._num_inputs], i)
             index += step._num_inputs
-
-        return outstr
+        return out
 
     def _draw_assemble(self, i=0):
         endlist = []
@@ -497,42 +440,4 @@ class ProductStep(QuantumStep):
 
     def __repr__(self):
         return "ProductStep({})".format(repr(self._substeps)[1:-1])
-
-# WARNING: This is considered legacy code and may be deleted in the future, along with the path() function of the QuantumStep class.
-def decode_path(path, d=2, args=None):
-    if args is None:
-        args = dict()
-    if len(path) < 1:
-        return (None,[])
-    if path[0] == "KRON":
-        k = []
-        vf = []
-        for item in path[1:]:
-           (step, v) = decode_path(item, d, args)
-           k.append(step)
-           vf.extend(v)
-        return (KroneckerStep(*k), vf)
-
-    elif path[0] == "PRODUCT":
-        p = []
-        vf = []
-        for item in path[1:]:
-           (step, v) = decode_path(item, d, args)
-           p.append(step)
-           vf.extend(v)
-        return (ProductStep(*p), vf)
-
-    elif not path[0] in args:
-        if path[0] == "IDENTITY":
-            args[path[0]] = IdentityStep(d)
-        elif path[0] == "QUBIT":
-            args[path[0]] = SingleQubitStep()
-        elif path[0] == "QUTRIT":
-            args[path[0]] = SingleQutritStep()
-        elif path[0] == "CNOT":
-            args[path[0]] = CNOTStep()
-        elif path[0] == "CQ":
-            args[path[0]] = CQubitStep()
-    return (args[path[0]], path[1] if len(path) > 1 else [])
-
 
