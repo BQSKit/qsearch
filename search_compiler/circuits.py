@@ -270,6 +270,26 @@ class CNOTStep(QuantumStep):
     def __repr__(self):
         return "CNOTStep()"
 
+class NonadjacentCNOTStep(QuantumStep):
+    def __init__(self, n, control, target):
+        self._dits = n
+        self._num_inputs = 0
+        self.control = control
+        self.target = target
+        self._U = gates.arbitrary_cnot(n, control, target)
+
+    def matrix(self, v):
+        return self._U
+
+    def assemble(self, v, i=0):
+        return "CNOT q{} q{}".format(control, target)
+
+    def _draw_assemble(self, i=0):
+        return [("CNOT", "q{}".format(target), "q{}".format(control))]
+
+    def __repr__(self):
+        return "NonadjacentCNOTStep({}, {}, {})".format(self._dits, self.control, self.target)
+
 class CRZStep(QuantumStep):
     _cnr = np.matrix([[1,0,0,0],
                        [0,1,0,0],
