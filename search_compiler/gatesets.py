@@ -81,6 +81,27 @@ class QubitCNOTRing(Gateset):
             steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
         return steps
 
+# TODO this code is untested
+class QubitCNOTAdjancencyList(Gateset):
+    def __init__(self, adjacency):
+        self.single_step = EfficientQubitStep()
+        self.I = IdentityStep(2)
+        self.adjacency = adjacency # a list of tuples of control-target.  It is not recommended to add bidirectional links, because that difference can be handled more efficiently via single qubit gates.
+
+    def initial_layer(self, n, d):
+        return fill_row(self.single_step, n)
+
+    def search_layers(self, n, d):
+        if n == 2:
+            return [ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step))] # prevents the creation of an extra cnot placement in the 2 qubit case
+
+        steps = []
+        for pair in self.adjacency:
+            cnot = NonadjacentCNOTStep(n, pair[0], pair[1])
+            single_steps = [self.single_step if i in pair else self.I for i in range(0, n)]
+            steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
+        return steps
+
 class QubitCRZRing(Gateset):
     def __init__(self):
         self.single_step = SingleQubitStep()
