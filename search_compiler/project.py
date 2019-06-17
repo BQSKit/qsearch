@@ -7,7 +7,7 @@ import shutil
 import pickle
 from .compiler import SearchCompiler
 from .solver import CMA_Solver
-from . import logging, checkpoint, utils, gatesets, heuristics
+from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 
 PROJECT_STATUS_PROGRESS = 1
 PROJECT_STATUS_COMPLETE = 2
@@ -164,7 +164,7 @@ class Project:
     def get_result(self, name):
         _, cdict = self._compilations[name]
         if not "structure" in cdict or not "vector" in cdict:
-            print("This compilation has not been completed.  Please run the project to complete the compilation.")
+            print("this compilation has not been completed.  please run the project to complete the compilation.")
             return None, None
 
         return cdict["structure"], cdict["vector"]
@@ -204,4 +204,15 @@ class Project:
                 mins = diff
 
         print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0/count, mins*100.0))
+
+
+    def assemble(self, name, language_dict=assembler.qiskit, write_location=None):
+        _, cdict = self._compilations[name]
+        if not "structure" in cdict or not "vector" in cdict:
+            print("this compilation has not been completed.  please run the project to complete the compilation.")
+            return None, None
+
+        out = assembler.assemble(cdict["structure"], cdict["vector"], language_dict, write_location)
+        if write_location != None:
+            print(out)
 
