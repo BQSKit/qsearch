@@ -3,7 +3,7 @@ from .circuits import *
 def assemble(circuit, v, language_dict, write_location=None):
     il = circuit.assemble(v)
     if write_location == None:
-        out == "qc = QuantumCircuit({})\n\n".format(circuit._dits)
+        out = "qc = QuantumCircuit({})\n\n".format(circuit._dits)
     else:
         out = open(write_location, "w")
         out.write("qc = QuantumCircuit({})\n\n".format(circuit._dits))
@@ -18,7 +18,7 @@ def assemble(circuit, v, language_dict, write_location=None):
         if write_location == None:
             out += stepstr
         else:
-            out.write("stepstr")
+            out.write(stepstr)
 
     if write_location == None:
         return out

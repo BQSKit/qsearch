@@ -213,6 +213,6 @@ class Project:
             return None, None
 
         out = assembler.assemble(cdict["structure"], cdict["vector"], language_dict, write_location)
-        if write_location != None:
+        if write_location == None:
             print(out)
 

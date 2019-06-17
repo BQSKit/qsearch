@@ -78,11 +78,11 @@ class SingleQubitStep(QuantumStep):
     def assemble(self, v, i=0):
         # late use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
-        out.append(("Z", (i), (v[0])))
-        out.append(("X", (i), (np.pi/2)))
-        out.append(("Z", (i), (v[1] + np.pi)))
-        out.append(("X", (i), (np.pi/2)))
-        out.append(("Z", (i), (v[1] + np.pi)))
+        out.append(("Z", (i,), (v[0],)))
+        out.append(("X", (i,), (np.pi/2,)))
+        out.append(("Z", (i,), (v[1] + np.pi,)))
+        out.append(("X", (i,), (np.pi/2,)))
+        out.append(("Z", (i,), (v[1] + np.pi,)))
         return out
 
     def _draw_assemble(self, i=0):
@@ -101,7 +101,7 @@ class SingleQutritStep(QuantumStep):
         return utils.qt_arb_rot(*v)
 
     def assemble(self, v, i=0):
-        return [("U3", (i), tuple(v))]
+        return [("U3", (i,), tuple(v))]
     
     def __repr__(self):
         return "SingleQutritStep()"
@@ -118,9 +118,9 @@ class UStep(QuantumStep):
 
     def assemble(self, v, i=0):
         if self.name is None:
-            return [("UNKNOWN", (i), ())]
+            return [("UNKNOWN", (i,), ())]
         else:
-            return [(self.name, (i), ())]
+            return [(self.name, (i,), ())]
 
     def __repr__(self):
         if self.name is None:
