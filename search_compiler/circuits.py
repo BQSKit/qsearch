@@ -5,7 +5,7 @@ from . import utils, graphics
 class QuantumStep:
     def __init__(self):
         raise NotImplementedError("Subclasses of QuantumStep should declare their own initializers.")
-        # NOTE: QuantumStep initializers must set self._num_inputs, self._dits
+        # NOTE: QuantumStep initializers must set self.num_inputs, self.dits
     
     def matrix(self, v):
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the matrix(v) method.")
@@ -18,7 +18,7 @@ class QuantumStep:
 
     def draw(self):
         gates = self._draw_assemble()
-        labels = ["q{}".format(i) for i in range(0, self._dits)]
+        labels = ["q{}".format(i) for i in range(0, self.dits)]
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
 
     def _draw_assemble(self, i=0):
@@ -39,9 +39,9 @@ class QuantumStep:
 
 class IdentityStep(QuantumStep):
     def __init__(self, n=2, dits=1):
-        self._num_inputs=0
+        self.num_inputs=0
         self._I = np.matrix(np.eye(n), dtype='complex128')
-        self._dits = dits
+        self.dits = dits
         self._n = n
 
     def matrix(self, v):
@@ -55,10 +55,10 @@ class IdentityStep(QuantumStep):
     
 
 
-class SingleQubitStep(QuantumStep):
+class ZXZXZQubitStep(QuantumStep):
     def __init__(self):
-        self._num_inputs = 3
-        self._dits = 1
+        self.num_inputs = 3
+        self.dits = 1
 
         self._x90 = utils.rot_x(np.pi/2)
         self._rot_z = utils.rot_z(0)
@@ -76,7 +76,7 @@ class SingleQubitStep(QuantumStep):
         return np.dot(self._out, self._rot_z)
 
     def assemble(self, v, i=0):
-        # late use IBM's parameterization and convert to ZXZXZ in post processing
+        # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
         out.append(("Z", (i,), (v[0],)))
         out.append(("X", (i,), (np.pi/2,)))
@@ -89,13 +89,40 @@ class SingleQubitStep(QuantumStep):
         return [("U", "q{}".format(i))] 
     
     def __repr__(self):
+        return "ZXZXZQubitStep()"
+
+class QiskitU3QubitStep(QuantumStep):
+    def __init__(self):
+        self.num_inputs = 3
+        self.dits = 1
+
+    def matrix(self, v):
+        ct = np.cos(v[0] * np.pi)
+        st = np.sin(v[0] * np.pi)
+        cp = np.cos(v[1] * np.pi * 2)
+        sp = np.sin(v[1] * np.pi * 2)
+        cl = np.cos(v[2] * np.pi * 2)
+        sl = np.sin(v[2] * np.pi * 2)
+        return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+
+    def assemble(self, v, i=0):
+        return [("qiskit-u3", (i,), (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2))]
+
+    def _draw_assemble(self, i=0):
+        return [("U", "q{}".format(i))]
+
+    def __repr__(self):
+        return "QiskitU3QubitStep()"
+
+class SingleQubitStep(QiskitU3QubitStep):
+    def __repr__(self):
         return "SingleQubitStep()"
 
 
 class SingleQutritStep(QuantumStep):
     def __init__(self):
-        self._num_inputs = 8
-        self._dits = 1
+        self.num_inputs = 8
+        self.dits = 1
 
     def matrix(self, v):
         return utils.qt_arb_rot(*v)
@@ -109,9 +136,9 @@ class SingleQutritStep(QuantumStep):
 class UStep(QuantumStep):
     def __init__(self, U, name=None, dits=1):
         self.name = name
-        self._num_inputs = 0
+        self.num_inputs = 0
         self._U = U
-        self._dits = dits
+        self.dits = dits
 
     def matrix(self, v):
         return self._U
@@ -125,23 +152,23 @@ class UStep(QuantumStep):
     def __repr__(self):
         if self.name is None:
             return "UStep({})".format(repr(self._U))
-        elif self._dits == 1:
+        elif self.dits == 1:
             return "UStep({}, name={})".format(repr(self._U), repr(self.name))
         else:
-            return "UStep({}, name={}, dits={})".format(repr(self._U), repr(self.name), repr(self._dits))
+            return "UStep({}, name={}, dits={})".format(repr(self._U), repr(self.name), repr(self.dits))
 
 class CUStep(QuantumStep):
     def __init__(self, U, name=None, flipped=False):
         self.name = name
         self.flipped = flipped
-        self._num_inputs = 0
+        self.num_inputs = 0
         self._U = U
         n = np.shape(U)[0]
         I = np.matrix(np.eye(n))
         top = np.pad(self._U if flipped else I, [(0,n),(0,n)], 'constant')
         bot = np.pad(I if flipped else self._U, [(n,0),(n,0)], 'constant')
         self._CU = np.matrix(top + bot)
-        self._dits = 2
+        self.dits = 2
 
     def matrix(self, v):
         return self._CU
@@ -160,8 +187,8 @@ class CUStep(QuantumStep):
 class InvertStep(QuantumStep):
     def __init__(self, step):
         self._step = step
-        self._num_inputs = step._num_inputs
-        self._dits = step._dits
+        self.num_inputs = step._num_inputs
+        self.dits = step._dits
 
     def matrix(self, v):
         return self._step.matrix(v).H
@@ -186,8 +213,8 @@ class CSUMStep(QuantumStep):
                        ], dtype='complex128')
     
     def __init__(self):
-        self._num_inputs = 0
-        self._dits = 2
+        self.num_inputs = 0
+        self.dits = 2
 
     def matrix(self, v):
         return CSUMStep._csum
@@ -211,8 +238,8 @@ class CPIStep(QuantumStep):
                      ], dtype='complex128')
     
     def __init__(self):
-        self._num_inputs = 0
-        self._dits = 2
+        self.num_inputs = 0
+        self.dits = 2
 
     def matrix(self, v):
         return CPIStep._cpi
@@ -225,7 +252,7 @@ class CPIStep(QuantumStep):
 
 class CPIPhaseStep(QuantumStep):
     def __init__(self):
-        self._num_inputs = 0
+        self.num_inputs = 0
         self._cpi = np.matrix([[1,0,0, 0,0,0, 0,0,0],
                                [0,1,0, 0,0,0, 0,0,0],
                                [0,0,1, 0,0,0, 0,0,0],
@@ -238,7 +265,7 @@ class CPIPhaseStep(QuantumStep):
                               ], dtype='complex128')
         diag_mod = np.matrix(np.diag([1]*4 + [np.exp(2j * np.random.random()*np.pi) for _ in range(0,5)]))
         self._cpi = np.matmul(self._cpi, diag_mod)
-        self._dits = 2
+        self.dits = 2
 
     def matrix(self, v):
         return self._cpi
@@ -255,8 +282,8 @@ class CNOTStep(QuantumStep):
                        [0,0,0,1],
                        [0,0,1,0]], dtype='complex128')
     def __init__(self):
-        self._num_inputs = 0
-        self._dits = 2
+        self.num_inputs = 0
+        self.dits = 2
 
     def matrix(self, v):
         return CNOTStep._cnot
@@ -272,8 +299,8 @@ class CNOTStep(QuantumStep):
 
 class NonadjacentCNOTStep(QuantumStep):
     def __init__(self, n, control, target):
-        self._dits = n
-        self._num_inputs = 0
+        self.dits = n
+        self.num_inputs = 0
         self.control = control
         self.target = target
         self._U = gates.arbitrary_cnot(n, control, target)
@@ -288,7 +315,7 @@ class NonadjacentCNOTStep(QuantumStep):
         return [("CNOT", "q{}".format(target), "q{}".format(control))]
 
     def __repr__(self):
-        return "NonadjacentCNOTStep({}, {}, {})".format(self._dits, self.control, self.target)
+        return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 class CRZStep(QuantumStep):
     _cnr = np.matrix([[1,0,0,0],
@@ -297,8 +324,8 @@ class CRZStep(QuantumStep):
                        [0,0,0.5-0.5j,0.5+0.5j]])
     _I = np.matrix(np.eye(2))
     def __init__(self):
-        self._num_inputs = 1
-        self._dits = 2
+        self.num_inputs = 1
+        self.dits = 2
 
     def matrix(self, v):
         U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, utils.rot_z(v[0]))) # TODO fix this line
@@ -320,10 +347,10 @@ class RemapStep(QuantumStep):
         self._step = step
         self._source = source
         self._target = target
-        self._dits = dits
+        self.dits = dits
         self._d = d
         self._name = name
-        self._num_inputs = step._num_inputs
+        self.num_inputs = step._num_inputs
         def g(a,b):
             def f(i,j):
                 i_v = []
@@ -345,7 +372,7 @@ class RemapStep(QuantumStep):
 
 
     def matrix(self, v):
-       return utils.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self._dits-2))), self._postfix)
+       return utils.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self.dits-2))), self._postfix)
 
     def assemble(self, v, i=0):
         raise NotImplementedError("This whole class should probably be redone, and this can be rewritten then")
@@ -355,7 +382,7 @@ class RemapStep(QuantumStep):
             return "{} q{} q{}".format(self._name, self._source, self._target)
 
     def __repr__(self):
-        return "RemapStep({}, {}, {}, {}, name={}, d={})".format(self._step, self._dits, self._source, self._target, self._name, self._d)
+        return "RemapStep({}, {}, {}, {}, name={}, d={})".format(self._step, self.dits, self._source, self._target, self._name, self._d)
 
 
 
@@ -365,8 +392,8 @@ class CNOTRootStep(QuantumStep):
                        [0,0,0.5+0.5j,0.5-0.5j],
                        [0,0,0.5-0.5j,0.5+0.5j]])
     def __init__(self):
-        self._num_inputs = 0
-        self._dits = 2
+        self.num_inputs = 0
+        self.dits = 2
 
     def matrix(self, v):
         return CNOTRootStep._cnr
@@ -379,17 +406,17 @@ class CNOTRootStep(QuantumStep):
 
 class KroneckerStep(QuantumStep):
     def __init__(self, *substeps):
-        self._num_inputs = sum([step._num_inputs for step in substeps])
+        self.num_inputs = sum([step._num_inputs for step in substeps])
         self._substeps = substeps
-        self._dits = sum([step._dits for step in substeps])
+        self.dits = sum([step._dits for step in substeps])
 
     def matrix(self, v):
         matrices = []
         index = 0
         for step in self._substeps:
-            U = step.matrix(v[index:index+step._num_inputs])
+            U = step.matrix(v[index:index+step.num_inputs])
             matrices.append(U)
-            index += step._num_inputs
+            index += step.num_inputs
         U = matrices[0]
         for matrix in matrices[1:]:
             U = np.kron(U, matrix)
@@ -399,9 +426,9 @@ class KroneckerStep(QuantumStep):
         out = []
         index = 0
         for step in self._substeps:
-            out += step.assemble(v[index:index+step._num_inputs], i)
-            index += step._num_inputs
-            i += step._dits
+            out += step.assemble(v[index:index+step.num_inputs], i)
+            index += step.num_inputs
+            i += step.dits
         return out
 
     def appending(self, step):
@@ -411,7 +438,7 @@ class KroneckerStep(QuantumStep):
         endlist = []
         for step in self._substeps:
             endlist += step._draw_assemble(i)
-            i += step._dits
+            i += step.dits
         return endlist
 
     def __deepcopy__(self, memo):
@@ -422,17 +449,17 @@ class KroneckerStep(QuantumStep):
 
 class ProductStep(QuantumStep):
     def __init__(self, *substeps):
-        self._num_inputs = sum([step._num_inputs for step in substeps])
+        self.num_inputs = sum([step._num_inputs for step in substeps])
         self._substeps = substeps
-        self._dits = 0 if len(substeps) == 0 else substeps[0]._dits
+        self.dits = 0 if len(substeps) == 0 else substeps[0]._dits
 
     def matrix(self, v):
         matrices = []
         index = 0
         for step in self._substeps:
-            U = step.matrix(v[index:index+step._num_inputs])
+            U = step.matrix(v[index:index+step.num_inputs])
             matrices.append(U)
-            index += step._num_inputs
+            index += step.num_inputs
         U = matrices[0]
         for matrix in matrices[1:]:
             U = np.matmul(U, matrix)
@@ -442,8 +469,8 @@ class ProductStep(QuantumStep):
         out = []
         index = 0
         for step in self._substeps:
-            out += step.assemble(v[index:index+step._num_inputs], i)
-            index += step._num_inputs
+            out += step.assemble(v[index:index+step.num_inputs], i)
+            index += step.num_inputs
         return out
 
     def _draw_assemble(self, i=0):
