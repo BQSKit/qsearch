@@ -67,22 +67,22 @@ class ZXZXZQubitStep(QuantumStep):
         # need two buffers due to a bug in some implementations of numpy
         
     def matrix(self, v):
-        utils.re_rot_z(v[0], self._rot_z)
+        utils.re_rot_z(v[0]*np.pi*2, self._rot_z)
         self._out = np.dot(self._rot_z, self._x90, out=self._out)
-        utils.re_rot_z(v[1] + np.pi, self._rot_z)
+        utils.re_rot_z(v[1]*np.pi*2 + np.pi, self._rot_z)
         self._buffer = np.dot(self._out, self._rot_z, out=self._buffer)
         self._out = np.dot(self._buffer, self._x90, out=self._out)
-        utils.re_rot_z(v[2]-np.pi, self._rot_z)
+        utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
         return np.dot(self._out, self._rot_z)
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
-        out.append(("Z", (i,), (v[0],)))
+        out.append(("Z", (i,), (v[0]*np.pi*2,)))
         out.append(("X", (i,), (np.pi/2,)))
-        out.append(("Z", (i,), (v[1] + np.pi,)))
+        out.append(("Z", (i,), (v[1]*np.pi*2 + np.pi,)))
         out.append(("X", (i,), (np.pi/2,)))
-        out.append(("Z", (i,), (v[1] + np.pi,)))
+        out.append(("Z", (i,), (v[1]*np.pi*2 + np.pi,)))
         return out
 
     def _draw_assemble(self, i=0):
