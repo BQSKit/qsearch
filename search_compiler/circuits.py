@@ -114,7 +114,7 @@ class QiskitU3QubitStep(QuantumStep):
     def __repr__(self):
         return "QiskitU3QubitStep()"
 
-class SingleQubitStep(QiskitU3QubitStep):
+class SingleQubitStep(ZXZXZQubitStep):
     def __repr__(self):
         return "SingleQubitStep()"
 

@@ -41,6 +41,10 @@ class QubitCNOTLinear(Gateset):
     def search_layers(self, n, d):
         return linear_topology(self.cnot, self.single_step, n, d)
 
+class QiskitU3Linear(QubitCNOTLinear):
+    def __init__(self):
+        self.single_step = QiskitU3QubitStep()
+        self.cnot = CNOTStep()
 
 class QubitCRZLinear(Gateset):
     def __init__(self):

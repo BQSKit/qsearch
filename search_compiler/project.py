@@ -84,7 +84,7 @@ class Project:
         self._compiler_config = dict()
         self._save()
 
-    def run(self):
+    def run(self, target=None):
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.matrix_distance_squared)
@@ -124,9 +124,6 @@ class Project:
             checkpoint.delete(statefile)
             logging.logprint("Deleted checkpoint file.")
             self.status()
-
-
-
 
     def complete(self):
         for name in self._compilations:
