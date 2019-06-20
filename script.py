@@ -5,9 +5,9 @@ from search_compiler import sample_gates as gates
 
 from qasm_parser import parse_qasm
 
-project = sc.Project("solve-miro")
-#project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
-#project.add_compilation("qft3", gates.qft(8), handle_existing="ignore")
+project = sc.Project("dothetest")
+project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
+project.add_compilation("qft3", gates.qft(8), handle_existing="ignore")
 
 #project.add_compilation("fredkin", gates.fredkin, handle_existing="ignore")
 #project.add_compilation("toffoli", gates.toffoli, handle_existing="ignore")
@@ -71,14 +71,14 @@ circuit = circuit.appending(KroneckerStep(SWAP,I))
 
 HHL = circuit.matrix([])
 
-project.add_compilation("miro", mirogate, handle_existing="ignore")
+#project.add_compilation("miro", mirogate, handle_existing="ignore")
 #project.add_compilation("hhl", HHL, handle_existing="ignore")
 
 #project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
 
 project.configure_compiler("solver", sc.solver.COBYLA_Solver(), force=False)
-project.configure_compiler("gateset", sc.gatesets.QubitCNOTRing(), force=True)
-project.configure_compiler("beams", -1)
+#project.configure_compiler("gateset", sc.gatesets.QubitCNOTRing(), force=True)
+#project.configure_compiler("beams", -1)
 
 project.run()
 

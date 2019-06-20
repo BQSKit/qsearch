@@ -187,8 +187,8 @@ class CUStep(QuantumStep):
 class InvertStep(QuantumStep):
     def __init__(self, step):
         self._step = step
-        self.num_inputs = step._num_inputs
-        self.dits = step._dits
+        self.num_inputs = step.num_inputs
+        self.dits = step.dits
 
     def matrix(self, v):
         return self._step.matrix(v).H
@@ -350,7 +350,7 @@ class RemapStep(QuantumStep):
         self.dits = dits
         self._d = d
         self._name = name
-        self.num_inputs = step._num_inputs
+        self.num_inputs = step.num_inputs
         def g(a,b):
             def f(i,j):
                 i_v = []
@@ -406,9 +406,9 @@ class CNOTRootStep(QuantumStep):
 
 class KroneckerStep(QuantumStep):
     def __init__(self, *substeps):
-        self.num_inputs = sum([step._num_inputs for step in substeps])
+        self.num_inputs = sum([step.num_inputs for step in substeps])
         self._substeps = substeps
-        self.dits = sum([step._dits for step in substeps])
+        self.dits = sum([step.dits for step in substeps])
 
     def matrix(self, v):
         matrices = []
@@ -449,9 +449,9 @@ class KroneckerStep(QuantumStep):
 
 class ProductStep(QuantumStep):
     def __init__(self, *substeps):
-        self.num_inputs = sum([step._num_inputs for step in substeps])
+        self.num_inputs = sum([step.num_inputs for step in substeps])
         self._substeps = substeps
-        self.dits = 0 if len(substeps) == 0 else substeps[0]._dits
+        self.dits = 0 if len(substeps) == 0 else substeps[0].dits
 
     def matrix(self, v):
         matrices = []
