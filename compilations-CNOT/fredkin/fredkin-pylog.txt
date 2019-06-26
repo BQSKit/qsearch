@@ -1,1 +1,0 @@
-2019-03-03 02:35:19.829054 > 	Circuit fredkin is of size (8, 8)

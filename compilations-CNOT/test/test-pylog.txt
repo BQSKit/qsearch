@@ -1,6 +1,0 @@
-2019-02-25 01:20:48.031301 > 	Circuit test is of size (8, 8)
-2019-02-25 01:20:48.031493 > 	There are 12 processors available to Pool.
-2019-02-25 01:20:48.031644 > 	The branching factor is 2.
-2019-02-25 01:20:48.038908 > 	Creating a pool of 2 workers
-2019-02-25 01:20:51.888098 > 	New best! 0.1339745962155683 at depth 0
-2019-02-25 01:20:51.888284 > 	Popped a node with score: 0.1339745962155683 at depth: 0
