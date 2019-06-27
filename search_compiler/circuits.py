@@ -78,11 +78,11 @@ class ZXZXZQubitStep(QuantumStep):
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
-        out.append(("gate", "Z", (i,), (v[0]*np.pi*2,)))
-        out.append(("gate", "X", (i,), (np.pi/2,)))
-        out.append(("gate", "Z", (i,), (v[1]*np.pi*2 + np.pi,)))
-        out.append(("gate", "X", (i,), (np.pi/2,)))
-        out.append(("gate", "Z", (i,), (v[1]*np.pi*2 + np.pi,)))
+        out.append(("gate", "Z", (v[0]*np.pi*2,), (i,)))
+        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "Z", (v[1]*np.pi*2 + np.pi,), (i,)))
+        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "Z", (v[1]*np.pi*2 + np.pi,), (i,)))
         return [("block", out)]
 
     def _draw_assemble(self, i=0):
@@ -106,7 +106,7 @@ class QiskitU3QubitStep(QuantumStep):
         return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
 
     def assemble(self, v, i=0):
-        return [("gate", "qiskit-u3", (i,), (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2))]
+        return [("gate", "qiskit-u3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
 
     def _draw_assemble(self, i=0):
         return [("U", "q{}".format(i))]
@@ -128,7 +128,7 @@ class SingleQutritStep(QuantumStep):
         return utils.qt_arb_rot(*v)
 
     def assemble(self, v, i=0):
-        return [("qutrit", (i,), tuple(v))]
+        return [("qutrit", tuple(v), (i,))]
     
     def __repr__(self):
         return "SingleQutritStep()"
@@ -145,9 +145,9 @@ class UStep(QuantumStep):
 
     def assemble(self, v, i=0):
         if self.name is None:
-            return [("gate", "UNKNOWN", (i,), ())]
+            return [("gate", "UNKNOWN", (), (i,))]
         else:
-            return [("gate", self.name, (i,), ())]
+            return [("gate", self.name, (), (i,))]
 
     def __repr__(self):
         if self.name is None:
@@ -222,7 +222,7 @@ class CSUMStep(QuantumStep):
         return CSUMStep._csum
 
     def assemble(self, v, i=0):
-        return [("gate", "CSUM", (i, i+1), ())]
+        return [("gate", "CSUM", (), (i, i+1))]
 
     def __repr__(self):
         return "CSUMStep()"
@@ -247,7 +247,7 @@ class CPIStep(QuantumStep):
         return CPIStep._cpi
 
     def assemble(self, v, i=0):
-        return [("gate", "CPI", (i, i+1), ())]
+        return [("gate", "CPI", (), (i, i+1))]
 
     def __repr__(self):
         return "CPIStep()"
@@ -273,7 +273,7 @@ class CPIPhaseStep(QuantumStep):
         return self._cpi
 
     def assemble(self, v, i=0):
-        return [("gate", "CPI-", (i, i+1), ())]
+        return [("gate", "CPI-", (), (i, i+1))]
 
     def __repr__(self):
         return "CPIPhaseStep()"
@@ -291,7 +291,7 @@ class CNOTStep(QuantumStep):
         return CNOTStep._cnot
 
     def assemble(self, v, i=0):
-        return [("gate", "CNOT", (i, i+1), ())]
+        return [("gate", "CNOT", (), (i, i+1))]
 
     def _draw_assemble(self, i=0):
         return [("CNOT", "q{}".format(i+1), "q{}".format(i))]
@@ -311,7 +311,7 @@ class NonadjacentCNOTStep(QuantumStep):
         return self._U
 
     def assemble(self, v, i=0):
-        return [("gate", "CNOT", (control, target), ())]
+        return [("gate", "CNOT", (), (control, target))]
 
     def _draw_assemble(self, i=0):
         return [("CNOT", "q{}".format(target), "q{}".format(control))]
@@ -403,7 +403,7 @@ class CNOTRootStep(QuantumStep):
         return CNOTRootStep._cnr
 
     def assemble(self, v, i=0):
-        return [("gate", "sqrt(CNOT)", (i, i+1), ())]
+        return [("gate", "sqrt(CNOT)", (), (i, i+1))]
 
     def __repr__(self):
         return "CNOTRootStep()"

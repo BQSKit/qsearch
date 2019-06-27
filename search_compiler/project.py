@@ -203,13 +203,13 @@ class Project:
         print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0/count, mins*100.0))
 
 
-    def assemble(self, name, language_dict=assembler.qiskit, write_location=None):
+    def assemble(self, name, language=assembler.ASSEMBLY_OPENQASM, write_location=None):
         _, cdict = self._compilations[name]
         if not "structure" in cdict or not "vector" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
             return None, None
 
-        out = assembler.assemble(cdict["structure"], cdict["vector"], language_dict, write_location)
+        out = assembler.assemble(cdict["structure"], cdict["vector"], language, write_location)
         if write_location == None:
             print(out)
 
