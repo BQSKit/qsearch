@@ -6,7 +6,7 @@ import heapq
 from .circuits import *
 
 from . import gatesets as gatesets
-from .solver import CMA_Solver
+from .solver import default_solver
 from .logging import logprint
 from . import checkpoint, utils, heuristics
 
@@ -20,7 +20,7 @@ def evaluate_step(tup, U, error_func, solver):
     return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, d=2, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=CMA_Solver(), beams=1):
+    def __init__(self, threshold=0.01, d=2, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
         self.heuristic = heuristic
