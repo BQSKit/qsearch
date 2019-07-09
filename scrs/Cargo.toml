@@ -1,0 +1,27 @@
+[package]
+name = "scrs"
+version = "0.1.0"
+authors = ["Ethan Smith <ethan@ethanhs.me>"]
+edition = "2018"
+
+[dependencies]
+num-complex = "0.2"
+ndarray = { version = "0.12.1", features = ["blas"] }
+blas-src = { version = "0.2.0", default-features = false, features = ["openblas"] }
+openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
+pyo3 = "0.7"
+numpy = "0.6.0"
+better-panic = "*"
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
+
+[lib]
+name = "search_compiler_native"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "test_srcrs"
+path = "src/main.rs"
