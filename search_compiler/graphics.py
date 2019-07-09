@@ -1,6 +1,14 @@
-import matplotlib
-import matplotlib.pyplot
+import sys
+
 import numpy as np
+
+try:
+    import matplotlib
+    import matplotlib.pyplot
+    HAVE_MATPLOTLIB = True
+except ImportError:
+    HAVE_MATPLOTLIB = False
+
 
 # This code was written by Rick Muller "Simplified Plotting Routines for Quantum Circuits"
 # https://github.com/rpmuller/PlotQCircuit/blob/master/PlotQCircuit.ipynb
@@ -14,6 +22,9 @@ def plot_quantum_circuit(gates,inits={},labels=[],plot_labels=True,**kwargs):
     
    kwargs    Can override plot_parameters
     """
+    if not HAVE_MATPLOTLIB:
+        print("ERROR: Could not find matplotlib, try running pip install quantum_synthesis[graphics]", file=sys.stderr)
+        sys.exit(1)
     plot_params = dict(scale = 1.0,fontsize = 14.0, linewidth = 1.0, 
                          control_radius = 0.05, not_radius = 0.15, 
                          swap_delta = 0.08, label_buffer = 0.0)

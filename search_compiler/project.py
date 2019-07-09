@@ -6,7 +6,7 @@ import os
 import shutil
 import pickle
 from .compiler import SearchCompiler
-from .solver import CMA_Solver
+from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 
 PROJECT_STATUS_PROGRESS = 1
@@ -98,7 +98,7 @@ class Project:
                 heuristic = heuristics.greedy
 
         heuristic = self._config("heuristic", heuristic)
-        solver = self._config("solver", CMA_Solver())
+        solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
         compiler = SearchCompiler(threshold=threshold, d=d, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
