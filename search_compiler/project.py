@@ -6,7 +6,6 @@ from warnings import warn
 import os
 import shutil
 import pickle
-import multiprocessing
 from .compiler import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
@@ -102,7 +101,7 @@ class Project:
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
-        blas_threads = self._config("blas_threads", multiprocessing.cpu_count())
+        blas_threads = self._config("blas_threads", None)
         compiler = SearchCompiler(threshold=threshold, d=d, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
