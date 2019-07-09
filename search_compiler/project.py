@@ -16,20 +16,22 @@ PROJECT_STATUS_DEBUGING = 4
 
 class Project:
     def __init__(self, path, debug=False):
-        if not ".scp" in path:
-            path = path + ".scp"
-        self.path = path
+        self.folder = path
+        self.projfile = os.path.join(path, "qcproject")
         try:
-            with open(self.path, "rb") as projfile:
+            if not os.path.exists(self.projfile):
+                os.mkdir(self.projfile)
+
+            with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
 
     def _save(self):
-        with open(self.path, "wb") as projfile:
+        with open(self.projfile, "wb") as projfile:
             pickle.dump((self._compilations, self._compiler_config), projfile)
-    
+
     def _config(self, keyword, default):
         if keyword in self._compiler_config:
             return self._compiler_config[keyword]
@@ -37,7 +39,8 @@ class Project:
             return default
 
     def _checkpoint_path(self, name):
-        return os.path.splitext(self.path)[0] + "-{}.checkpoint".format(name)
+        return os.path.join(self.folder, "{}.checkpoint".format(name))
+        return os.path.splitext(self.projfile)[0] + "-{}.checkpoint".format(name)
 
     def add_compilation(self, name, U, debug=False, handle_existing=None):
         if name in self._compilations:
@@ -49,7 +52,7 @@ class Project:
             elif s == PROJECT_STATUS_PROGRESS or s == PROJECT_STATUS_COMPLETE:
                 warn("A compilation with name {} already exists.  To change it, remove it and then add it again.".format(name), RuntimeWarning, stacklevel=2)
                 return
-
+        
         self._compilations[name] = (U, {"debug" : debug})
         self._save()
 
@@ -110,7 +113,7 @@ class Project:
             if self.compilation_status(name) == PROJECT_STATUS_COMPLETE:
                 continue
 
-            logging.output_file = os.path.splitext(self.path)[0] + "-{}".format(name)
+            logging.output_file = os.path.splitext(self.projfile)[0] + "-{}".format(name)
             logging.logprint("Starting compilation of {}".format(name))
             result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))
