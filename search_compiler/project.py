@@ -1,3 +1,4 @@
+from threadpoolctl import threadpool_limits
 import numpy as np
 from numpy import matrix, array
 from .circuits import *
@@ -5,6 +6,7 @@ from warnings import warn
 import os
 import shutil
 import pickle
+import multiprocessing
 from .compiler import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
@@ -100,6 +102,7 @@ class Project:
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
+        blas_threads = self._config("blas_threads", multiprocessing.cpu_count())
         compiler = SearchCompiler(threshold=threshold, d=d, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
@@ -112,7 +115,8 @@ class Project:
 
             logging.output_file = os.path.splitext(self.path)[0] + "-{}".format(name)
             logging.logprint("Starting compilation of {}".format(name))
-            result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
+            with threadpool_limits(limits=blas_threads, user_api='blas'):
+                result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure

@@ -22,7 +22,7 @@ setup(
     keywords='quantum compilers synthesis computing',
     packages=['search_compiler'],
     python_requires='>=3.6, <4',
-    install_requires=['numpy'],
+    install_requires=['numpy', 'threadpoolctl'],
     extras_require={
         'cma': ['cma'],
         'cobyla': ['scipy'],
