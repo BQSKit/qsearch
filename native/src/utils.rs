@@ -39,6 +39,15 @@ pub fn re_rot_z(u: &mut ComplexUnitary, theta: f64) {
     u[[1, 1]] = (posi * half_theta).exp();
 }
 
+fn matrix_distance_squared(a: &ComplexUnitary, b: &ComplexUnitary) -> f64 {
+    // 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
+    1f64 - a.dot(b).sum().norm() / a.shape()[0] as f64
+}
+
+pub fn matrix_distance(a: &ComplexUnitary, b: &ComplexUnitary) -> f64 {
+    matrix_distance_squared(a, b).sqrt()
+}
+
 // ndarray doesn't have a Kronecker product implementation, so we implement it ourselves.
 pub fn kron(a: &ComplexUnitary, b: &ComplexUnitary) -> ComplexUnitary {
     let dima = a.shape()[0];

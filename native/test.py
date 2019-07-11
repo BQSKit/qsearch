@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
 
 import numpy as np
 from search_compiler_native import *
@@ -40,12 +38,4 @@ print(timeit(lambda: py[0].matrix(np.repeat(np.pi, 100)), number=10000))
 native = native_linear_topo(GateCNOT(), GateSingleQubit(1), qubits, 1)
 print("Native .matrix")
 print(timeit(lambda: native[0].matrix(np.array([np.pi]*100)), number=10000))
-
-
-
-
-# In[ ]:
-
-
-
 
