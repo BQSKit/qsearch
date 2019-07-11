@@ -176,34 +176,9 @@ class Project:
             return
 
         final = cdict["result"]
+        maxs, total, mins = sc.utils.random_vector_evaluation(original, final, count)
 
-        dist = utils.matrix_distance_squared(original, final)
-        print("Distance squared: {}".format(dist))
-        
-        total = 0.0
-        mins = 10.0
-        maxs = -10.0
-        n = np.shape(original)[0]
-
-        for _ in range(0, count):
-            v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
-            v = v / sum(np.multiply(v, np.conj(v)))
-
-            fv1 = np.ravel(np.dot(original, v))
-            fv2 = np.ravel(np.dot(final, v))
-
-            p1 = np.real(np.multiply(fv1, np.conj(fv1)))
-            p2 = np.real(np.multiply(fv2, np.conj(fv2)))
-
-            diff = 1-sum(np.abs(p1-p2))
-
-            total += diff
-            if diff > maxs:
-                maxs = diff
-            if diff < mins:
-                mins = diff
-
-        print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0/count, mins*100.0))
+        print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0, mins*100.0))
 
 
     def assemble(self, name, language=assembler.ASSEMBLY_OPENQASM, write_location=None):
