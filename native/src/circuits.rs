@@ -26,7 +26,7 @@ impl Clone for Gate {
     }
 }
 
-pub trait QuantumGate: QuantumGateClone {
+pub trait QuantumGate: QuantumGateClone + Send + Sync {
     fn matrix(&self, v: &[f64]) -> ComplexUnitary;
     fn assemble(&self, v: &[f64]);
     fn inputs(&self) -> usize;

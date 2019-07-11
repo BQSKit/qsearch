@@ -6,8 +6,10 @@ use num_complex::Complex64;
 pub mod utils;
 pub mod circuits;
 pub mod gatesets;
+pub mod solver;
+pub mod compiler;
 
-use utils::{rot_x, rot_y, rot_z, re_rot_z, kron};
+use utils::{rot_x, rot_y, rot_z, re_rot_z};
 use circuits::{GateCNOT, GateIdentity, GateSingleQubit, GateRX, GateRY, GateRZ, GateKronecker, GateProduct, QuantumGate};
 
 
