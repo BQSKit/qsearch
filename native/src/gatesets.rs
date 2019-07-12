@@ -1,25 +1,37 @@
-use crate::circuits::{GateKronecker, GateProduct, QuantumGate, GateIdentity, Gate, GateSingleQubit, GateCNOT};
+use crate::circuits::{
+    Gate, GateCNOT, GateIdentity, GateKronecker, GateProduct, GateSingleQubit, QuantumGate,
+};
 
 use std::iter::repeat;
-use core::f64::consts::PI;
 
-fn linear_toplogy(double_step: &Gate, single_step: &Gate, dits: u8, d: u8) -> Vec<Gate> {
-    let id: Box<dyn QuantumGate> = Box::new(GateIdentity::new(d as usize, d));
-    (0..(dits-1)).map(|i| {
-        let mut id_double: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
-        id_double[i as usize] = double_step.clone();
-        let mut id_single: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
-        id_single[i as usize] = single_step.clone();
-        id_single.insert((i + 1) as usize, single_step.clone());
-        let double = GateKronecker::new(id_double);
-        let single = GateKronecker::new(id_single);
-        let b: Gate = Box::new(GateProduct::new(vec![Box::new(double), Box::new(single)]));
-        b
-    }).collect()
+use std::rc::Rc;
+
+fn linear_toplogy(
+    double_step: &Gate,
+    single_step: &Gate,
+    id: &Gate,
+    dits: u8,
+    _d: u8,
+) -> Vec<Gate> {
+    (0..(dits - 1))
+        .map(move |i| {
+            let mut id_double: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
+            id_double[i as usize] = double_step.clone();
+            let mut id_single: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
+            id_single[i as usize] = single_step.clone();
+            id_single.insert((i + 1) as usize, single_step.clone());
+            let double = GateKronecker::new(id_double);
+            let single = GateKronecker::new(id_single);
+            let b: Gate = Rc::new(GateProduct::new(vec![Rc::new(double), Rc::new(single)]));
+            b
+        })
+        .collect()
 }
 
 fn fill_row(step: &Gate, dits: u8) -> Gate {
-    Box::new(GateKronecker::new(repeat(step.clone()).take(dits as usize).collect()))
+    Rc::new(GateKronecker::new(
+        repeat(step.clone()).take(dits as usize).collect(),
+    ))
 }
 
 pub trait GateSet {
@@ -39,7 +51,7 @@ pub struct GateSetLinearCNOT(Gate, Gate);
 
 impl GateSetLinearCNOT {
     pub fn new() -> Self {
-        GateSetLinearCNOT(Box::new(GateSingleQubit::new(1)), Box::new(GateCNOT::new()))
+        GateSetLinearCNOT(Rc::new(GateSingleQubit::new(1)), Rc::new(GateCNOT::new()))
     }
 }
 
@@ -49,7 +61,7 @@ impl GateSet for GateSetLinearCNOT {
     }
 
     fn search_layers(&self, dits: u8, d: u8) -> Vec<Gate> {
-        linear_toplogy(&self.1, &self.0, dits, d)
+        let id: Rc<dyn QuantumGate> = Rc::new(GateIdentity::new(d as usize, d));
+        linear_toplogy(&self.1, &self.0, &id, dits, d)
     }
 }
-

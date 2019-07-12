@@ -1,10 +1,12 @@
 use ndarray::arr2;
 use num_complex::Complex64;
 
-use crate::utils::{rot_x, rot_y, rot_z, kron};
+use crate::utils::{kron, rot_x, rot_y, rot_z};
 use crate::ComplexUnitary;
 
-pub type Gate = Box<dyn QuantumGate>;
+use std::rc::Rc;
+
+pub type Gate = Rc<dyn QuantumGate>;
 
 // note: based on https://stackoverflow.com/a/50020961/9688107
 pub trait QuantumGateClone {
@@ -13,25 +15,18 @@ pub trait QuantumGateClone {
 
 impl<T> QuantumGateClone for T
 where
-    T: 'static + QuantumGate + Clone
+    T: 'static + QuantumGate + Clone,
 {
     fn clone_box(&self) -> Gate {
-        Box::new(self.clone())
+        Rc::new(self.clone())
     }
 }
 
-impl Clone for Gate {
-    fn clone(&self) -> Gate {
-        self.clone_box()
-    }
-}
-
-pub trait QuantumGate: QuantumGateClone + Send + Sync {
+pub trait QuantumGate: QuantumGateClone {
     fn matrix(&self, v: &[f64]) -> ComplexUnitary;
     fn assemble(&self, v: &[f64]);
     fn inputs(&self) -> usize;
 }
-
 
 #[derive(Clone)]
 struct QuantumGateData {
@@ -39,7 +34,6 @@ struct QuantumGateData {
     pub dits: u8,
     pub num_inputs: usize,
 }
-
 
 #[derive(Clone)]
 pub struct GateIdentity {
@@ -55,7 +49,7 @@ impl GateIdentity {
                 d: n as u8,
                 dits: dits,
                 num_inputs: 0,
-            }
+            },
         }
     }
 }
@@ -65,15 +59,12 @@ impl QuantumGate for GateIdentity {
         self.mat.clone()
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
     }
 }
-
 
 #[derive(Clone)]
 pub struct GateRZ {
@@ -87,7 +78,7 @@ impl GateRZ {
                 d: d,
                 dits: 1,
                 num_inputs: 1,
-            }
+            },
         }
     }
 }
@@ -97,9 +88,7 @@ impl QuantumGate for GateRZ {
         rot_z(v[0])
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -118,7 +107,7 @@ impl GateRX {
                 d: d,
                 dits: 1,
                 num_inputs: 1,
-            }
+            },
         }
     }
 }
@@ -128,9 +117,7 @@ impl QuantumGate for GateRX {
         rot_x(v[0])
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -149,20 +136,17 @@ impl GateRY {
                 d: d,
                 dits: 1,
                 num_inputs: 1,
-            }
+            },
         }
     }
 }
-
 
 impl QuantumGate for GateRY {
     fn matrix(&self, v: &[f64]) -> ComplexUnitary {
         rot_y(v[0])
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -196,14 +180,13 @@ impl QuantumGate for GateSingleQubit {
         let i_lambda = Complex64::new(0.0, lambda);
         let cos = (theta / 2.0).cos();
         let sin = (theta / 2.0).sin();
-        arr2(&[[Complex64::new(cos, 0.0), -(i_lambda.exp()) * sin],
-              [i_phi.exp() * sin, (i_phi + i_lambda).exp() * cos],
-              ])
+        arr2(&[
+            [Complex64::new(cos, 0.0), -(i_lambda.exp()) * sin],
+            [i_phi.exp() * sin, (i_phi + i_lambda).exp() * cos],
+        ])
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -213,7 +196,7 @@ impl QuantumGate for GateSingleQubit {
 #[derive(Clone)]
 pub struct GateCNOT {
     data: QuantumGateData,
-    mat: ComplexUnitary
+    mat: ComplexUnitary,
 }
 
 impl GateCNOT {
@@ -226,10 +209,12 @@ impl GateCNOT {
                 dits: 1,
                 num_inputs: 2,
             },
-            mat: arr2(&[[one,nil,nil,nil],
-                        [nil,one,nil,nil],
-                        [nil,nil,nil,one],
-                        [nil,nil,one,nil]])
+            mat: arr2(&[
+                [one, nil, nil, nil],
+                [nil, one, nil, nil],
+                [nil, nil, nil, one],
+                [nil, nil, one, nil],
+            ]),
         }
     }
 }
@@ -239,9 +224,7 @@ impl QuantumGate for GateCNOT {
         self.mat.clone()
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -280,9 +263,7 @@ impl QuantumGate for GateKronecker {
         u
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
@@ -321,9 +302,7 @@ impl QuantumGate for GateProduct {
         u
     }
 
-    fn assemble(&self, _v: &[f64]) {
-        
-    }
+    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize

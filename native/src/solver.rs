@@ -1,6 +1,6 @@
 use crate::circuits::Gate;
-use crate::ComplexUnitary;
 use crate::utils::matrix_distance;
+use crate::ComplexUnitary;
 
 use cmaes::*;
 
@@ -23,10 +23,10 @@ impl Solver for CMASolver {
     fn solve_for_unitary(&self, circuit: Gate, u: ComplexUnitary) -> (ComplexUnitary, Vec<f64>) {
         let fitness = CMAFitness(u, circuit.clone());
         let options = CMAESOptions::default(circuit.inputs())
-                                    .threads(1)
-                                    .initial_step_size(0.25f64);
-        let (res, _) = cmaes_loop(&fitness, options).unwrap();
+            .threads(1)
+            .initial_step_size(0.25f64)
+            .max_evaluations(15000);
+        let (res, _) = cmaes_loop_single(&fitness, options).unwrap();
         (circuit.matrix(&res), res)
-
     }
 }
