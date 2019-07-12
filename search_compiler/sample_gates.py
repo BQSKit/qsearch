@@ -52,6 +52,9 @@ def qft(n):
     Q = np.matrix(np.fromfunction(lambda x,y: root**(x*y), (n,n))) / np.sqrt(n)
     return Q
 
+def identity(n): # not super necessary but saves a little code length
+    return np.matrix(np.eye(n), dtype='complex128')
+
 
 # generates an arbitrary cnot gate by classical logic and brute force
 # it may be a good idea to write a better version of this at some point, but this should be good enough for use with the search compiler on 2-4 qubits.

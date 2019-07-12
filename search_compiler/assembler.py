@@ -75,8 +75,9 @@ openqasmdict = {
         "Y" : "U({}, 0, 0) q[{}];\n",
         "Z" : "U(0, 0, {}) q[{}];\n",
         "qiskit-u3" : "U({}, {}, {}) q[{}];\n",
-        "CNOT" : "CX q[{}] q[{}];\n"
+        "CNOT" : "CX q[{}], q[{}];\n"
 }
+
 
 
 ASSEMBLY_QISKIT = DictionaryAssembly(qiskitdict)

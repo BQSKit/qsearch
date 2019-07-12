@@ -92,3 +92,36 @@ def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
     evaluated_unitary = np.matrix([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
 
     return evaluated_unitary
+
+# based on old solovay kitaev code
+def random_near_identity(n, alpha):
+    # generate a random hermitian matrix
+    H = np.matrix((np.random.rand(n,n) - 0.5) +1j * (np.random.rand(n,n) - 0.5))
+    H = H + H.H
+    # generate a unitary matrix from the hermitian matrix that is not far from the identity
+    return np.matrix(sp.linalg.expm(1j * H * self.alpha))
+    
+def random_vector_evaluation(A, B, count=1000):
+    total = 0.0
+    mins = 10.0
+    maxs = -10.0
+    n = np.shape(original)[0]
+
+    for _ in range(0, count):
+        v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
+        v = v / sum(np.multiply(v, np.conj(v)))
+
+        fv1 = np.ravel(np.dot(A, v))
+        fv2 = np.ravel(np.dot(B, v))
+
+        p1 = np.real(np.multiply(fv1, np.conj(fv1)))
+        p2 = np.real(np.multiply(fv2, np.conj(fv2)))
+
+        diff = 1-sum(np.abs(p1-p2))
+
+        total += diff
+        if diff > maxs:
+            maxs = diff
+        if diff < mins:
+            mins = diff
+    return (maxs, total/count, mins)
