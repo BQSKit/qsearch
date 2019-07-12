@@ -52,7 +52,7 @@ impl GateIdentity {
         GateIdentity {
             mat: ComplexUnitary::eye(n),
             data: QuantumGateData {
-                d: n.pow((1/dits) as u32) as u8,
+                d: n as u8,
                 dits: dits,
                 num_inputs: 0,
             }

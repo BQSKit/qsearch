@@ -1,14 +1,15 @@
 use crate::circuits::{GateKronecker, GateProduct, QuantumGate, GateIdentity, Gate, GateSingleQubit, GateCNOT};
 
 use std::iter::repeat;
+use core::f64::consts::PI;
 
 fn linear_toplogy(double_step: &Gate, single_step: &Gate, dits: u8, d: u8) -> Vec<Gate> {
-    let id: Box<dyn QuantumGate> = Box::new(GateIdentity::new(d.pow(dits as u32) as usize, d));
-    (0..dits-1).map(|i| {
-        let mut id_double: Vec<Gate> = repeat(id.clone()).take(dits as usize).collect();
-        id_double.insert((i + 1) as usize, double_step.clone());
-        let mut id_single: Vec<Gate> = repeat(id.clone()).take(dits as usize).collect();
-        id_single.insert((i + 1) as usize, single_step.clone());
+    let id: Box<dyn QuantumGate> = Box::new(GateIdentity::new(d as usize, d));
+    (0..(dits-1)).map(|i| {
+        let mut id_double: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
+        id_double[i as usize] = double_step.clone();
+        let mut id_single: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
+        id_single[i as usize] = single_step.clone();
         id_single.insert((i + 1) as usize, single_step.clone());
         let double = GateKronecker::new(id_double);
         let single = GateKronecker::new(id_single);

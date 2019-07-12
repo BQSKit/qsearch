@@ -24,8 +24,7 @@ impl Solver for CMASolver {
         let fitness = CMAFitness(u, circuit.clone());
         let options = CMAESOptions::default(circuit.inputs())
                                     .threads(1)
-                                    .initial_step_size(0.25f64)
-                                    .fitness_threshold(0.001f64);
+                                    .initial_step_size(0.25f64);
         let (res, _) = cmaes_loop(&fitness, options).unwrap();
         (circuit.matrix(&res), res)
 
