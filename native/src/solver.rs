@@ -1,4 +1,5 @@
 use crate::circuits::Gate;
+use crate::circuits::QuantumGate;
 use crate::utils::matrix_distance;
 use crate::ComplexUnitary;
 

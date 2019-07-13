@@ -6,23 +6,24 @@ use crate::ComplexUnitary;
 
 use std::rc::Rc;
 
-pub type Gate = Rc<dyn QuantumGate>;
+use enum_dispatch::enum_dispatch;
 
-// note: based on https://stackoverflow.com/a/50020961/9688107
-pub trait QuantumGateClone {
-    fn clone_box(&self) -> Gate;
+#[enum_dispatch(QuantumGate)]
+#[derive(Clone)]
+pub enum Gate {
+    RX(GateRX),
+    RY(GateRY),
+    RZ(GateRZ),
+    Identity(GateIdentity),
+    CNOT(GateCNOT),
+    SingleQubit(GateSingleQubit),
+    Kronecker(GateKronecker),
+    Product(GateProduct),
+    Unknown(Rc<dyn QuantumGate>),
 }
 
-impl<T> QuantumGateClone for T
-where
-    T: 'static + QuantumGate + Clone,
-{
-    fn clone_box(&self) -> Gate {
-        Rc::new(self.clone())
-    }
-}
-
-pub trait QuantumGate: QuantumGateClone {
+#[enum_dispatch]
+pub trait QuantumGate {
     fn matrix(&self, v: &[f64]) -> ComplexUnitary;
     fn assemble(&self, v: &[f64]);
     fn inputs(&self) -> usize;
@@ -248,6 +249,12 @@ impl GateKronecker {
             substeps: substeps,
         }
     }
+
+    pub fn push(mut self, other: Gate) -> Self {
+        self.data.num_inputs = self.data.num_inputs + other.inputs();
+        self.substeps.push(other);
+        self
+    }
 }
 
 impl QuantumGate for GateKronecker {
@@ -286,6 +293,13 @@ impl GateProduct {
             },
             substeps: substeps,
         }
+    }
+
+    pub fn push(mut self, other: Gate) -> Self {
+        self.data.num_inputs = self.data.num_inputs + other.inputs();
+        self.substeps.push(other);
+
+        self
     }
 }
 

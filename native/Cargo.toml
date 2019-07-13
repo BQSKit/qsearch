@@ -11,6 +11,9 @@ blas-src = { version = "0.2.0", default-features = false, features = ["openblas"
 openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
 better-panic = "*"
 cmaes = { git = "https://github.com/ethanhs/cmaes", branch = "testsingle" }
+rayon = "1.1"
+num_cpus = "*"
+enum_dispatch = "0.1"
 
 [lib]
 name = "search_compiler"
