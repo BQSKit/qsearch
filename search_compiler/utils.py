@@ -1,4 +1,6 @@
 import numpy as np
+import scipy as sp
+import scipy.linalg
 
 cnot = np.matrix([[1,0,0,0],
                   [0,1,0,0],
@@ -32,7 +34,7 @@ def matrix_distance_squared(A,B):
     #return 1 - np.abs(np.trace(np.dot(A,B.H))) / A.shape[0]
 
 def matrix_distance(A,B):
-    return np.sqrt(matrix_distance_squared(A,B))
+    return np.sqrt(np.abs(matrix_distance_squared(A,B)))
 
 def rot_z(theta):
     return np.matrix([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
@@ -99,29 +101,29 @@ def random_near_identity(n, alpha):
     H = np.matrix((np.random.rand(n,n) - 0.5) +1j * (np.random.rand(n,n) - 0.5))
     H = H + H.H
     # generate a unitary matrix from the hermitian matrix that is not far from the identity
-    return np.matrix(sp.linalg.expm(1j * H * self.alpha))
+    return np.matrix(sp.linalg.expm(1j * H * alpha))
     
 def random_vector_evaluation(A, B, count=1000):
     total = 0.0
     mins = 10.0
     maxs = -10.0
-    n = np.shape(original)[0]
+    n = np.shape(A)[0]
 
     for _ in range(0, count):
         v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
-        v = v / sum(np.multiply(v, np.conj(v)))
+        v = v / np.sqrt(np.sum(np.multiply(v, np.conj(v))))
 
-        fv1 = np.ravel(np.dot(A, v))
-        fv2 = np.ravel(np.dot(B, v))
+        fv1 = np.dot(A, v)
+        fv2 = np.dot(B, v)
 
         p1 = np.real(np.multiply(fv1, np.conj(fv1)))
         p2 = np.real(np.multiply(fv2, np.conj(fv2)))
 
-        diff = 1-sum(np.abs(p1-p2))
-
+        diff = 1-np.sum(np.abs(p1-p2))/2
         total += diff
         if diff > maxs:
             maxs = diff
         if diff < mins:
             mins = diff
     return (maxs, total/count, mins)
+

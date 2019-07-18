@@ -20,9 +20,8 @@ class Project:
         self.folder = path
         self.projfile = os.path.join(path, "qcproject")
         try:
-            if not os.path.exists(self.projfile):
-                os.mkdir(self.projfile)
-
+            if not os.path.exists(path):
+                os.mkdir(path)
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
         except IOError:
@@ -105,7 +104,7 @@ class Project:
         solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
         blas_threads = self._config("blas_threads", None)
-        compiler = SearchCompiler(threshold=threshold, d=d, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]

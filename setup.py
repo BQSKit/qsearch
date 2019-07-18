@@ -22,11 +22,9 @@ setup(
     keywords='quantum compilers synthesis computing',
     packages=['search_compiler'],
     python_requires='>=3.6, <4',
-    install_requires=['numpy', 'threadpoolctl'],
+    install_requires=['numpy', 'scipy', 'threadpoolctl'],
     extras_require={
         'cma': ['cma'],
-        'cobyla': ['scipy'],
-        'bfgs': ['scipy'],
         'graphics': ['matplotlib'],
     },
 )

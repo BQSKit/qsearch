@@ -20,25 +20,23 @@ def evaluate_step(tup, U, error_func, solver):
     return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, d=2, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
+    def __init__(self, threshold=0.01, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
         self.heuristic = heuristic
-        self.d = d
         self.gateset = gateset
         self.solver = solver
         self.beams = int(beams)
 
     def compile(self, U, depth=None, statefile=None):
         h = self.heuristic
-        n = int(np.round(np.log(np.shape(U)[0])/np.log(self.d)))
+        dits = int(np.round(np.log(np.shape(U)[0])/np.log(self.gateset.d)))
 
-        if self.d**n != np.shape(U)[0]:
+        if self.gateset.d**dits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
-        n = int(n)
 
-        initial_layer = self.gateset.initial_layer(n, self.d)
-        search_layers = self.gateset.search_layers(n, self.d)
+        initial_layer = self.gateset.initial_layer(dits)
+        search_layers = self.gateset.search_layers(dits)
 
         if len(search_layers) <= 0:
             print("This gateset has no branching factor so only an initial optimization will be run.")
