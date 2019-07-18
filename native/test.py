@@ -11,4 +11,4 @@ solv = CMA_Solver()
 search = ProductStep(gateset.initial_layer(qubits, 2), *gateset.search_layers(qubits, 2))
 target = qft(2**qubits)
 sol = solv.solve_for_unitary(search, target)
-assert sol[0].shape[0] == 2**qubits
+print(sol[0])

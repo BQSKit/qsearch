@@ -4,8 +4,6 @@ use num_complex::Complex64;
 use crate::utils::{kron, rot_x, rot_y, rot_z};
 use crate::ComplexUnitary;
 
-use std::rc::Rc;
-
 use enum_dispatch::enum_dispatch;
 
 #[enum_dispatch(QuantumGate)]
@@ -19,7 +17,6 @@ pub enum Gate {
     SingleQubit(GateSingleQubit),
     Kronecker(GateKronecker),
     Product(GateProduct),
-    Unknown(Rc<dyn QuantumGate>),
 }
 
 #[enum_dispatch]
@@ -251,7 +248,7 @@ impl GateKronecker {
     }
 
     pub fn push(mut self, other: Gate) -> Self {
-        self.data.num_inputs = self.data.num_inputs + other.inputs();
+        self.data.num_inputs += other.inputs();
         self.substeps.push(other);
         self
     }
@@ -281,6 +278,7 @@ impl QuantumGate for GateKronecker {
 pub struct GateProduct {
     data: QuantumGateData,
     substeps: Vec<Gate>,
+    pub index: usize,
 }
 
 impl GateProduct {
@@ -292,14 +290,14 @@ impl GateProduct {
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
             substeps: substeps,
+            index: 0,
         }
     }
 
-    pub fn push(mut self, other: Gate) -> Self {
-        self.data.num_inputs = self.data.num_inputs + other.inputs();
-        self.substeps.push(other);
-
-        self
+    pub fn push(&self, g: Gate) -> Self {
+        let mut substeps = self.substeps.clone();
+        substeps.push(g);
+        GateProduct::new(substeps)
     }
 }
 

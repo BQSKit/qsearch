@@ -1,8 +1,21 @@
-use ndarray::arr2;
+pub use ndarray::prelude::*;
+pub use ndarray::{stack, Data};
 use num_complex::Complex64;
 
 use crate::ComplexUnitary;
 
+pub trait ComplexFloat {
+    fn cj(&self) -> Self;
+}
+
+impl ComplexFloat for Complex64 {
+    #[inline]
+    fn cj(&self) -> Self {
+        self.conj()
+    }
+}
+
+#[inline]
 pub fn rot_x(theta: f64) -> ComplexUnitary {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     let negi = Complex64::new(0.0, -1.0);
@@ -12,6 +25,7 @@ pub fn rot_x(theta: f64) -> ComplexUnitary {
     ])
 }
 
+#[inline]
 pub fn rot_y(theta: f64) -> ComplexUnitary {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     arr2(&[
@@ -20,6 +34,7 @@ pub fn rot_y(theta: f64) -> ComplexUnitary {
     ])
 }
 
+#[inline]
 pub fn rot_z(theta: f64) -> ComplexUnitary {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     let negi = Complex64::new(0.0, -1.0);
@@ -31,6 +46,7 @@ pub fn rot_z(theta: f64) -> ComplexUnitary {
     ])
 }
 
+#[inline]
 pub fn re_rot_z(u: &mut ComplexUnitary, theta: f64) {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     let negi = Complex64::new(0.0, -1.0);
@@ -39,27 +55,34 @@ pub fn re_rot_z(u: &mut ComplexUnitary, theta: f64) {
     u[[1, 1]] = (posi * half_theta).exp();
 }
 
+#[inline]
 fn matrix_distance_squared(a: &ComplexUnitary, b: &ComplexUnitary) -> f64 {
     // 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
-    1f64 - a.dot(b).sum().norm() / a.shape()[0] as f64
+    1f64 - a.dot(&conj_t(&b)).sum().norm() / a.shape()[0] as f64
 }
 
+#[inline]
 pub fn matrix_distance(a: &ComplexUnitary, b: &ComplexUnitary) -> f64 {
     matrix_distance_squared(a, b).sqrt()
 }
 
-// ndarray doesn't have a Kronecker product implementation, so we implement it ourselves.
+#[inline]
+pub fn conj_t<T: ComplexFloat + Clone, D: Data<Elem = T>>(a: &ArrayBase<D, Ix2>) -> Array<T, Ix2> {
+    a.t().mapv(|x| x.cj())
+}
+
+#[inline]
+/// ndarray doesn't have a Kronecker product implementation, so we implement it ourselves.
+/// We also optimize for the common case where we are kronecker'ing some matrix with the identity.
 pub fn kron(a: &ComplexUnitary, b: &ComplexUnitary) -> ComplexUnitary {
     let dima = a.shape()[0];
     let dimb = b.shape()[0];
     let dimout = dima * dimb;
+
     let mut out = ComplexUnitary::zeros((dimout, dimout));
-    for (mut chunk, elem) in out.exact_chunks_mut((dimb, dimb)).into_iter().zip(a.iter()) {
+
+    for (ref mut chunk, elem) in out.exact_chunks_mut((dimb, dimb)).into_iter().zip(a.iter()) {
         chunk.assign(&(*elem * b));
     }
-    // TODO: Optimize? See simd, rayon, etc.
-    // https://docs.rs/ndarray/0.12.1/ndarray/struct.ArrayBase.html#method.exact_chunks_mut
-    // https://docs.rs/ndarray/0.12.1/ndarray/struct.Zip.html
-    // https://docs.rs/ndarray/0.12.1/ndarray/doc/ndarray_for_numpy_users/index.html
     out
 }

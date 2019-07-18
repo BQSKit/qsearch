@@ -11,14 +11,11 @@ fn linear_toplogy(
 ) -> Vec<Gate> {
     (0..(dits - 1))
         .map(move |i| {
-            let mut id_double: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
-            id_double[i as usize] = double_step.clone();
-            let mut id_single: Vec<Gate> = repeat(id.clone()).take((dits - 1) as usize).collect();
-            id_single[i as usize] = single_step.clone();
-            id_single.insert((i + 1) as usize, single_step.clone());
-            let double = GateKronecker::new(id_double);
-            let single = GateKronecker::new(id_single);
-            let b: Gate = GateProduct::new(vec![double.into(), single.into()]).into();
+            let mut layer: Vec<Gate> = repeat(id.clone()).take((dits - 2) as usize).collect();
+            let singles = GateKronecker::new(vec![single_step.clone(), single_step.clone()]);
+            let parameterized = GateProduct::new(vec![double_step.clone(), singles.into()]);
+            layer.insert(i as usize, parameterized.into());
+            let b: Gate = GateKronecker::new(layer).into();
             b
         })
         .collect()

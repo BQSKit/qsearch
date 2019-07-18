@@ -20,13 +20,13 @@ fn astar_heuristic(dsq: f64, depth: u8) -> f64 {
 }
 
 #[derive(Clone)]
-struct QueueItem(f64, u8, f64, i32, Vec<f64>, Rc<GateProduct>);
+struct QueueItem(f64, u8, f64, i32, Vec<f64>, GateProduct);
 
 impl Eq for QueueItem {}
 
 impl PartialEq for QueueItem {
     fn eq(&self, other: &Self) -> bool {
-        (self.0 - other.0).abs() < 0.000000000001
+        self.0 == other.0
     }
 }
 
@@ -72,7 +72,7 @@ impl<T: GateSet, S: Solver> SearchCompiler<T, S> {
 }
 
 impl<T: GateSet, S: Solver> Compiler for SearchCompiler<T, S> {
-    fn compile(&mut self, u: ComplexUnitary, depth: u8) -> (ComplexUnitary, &Gate, Vec<f64>) {
+    fn compile(&mut self, u: ComplexUnitary, depth: u8) -> (ComplexUnitary, Gate, Vec<f64>) {
         // figure out the number of qubits needed for the problem
         let size = u.shape()[0];
         let n = (size as f64).log(self.d as f64).round() as u32;
@@ -100,10 +100,10 @@ impl<T: GateSet, S: Solver> Compiler for SearchCompiler<T, S> {
 
         // Set up the graph
         let root_node = vec![initial_layer];
-        let root = Rc::new(GateProduct::new(root_node));
-        let mut result = self.solv.solve_for_unitary(root.clone(), u.clone());
+        let root = GateProduct::new(root_node);
+        let mut result = self.solv.solve_for_unitary(root.clone().into(), u.clone());
         let mut best_value = matrix_distance(&result.0, &u);
-        let mut best_pair = (result.0, &root, result.1);
+        let mut best_pair = (result.0, root.clone().into(), result.1.clone());
         if depth == 0 {
             return best_pair;
         };
@@ -113,12 +113,24 @@ impl<T: GateSet, S: Solver> Compiler for SearchCompiler<T, S> {
             if best_value < self.threshold {
                 break;
             };
-            let popped = vec![];
+            let mut popped = vec![];
             for _ in 0..self.beams {
-                popped.push(queue.pop());
+                popped.push(queue.pop().unwrap());
             }
             let then = Instant::now();
-            new_steps = popped.iter().zip(search_layers.iter()).map(|(item, layer)| item.unwrap().5.push(layer))
+            let mut new_steps: Vec<(GateProduct, u8, &Vec<f64>)> = vec![];
+            for ref current_item in &popped {
+                for layer in &search_layers {
+                    new_steps.push((current_item.5.push(layer.clone()), current_item.1, &current_item.4));
+                }
+            }
+
+            for (i, mut step) in new_steps.iter().enumerate() {
+                step.0.index = i;
+            }
+            new_steps.into_par_iter().map(move |step| {
+
+            });
 
         };
         best_pair
