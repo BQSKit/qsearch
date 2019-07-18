@@ -183,7 +183,7 @@ class Project:
         print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0, mins*100.0))
 
 
-    def assemble(self, name, language=assembler.ASSEMBLY_OPENQASM, write_location=None):
+    def assemble(self, name, language=assembler.ASSEMBLY_IBMOPENQASM, write_location=None):
         _, cdict = self._compilations[name]
         if not "structure" in cdict or not "vector" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")

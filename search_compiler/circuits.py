@@ -139,7 +139,7 @@ class QiskitU3QubitStep(QuantumStep):
         return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
 
     def assemble(self, v, i=0):
-        return [("gate", "qiskit-u3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
+        return [("gate", "U3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
 
     def _draw_assemble(self, i=0):
         return [("U", "q{}".format(i))]
