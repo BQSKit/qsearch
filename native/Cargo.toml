@@ -14,7 +14,7 @@ enum_dispatch = { path = "/home/ethanhs/enum_dispatch" }
 cmaes = { git = "https://github.com/ethanhs/cmaes", branch = "testsingle" }
 rayon = "1.1"
 num_cpus = "*"
-numpy = "0.6.0"
+numpy = { version = "0.6.0", path="/home/ethanhs/rust-numpy" }
 
 [dependencies.pyo3]
 version = "0.7.0"
@@ -22,9 +22,9 @@ features = ["extension-module"]
 
 
 [lib]
-name = "search_compiler"
+name = "search_compiler_rs"
 path = "src/lib.rs"
-crate-type = ["dylib"]
+crate-type = ["cdylib", "rlib"]
 
 [[bin]]
 name = "test_srcrs"

@@ -3,7 +3,6 @@ use search_compiler::circuits::{
     GateSingleQubit, QuantumGate,
 };
 use search_compiler::gatesets::{GateSet, GateSetLinearCNOT};
-use search_compiler::solver::{CMASolver, Solver};
 use search_compiler::utils::matrix_distance;
 use search_compiler::ComplexUnitary;
 
@@ -16,7 +15,7 @@ fn qft(n: usize) -> ComplexUnitary {
     let root = Complex64::new(E, 0f64).powc(Complex64::new(0f64, 2f64) * PI / n as f64);
     ComplexUnitary::from_shape_fn((n, n), |(x, y)| root.powf((x * y) as f64)) / (n as f64).sqrt()
 }
-
+/*
 fn test_qft(qubits: u8, target: &ComplexUnitary, solv: impl Solver) -> (ComplexUnitary, Vec<f64>) {
     let gateset = GateSetLinearCNOT::new();
     let initial = gateset.initial_layer(qubits, 2);
@@ -47,8 +46,9 @@ fn test_simple(qubits: u8, target: &ComplexUnitary, solv: impl Solver) -> (Compl
     let search = GateProduct::new(layers);
     solv.solve_for_unitary(search.into(), target.clone())
 }
-
+*/
 fn main() {
+    /*
     install();
     let qubits = 4;
     let target = qft(2usize.pow(qubits as u32));
@@ -59,5 +59,5 @@ fn main() {
         &sol.0,
         matrix_distance(&target, &sol.0),
         sol.1
-    );
+    );*/
 }
