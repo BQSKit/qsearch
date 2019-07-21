@@ -3,7 +3,7 @@ import numpy as np
 import search_compiler as sc
 from search_compiler import sample_gates as gates
 
-from qasm_parser import parse_qasm
+#from qasm_parser import parse_qasm
 
 project = sc.Project("testqiskitu3")
 project.clear()
@@ -80,7 +80,7 @@ HHL = circuit.matrix([])
 #project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
 
 project.configure_compiler("solver", sc.solver.COBYLA_Solver(), force=False)
-project.configure_compiler("gateset", sc.gatesets.QiskitU3Linear(), force=True)
+#project.configure_compiler("gateset", sc.gatesets.QiskitU3Linear(), force=True)
 #project.configure_compiler("gateset", sc.gatesets.QubitCNOTRing(), force=True)
 #project.configure_compiler("beams", -1)
 

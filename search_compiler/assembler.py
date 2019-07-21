@@ -64,24 +64,36 @@ qiskitdict = {
         "X" : "qc.rx({}, {})\n",
         "Y" : "qc.ry({}, {})\n",
         "Z" : "qc.rz({}, {})\n",
-        "qiskit-u3" : "qc.u3({}, {}, {}, {})\n",
+        "U3" : "qc.u3({}, {}, {}, {})\n",
         "CNOT" : "qc.cx({}, {})\n",
 }
 
-# this dict is based off of how IBM assembles to qiskit from https://github.com/Qiskit/openqasm/blob/master/examples/generic/qelib1.inc
+# currently ibm's quantum experience cannot handle normal openqasm, even though supposedly u3 and cx below should evaluate to U3 and CX above.
+# ironically, this pure openqasm does not seem to be supported by IBM.  I have double checked that the syntax is theoretically correct.  The IBM Quantum Experience circuit builder will only recognize the ibm versions.
 openqasmdict = {
         "initial" : 'OPENQASM 2.0;\nqreg q[{}];\n',
         "X" : "U({}, -pi/2, pi/2) q[{}];\n",
         "Y" : "U({}, 0, 0) q[{}];\n",
         "Z" : "U(0, 0, {}) q[{}];\n",
-        "qiskit-u3" : "U({}, {}, {}) q[{}];\n",
+        "U3" : "U({}, {}, {}) q[{}];\n",
         "CNOT" : "CX q[{}], q[{}];\n"
+}
+
+# currently ibm's quantum experience cannot handle normal openqasm, even though supposedly u3 and cx below should evaluate to U3 and CX above.
+ibmopenqasmdict = {
+        "initial" : 'OPENQASM 2.0;\ninclude \"qelib1.inc\";\n\nqreg q[{}];\n',
+        "X" : "rx({}) q[{}];\n",
+        "Y" : "ry({}) q[{}];\n",
+        "Z" : "rz({}) q[{}];\n",
+        "U3" : "u3({}, {}, {}) q[{}];\n",
+        "CNOT" : "cx q[{}], q[{}];\n"
 }
 
 
 
 ASSEMBLY_QISKIT = DictionaryAssembly(qiskitdict)
 ASSEMBLY_OPENQASM = DictionaryAssembly(openqasmdict)
+ASSEMBLY_IBMOPENQASM = DictionaryAssembly(ibmopenqasmdict)
 
 
 
