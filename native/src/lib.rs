@@ -35,6 +35,7 @@ impl PyGateWrapper {
 #[pyclass(name=QubitCNOTLinearNative)]
 struct PyGateSetLinearCNOT {
     gateset: GateSetLinearCNOT,
+    d: u8,
 }
 
 #[pymethods]
@@ -43,15 +44,16 @@ impl PyGateSetLinearCNOT {
     pub fn new(obj: &PyRawObject) {
         obj.init( PyGateSetLinearCNOT {
             gateset: GateSetLinearCNOT::new(),
+            d: 2,
         });
     }
 
-    pub fn initial_layer(&self, py: Python, n: u8, d: u8) -> Py<PyGateWrapper> {
-        Py::new(py, PyGateWrapper { gate: self.gateset.initial_layer(n, d) } ).unwrap()
+    pub fn initial_layer(&self, py: Python, n: u8) -> Py<PyGateWrapper> {
+        Py::new(py, PyGateWrapper { gate: self.gateset.initial_layer(n, self.d) } ).unwrap()
     }
 
-    pub fn search_layers(&self, py: Python, n: u8, d: u8) -> Vec<Py<PyGateWrapper>> {
-        let layers = self.gateset.search_layers(n, d);
+    pub fn search_layers(&self, py: Python, n: u8) -> Vec<Py<PyGateWrapper>> {
+        let layers = self.gateset.search_layers(n, self.d);
         let mut pygates = Vec::with_capacity(layers.len());
         for i in layers {
             pygates.push(Py::new(py, PyGateWrapper { gate: i }).unwrap())
