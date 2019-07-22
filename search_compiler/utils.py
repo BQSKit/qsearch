@@ -1,12 +1,7 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
-
-cnot = np.matrix([[1,0,0,0],
-                  [0,1,0,0],
-                  [0,0,0,1],
-                  [0,0,1,0]
-                 ], dtype='complex128')
+from . import gates
 
 def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
@@ -35,16 +30,6 @@ def matrix_distance_squared(A,B):
 
 def matrix_distance(A,B):
     return np.sqrt(np.abs(matrix_distance_squared(A,B)))
-
-def rot_z(theta):
-    return np.matrix([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
-
-def rot_x(theta):
-    return np.matrix([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
-
-def rot_y(theta):
-    return np.matrix([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
-
 
 def re_rot_z(theta, old_z):
     old_z[0,0] = np.exp(-1j*theta/2)
@@ -126,4 +111,12 @@ def random_vector_evaluation(A, B, count=1000):
         if diff < mins:
             mins = diff
     return (maxs, total/count, mins)
+
+def remap(U, order, d=2):
+    dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
+    if dits == 1:
+        return U
+    current_order = [i for i in range(0, dits)]
+
+
 

@@ -6,6 +6,12 @@ cnot = np.matrix([[1,0,0,0],
                   [0,0,1,0]],
                   dtype='complex128')
 
+swap = np.matrix([[1,0,0,0],
+                  [0,0,1,0],
+                  [0,1,0,0],
+                  [0,0,0,1]],
+                  dtype='complex128')
+
 toffoli = np.matrix([[1,0,0,0,0,0,0,0],
                      [0,1,0,0,0,0,0,0],
                      [0,0,1,0,0,0,0,0],
@@ -46,6 +52,15 @@ maybe_or = np.matrix([[1,0,0,0,0,0,0,0],
                       [0,0,0,0,0,1,0,0],
                       [0,0,0,0,1,0,0,0]], 
                       dtype='complex128')
+
+def rot_z(theta):
+    return np.matrix([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
+
+def rot_x(theta):
+    return np.matrix([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
+
+def rot_y(theta):
+    return np.matrix([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
 def qft(n):
     root = np.e ** (2j * np.pi / n)

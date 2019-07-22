@@ -1,5 +1,4 @@
 import numpy as np
-
 from . import utils, graphics
 
 class QuantumStep:

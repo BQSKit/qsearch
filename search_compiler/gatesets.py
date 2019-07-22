@@ -1,5 +1,4 @@
-from . import utils as util
-from . import sample_gates as gates
+from . import gates
 from .logging import logprint
 from .circuits import *
 
