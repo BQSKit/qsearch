@@ -1,5 +1,5 @@
 import numpy as np
-from . import utils, graphics
+from . import utils, graphics, gates
 
 class QuantumStep:
     def __init__(self):
@@ -59,8 +59,8 @@ class ZXZXZQubitStep(QuantumStep):
         self.num_inputs = 3
         self.dits = 1
 
-        self._x90 = utils.rot_x(np.pi/2)
-        self._rot_z = utils.rot_z(0)
+        self._x90 = gates.rot_x(np.pi/2)
+        self._rot_z = gates.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -95,8 +95,8 @@ class XZXZPartialQubitStep(QuantumStep):
         self.num_inputs = 2
         self.dits = 1
 
-        self._x90 = utils.rot_x(np.pi/2)
-        self._rot_z = utils.rot_z(0)
+        self._x90 = gates.rot_x(np.pi/2)
+        self._rot_z = gates.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -363,7 +363,7 @@ class CRZStep(QuantumStep):
         self.dits = 2
 
     def matrix(self, v):
-        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, utils.rot_z(v[0]))) # TODO fix this line
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]))) # TODO fix this line
         return np.dot(U, CRZStep._cnr)
 
     def assemble(self, v, i=0):

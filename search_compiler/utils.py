@@ -5,7 +5,7 @@ from . import gates
 
 def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
-    result = np.eye(LU[0].shape[0])
+    result = np.matrix(np.eye(LU[0].shape[0]), dtype='complex128')
     for U in LU:
         result = np.dot(result, U, out=result)
     return result
@@ -113,10 +113,39 @@ def random_vector_evaluation(A, B, count=1000):
     return (maxs, total/count, mins)
 
 def remap(U, order, d=2):
+    U = np.matrix(U, dtype='complex128')
+    if d != 2:
+        raise NotImplementedError("This function is not yet implemented for dits other than qubits because I have not implemented the swap for those qudits yet.")
+
     dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
+    beforemat = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
+    aftermat  = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
+    I = np.matrix(np.eye(d), dtype = 'complex128')
     if dits == 1:
         return U
     current_order = [i for i in range(0, dits)]
+    for i in range(0, dits):
+        if not order[i] == current_order[i]:
+            target_loc = i
+            current_loc = current_order.index(order[i])
+            print(current_loc)
+            while not target_loc == current_loc:
+                if current_loc > target_loc:
+                    # perform the swap current_loc and current_loc - 1
+                    swapmat = matrix_kron(*[I]*(current_loc-1), gates.swap, *[I]*(dits - current_loc - 1))
+                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
+                    current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
+                    beforemat = np.dot(beforemat, swapmat)
+                    aftermat  = np.dot(swapmat, aftermat)
+                    current_loc = current_loc - 1
+                else:
+                    # perform the swap current_loc and current_loc + 1
+                    swapmat = matrix_kron(*[I]*(current_loc), gates.swap, *[I]*(dits - current_loc - 2))
+                    print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
+                    current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
+                    beforemat = np.dot(beforemat, swapmat)
+                    aftermat  = np.dot(swapmat, aftermat)
+                    current_loc = current_loc + 1
 
-
+    return matrix_product(beforemat, U, aftermat)
 
