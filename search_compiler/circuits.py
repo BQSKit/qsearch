@@ -26,6 +26,9 @@ class QuantumStep:
     def copy(self):
         return self
 
+    def _parts(self):
+        return [self]
+
     def __copy__(self):
         return self
 
@@ -51,8 +54,6 @@ class IdentityStep(QuantumStep):
 
     def __repr__(self):
         return "IdentityStep({})".format(self._n)
-    
-
 
 class ZXZXZQubitStep(QuantumStep):
     def __init__(self):
@@ -121,7 +122,7 @@ class XZXZPartialQubitStep(QuantumStep):
         return [("U", "q{}".format(i))] 
     
     def __repr__(self):
-        return "ZXZXZQubitStep()"
+        return "XZXZPartialQubitStep()"
 
 class QiskitU3QubitStep(QuantumStep):
     def __init__(self):
@@ -478,6 +479,9 @@ class KroneckerStep(QuantumStep):
             i += step.dits
         return endlist
 
+    def _parts(self):
+        return self._substeps
+
     def __deepcopy__(self, memo):
         return KroneckerStep(self._substeps.__deepcopy__(memo))
 
@@ -509,6 +513,109 @@ class ProductStep(QuantumStep):
             out += step.assemble(v[index:index+step.num_inputs], i)
             index += step.num_inputs
         return out
+
+
+    def _optimize(self, I):
+        steps = self._substeps
+        for size in range(2, self.dits):
+            latest = [None for _ in range(0, self.dits)]
+            connected = [set() for _ in range(0, self.dits)]
+            newsteps = []
+            for step in steps:
+                index = 0
+                print("step with {} parts".format(len(step._parts())))
+                for part in step._parts():
+                    nextindex = index + part.dits
+                    print(index, nextindex)
+                    if type(part) is IdentityStep:
+                        index = nextindex
+                        continue
+                    part_connections = set(range(index, index + part.dits))
+                    for qudit in part_connections:
+                        part_connections = part_connections.union(connected[qudit])
+                    if len(part_connections) >= size:
+                        qudit = 0
+                        newkron = []
+                        while qudit < self.dits:
+                            if qudit in part_connections:
+                                newstep = latest[qudit]
+                                if newstep == None:
+                                    newstep = I
+                                newkron.append(newstep)
+                                for i in range(qudit, qudit+newstep.dits):
+                                    latest[i] = None
+                                    connected[i] = set()
+                                qudit += newstep.dits
+                            else:
+                                newkron.append(I)
+                                qudit += 1
+                        newsteps.append(KroneckerStep(*newkron))
+                        part_connections = set(range(index, index + part.dits))
+                        for i in part_connections:
+                            latest[i] = None
+                            connected[i] = set()
+                        for i in range(index, index + part.dits):
+                            latest[i] = part
+                            connected[i] = set(range(index, index + part.dits))
+                        print("popped parts in {}".format(part_connections))
+                    else:
+                        qudit = min(part_connections)
+                        if len(part_connections) > part.dits:
+                            part = KroneckerStep(*[I]*(index - min(part_connections)), part, *[I]*(max(part_connections) - index + part.dits))
+                        if type(part) is ProductStep:
+                            part_pieces = part._substeps
+                        else:
+                            part_pieces = [part]
+                        newq = latest[qudit]
+                        if newq is None:
+                            newq = I
+                        qudit += newq.dits
+                        while newq.dits < part.dits:
+                            qtwo = latest[qudit]
+                            if qtwo is None:
+                                qtwo = I
+                            qudit += qtwo.dits
+                            if type(qtwo) is KroneckerStep:
+                                qtwo = qtwo._substeps
+                            else:
+                                qtwo = [qtwo]
+                            if type(newq) is KroneckerStep:
+                                newq = newq.appending(*qtwo)
+                            else:
+                                newq = KroneckerStep(newq, *qtwo)
+                        if type(newq) is IdentityStep:
+                            newq = part
+                        elif type(newq) is ProductStep:
+                            newq = newq.appending(*part_pieces)
+                        else:
+                            newq = ProductStep(newq, *part_pieces)
+                        for i in part_connections:
+                            latest[i] = newq
+                            connected[i] = part_connections
+                        print("updated connected entries for {}".format(part_connections))
+                    print(connected, latest)
+                    index = nextindex
+            qudit = 0
+            newkron = []
+            while qudit < self.dits:
+                if qudit in part_connections:
+                    newstep = latest[qudit]
+                    if newstep == None:
+                        newstep = I
+                    newkron.append(newstep)
+                    for i in range(qudit, qudit+newstep.dits):
+                        latest[i] = None
+                        connected[i] = set()
+                    qudit += newstep.dits
+                else:
+                    newkron.append(I)
+                    qudit += 1
+            newsteps.append(KroneckerStep(*newkron))
+            steps = newsteps
+        return ProductStep(*steps)
+
+
+
 
     def _draw_assemble(self, i=0):
         endlist = []

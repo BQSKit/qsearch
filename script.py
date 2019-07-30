@@ -1,16 +1,16 @@
 import numpy as np
 
 import search_compiler as sc
-from search_compiler import sample_gates as gates
+from search_compiler import  gates
 
 #from qasm_parser import parse_qasm
 
 project = sc.Project("testqiskitu3")
-project.clear()
+#project.clear()
 #project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
-project.add_compilation("qft3-1", gates.qft(8), handle_existing="ignore")
-project.add_compilation("qft3-2", gates.qft(8), handle_existing="ignore")
-project.add_compilation("qft3-3", gates.qft(8), handle_existing="ignore")
+#project.add_compilation("qft3-1", gates.qft(8), handle_existing="ignore")
+#project.add_compilation("qft3-2", gates.qft(8), handle_existing="ignore")
+#project.add_compilation("qft3-3", gates.qft(8), handle_existing="ignore")
 
 #project.add_compilation("fredkin", gates.fredkin, handle_existing="ignore")
 #project.add_compilation("toffoli", gates.toffoli, handle_existing="ignore")
@@ -79,10 +79,13 @@ HHL = circuit.matrix([])
 
 #project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
 
-project.configure_compiler("solver", sc.solver.COBYLA_Solver(), force=False)
+#project.configure_compiler("solver", sc.solver.COBYLA_Solver(), force=False)
 #project.configure_compiler("gateset", sc.gatesets.QiskitU3Linear(), force=True)
 #project.configure_compiler("gateset", sc.gatesets.QubitCNOTRing(), force=True)
 #project.configure_compiler("beams", -1)
 
 project.run()
+c = project.get_result("qft3-1")[0]
+v = project.get_result("qft3-1")[1]
+c2 = c._optimize(sc.circuits.IdentityStep(2))
 
