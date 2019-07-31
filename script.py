@@ -5,7 +5,8 @@ from search_compiler import  gates
 
 #from qasm_parser import parse_qasm
 
-project = sc.Project("testqiskitu3")
+project = sc.Project("canIhandle4Qubits")
+project.add_compilation("qft4", gates.qft(16))
 #project.clear()
 #project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
 #project.add_compilation("qft3-1", gates.qft(8), handle_existing="ignore")
@@ -85,7 +86,4 @@ HHL = circuit.matrix([])
 #project.configure_compiler("beams", -1)
 
 project.run()
-c = project.get_result("qft3-1")[0]
-v = project.get_result("qft3-1")[1]
-c2 = c._optimize(sc.circuits.IdentityStep(2))
 
