@@ -68,7 +68,6 @@ class SearchCompiler(Compiler):
         tiebreaker = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            root.index = 0
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
             best_pair = (result[0], root._optimize(I), result[1])
@@ -96,12 +95,10 @@ class SearchCompiler(Compiler):
                     break
                 tup = heapq.heappop(queue)
                 popped.append(tup)
-                logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[2]), tup[1], tup[5].index))
+                logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]))
 
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer), current_tup[1], current_tup[4]) for search_layer in search_layers for current_tup in popped]
-            for i in range(0, len(new_steps)):
-                new_steps[i][0].index = i
 
             for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, I=I), new_steps):
                 current_value = self.error_func(U, result[0])
@@ -110,7 +107,7 @@ class SearchCompiler(Compiler):
                     best_value = current_value
                     best_pair = (result[0], step._optimize(I), result[1])
                     best_depth = current_depth + 1
-                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
+                    logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
                 if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
