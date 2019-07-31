@@ -523,10 +523,8 @@ class ProductStep(QuantumStep):
             newsteps = []
             for step in steps:
                 index = 0
-                print("step with {} parts".format(len(step._parts())))
                 for part in step._parts():
                     nextindex = index + part.dits
-                    print(index, nextindex)
                     if type(part) is IdentityStep:
                         index = nextindex
                         continue
@@ -557,7 +555,6 @@ class ProductStep(QuantumStep):
                         for i in range(index, index + part.dits):
                             latest[i] = part
                             connected[i] = set(range(index, index + part.dits))
-                        print("popped parts in {}".format(part_connections))
                     else:
                         qudit = min(part_connections)
                         if len(part_connections) > part.dits:
@@ -592,8 +589,6 @@ class ProductStep(QuantumStep):
                         for i in part_connections:
                             latest[i] = newq
                             connected[i] = part_connections
-                        print("updated connected entries for {}".format(part_connections))
-                    print(connected, latest)
                     index = nextindex
             qudit = 0
             newkron = []
