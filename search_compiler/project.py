@@ -56,21 +56,26 @@ class Project:
         self._compilations[name] = (U, {"debug" : debug})
         self._save()
 
-    def configure_compiler(self, keyword, value, force=False):
-        if not force:
-            for name in self._compilations:
-                s = self.compilation_status(name)
-                if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
-                    warn("This project contains compilations which have been completed or have been started.  Changing the compiler configuration will delete the existing progress.  Call configure_compiler with the 'force' option set to True to reset these compilations and reconfigure the compiler.", RuntimeWarning, stacklevel=2)
-                    self.status()
-                    return
-        else:
-            for name in self._compilations:
-                U, cdict = self._compilations[name]
-                self.add_compilation(name, U, debug=cdict["debug"], handle_existing="overwrite")
-
+    def __setitem__(self, keyword, value):
+        for name in self._compilations:
+            s = self.compilation_status(name)
+            if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
+                warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.")
+                return
         self._compiler_config[keyword] = value
         self._save()
+    def configure(self, dictionary):
+        for key in dictionary:
+            self[key] = dictionary[key]
+    
+    def reset(self, name=None):
+        if name is None:
+            [self.reset(n) for n in self._compilations]
+        else:
+            statefile = self._checkpoint_path(name)
+            if os.path.exists(statefile):
+                os.remove(statefile)
+                self._save()
 
     def remove_compilation(self, name):
         statefile = self._checkpoint_path(name)

@@ -21,7 +21,7 @@ def evaluate_step(tup, U, error_func, solver, I):
     return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
+    def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
         self.heuristic = heuristic

@@ -9,12 +9,6 @@ from . import utils as util
 
 
 def default_solver():
-    try:
-        import cma
-    except ImportError:
-        pass
-    else:
-        return CMA_Solver()
     return COBYLA_Solver()
 
 class CMA_Solver():
