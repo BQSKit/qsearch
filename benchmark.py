@@ -1,7 +1,7 @@
 import numpy as np
 
 import search_compiler as sc
-from search_compiler import sample_gates as gates
+from search_compiler import gates
 
 project = sc.Project("benchmark")
 project.clear()
