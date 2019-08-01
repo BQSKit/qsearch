@@ -60,14 +60,18 @@ class Project:
         for name in self._compilations:
             s = self.compilation_status(name)
             if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
-                warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.")
+                warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.", RuntimeWarning, stacklevel=2)
                 return
         self._compiler_config[keyword] = value
         self._save()
+
+    def __getitem__(self, keyword):
+        return self._compiler_config[keyword]
+
     def configure(self, dictionary):
         for key in dictionary:
             self[key] = dictionary[key]
-    
+ 
     def reset(self, name=None):
         if name is None:
             [self.reset(n) for n in self._compilations]
@@ -143,6 +147,8 @@ class Project:
         return True
 
     def status(self):
+        complete = True
+        started = False
         for name in self._compilations:
             s = self.compilation_status(name)
             msg = ""
@@ -155,7 +161,17 @@ class Project:
             elif s == PROJECT_STATUS_DEBUGING:
                 msg = "Debug."
 
+            if s != PROJECT_STATUS_COMPLETE:
+                complete = False
+            if s != PROJECT_STATUS_NOTBEGUN:
+                started = True
             print("{}\t{}".format(name,msg))
+        if complete:
+            return PROJECT_STATUS_COMPLETE
+        elif started:
+            return PROJECT_STATUS_PROGRESS
+        else:
+            return PROJECT_STATUS_NOTBEGUN
 
     def compilation_status(self, name):
         _, cdict = self._compilations[name]
