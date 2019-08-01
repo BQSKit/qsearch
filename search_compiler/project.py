@@ -1,4 +1,3 @@
-from threadpoolctl import threadpool_limits
 import numpy as np
 from numpy import matrix, array
 from .circuits import *
@@ -121,8 +120,13 @@ class Project:
 
             logging.output_file = os.path.splitext(self.projfile)[0] + "-{}".format(name)
             logging.logprint("Starting compilation of {}".format(name))
-            with threadpool_limits(limits=blas_threads, user_api='blas'):
+            try:
+                from threadpoolctl import threadpool_limits
+            except ImportError:
                 result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
+            else:
+                with threadpool_limits(limits=blas_threads, user_api='blas'):
+                    result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure
