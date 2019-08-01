@@ -5,18 +5,13 @@ from search_compiler import  gates
 
 #from qasm_parser import parse_qasm
 
-project = sc.Project("canIhandle4Qubits")
-project.add_compilation("qft4", gates.qft(16))
-#project.clear()
-#project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
-#project.add_compilation("qft3-1", gates.qft(8), handle_existing="ignore")
-#project.add_compilation("qft3-2", gates.qft(8), handle_existing="ignore")
-#project.add_compilation("qft3-3", gates.qft(8), handle_existing="ignore")
-
-#project.add_compilation("fredkin", gates.fredkin, handle_existing="ignore")
-#project.add_compilation("toffoli", gates.toffoli, handle_existing="ignore")
-#project.add_compilation("peres", gates.peres, handle_existing="ignore")
-
+project = sc.Project("paper-benchmarks")
+project.add_compilation("qft2", gates.qft(4))
+project.add_compilation("qft3", gates.qft(8))
+project.add_compilation("fredkin", gates.fredkin)
+project.add_compilation("toffoli", gates.toffoli)
+project.add_compilation("peres", gates.peres)
+project.add_compilation("logical or", gates.logical_or)
 
 theta = np.pi/3
 c = np.cos(theta/2)
@@ -75,15 +70,16 @@ circuit = circuit.appending(KroneckerStep(SWAP,I))
 
 HHL = circuit.matrix([])
 
-#project.add_compilation("miro", mirogate, handle_existing="ignore")
-#project.add_compilation("hhl", HHL, handle_existing="ignore")
+project.add_compilation("miro", mirogate)
+project.add_compilation("hhl", HHL)
 
-#project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
+# 4 qubit stuff here
+project.add_compilation("qft4", gates.qft(16))
+project.add_compilation("full adder", gates.full_adder)
 
-#project.configure_compiler("solver", sc.solver.COBYLA_Solver(), force=False)
-#project.configure_compiler("gateset", sc.gatesets.QiskitU3Linear(), force=True)
-#project.configure_compiler("gateset", sc.gatesets.QubitCNOTRing(), force=True)
-#project.configure_compiler("beams", -1)
+
+# compiler configuration here
+project["beams"] = -1
 
 project.run()
 
