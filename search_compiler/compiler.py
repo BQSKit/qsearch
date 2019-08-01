@@ -16,9 +16,9 @@ class Compiler():
         return (U, None, None)
 
 def evaluate_step(tup, U, error_func, solver, I):
-    step, depth, initial_guess = tup
+    step, depth = tup
     step = step._optimize(I)
-    return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
+    return (step, solver.solve_for_unitary(step, U, error_func), depth)
 
 class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
@@ -98,7 +98,7 @@ class SearchCompiler(Compiler):
                 logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]))
 
             then = timer()
-            new_steps = [(current_tup[5].appending(search_layer), current_tup[1], current_tup[4]) for search_layer in search_layers for current_tup in popped]
+            new_steps = [(current_tup[5].appending(search_layer), current_tup[1]) for search_layer in search_layers for current_tup in popped]
 
             for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, I=I), new_steps):
                 current_value = self.error_func(U, result[0])
