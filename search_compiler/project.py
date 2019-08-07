@@ -79,6 +79,11 @@ class Project:
             if os.path.exists(statefile):
                 os.remove(statefile)
                 self._save()
+            U, cdict = self._compilations[name]
+            cdict.pop("vector", None)
+            cdict.pop("structure", None)
+            self._compilations[name] = (U, cdict)
+
 
     def remove_compilation(self, name):
         statefile = self._checkpoint_path(name)

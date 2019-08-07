@@ -133,7 +133,7 @@ def remap(U, order, d=2):
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
                     swapmat = matrix_kron(*[I]*(current_loc-1), gates.swap, *[I]*(dits - current_loc - 1))
-                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
+#                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
                     current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
                     aftermat  = np.dot(swapmat, aftermat)
@@ -141,7 +141,7 @@ def remap(U, order, d=2):
                 else:
                     # perform the swap current_loc and current_loc + 1
                     swapmat = matrix_kron(*[I]*(current_loc), gates.swap, *[I]*(dits - current_loc - 2))
-                    print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
+ #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
                     current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
                     aftermat  = np.dot(swapmat, aftermat)
