@@ -147,12 +147,6 @@ class QiskitU3QubitStep(QuantumStep):
     def __repr__(self):
         return "QiskitU3QubitStep()"
 
-# NOTE: Consider this code DEPRECATED and expect it to be deleted before a real release.  Use QiskitU3QubitStep or ZXZXZQubitStep instead.
-class SingleQubitStep(ZXZXZQubitStep):
-    def __repr__(self):
-        return "SingleQubitStep()"
-
-
 class SingleQutritStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 8
@@ -334,12 +328,12 @@ class CNOTStep(QuantumStep):
         return "CNOTStep()"
 
 class NonadjacentCNOTStep(QuantumStep):
-    def __init__(self, n, control, target):
-        self.dits = n
+    def __init__(self, dits, control, target):
+        self.dits = dits
         self.num_inputs = 0
         self.control = control
         self.target = target
-        self._U = gates.arbitrary_cnot(n, control, target)
+        self._U = gates.arbitrary_cnot(dits, control, target)
 
     def matrix(self, v):
         return self._U
@@ -354,11 +348,8 @@ class NonadjacentCNOTStep(QuantumStep):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 class CRZStep(QuantumStep):
-    _cnr = np.matrix([[1,0,0,0],
-                       [0,1,0,0],
-                       [0,0,0.5+0.5j,0.5-0.5j],
-                       [0,0,0.5-0.5j,0.5+0.5j]])
-    _I = np.matrix(np.eye(2))
+    _cnr = gates.sqrt_cnot
+    _I = np.matrix(np.eye(2), dtype='complex128')
     def __init__(self):
         self.num_inputs = 1
         self.dits = 2
@@ -376,6 +367,41 @@ class CRZStep(QuantumStep):
 
     def __repr__(self):
         return "CQubitStep()"
+
+class NonadjacentCRZStep(QuantumStep):
+    _I = np.matrix(np.eye(2), dtype='complex128')
+
+    def __init__(self, dits, control, target):
+        self.dits = dits
+        self.num_inputs = 1
+        self.control = control
+        self.target = target
+        self._cnr = utils.matrix_kron(gates.sqrt_cnot, *[NonadjacentCRZStep._I]*(dits-2))
+        neworder = [i for i in range(0, dits)]
+        ci = 0
+        ti = 1
+        neworder[ci] = control
+        neworder[control] = ci
+        if ti == ci:
+            ti = control
+        elif ti == control:
+            ti = ci
+        tmp = neworder[ti]
+        neworder[ti] = neworder[target]
+        neworder[target] = tmp
+        self._cnr = utils.remap(self._cnr, neworder)
+
+    def matrix(self, v):
+        return self._cnr
+
+    def assemble(self, v, i=0):
+        return [("gate", "sqrt(CNOT)", (), (control, target)), ("gate", "RZ", (v[0],), (target,)), ("gate", "sqrt(CNOT)", (), (control, target))]
+
+    def _draw_assemble(self, i=0):
+        return [("CRZ", "q{}".format(target), "q{}".format(control))]
+
+    def __repr__(self):
+        return "NonadjacentCRZStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 
 # TODO fix this code or deprecate it
