@@ -120,7 +120,5 @@ class SearchCompiler(Compiler):
         pool.join()
         logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
         logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
-        if statefile == None:
-            checkpoint.delete()
         return best_pair
 

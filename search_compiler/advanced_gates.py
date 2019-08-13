@@ -58,7 +58,7 @@ def generate_HHL():
     return circuit.matrix([])
 HHL = generate_HHL()
 
-ethelyne = np.matrix([[-3.72110828e-26+0.00000000e+00j,
+ethylene = np.matrix([[-3.72110828e-26+0.00000000e+00j,
           0.00000000e+00+3.64959242e-16j,
           0.00000000e+00-1.10343461e-15j,
          -9.56077279e-04+0.00000000e+00j,
