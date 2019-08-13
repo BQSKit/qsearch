@@ -355,7 +355,7 @@ class CRZStep(QuantumStep):
         self.dits = 2
 
     def matrix(self, v):
-        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]))) # TODO fix this line
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]*np.pi*2)))
         return np.dot(U, CRZStep._cnr)
 
     def assemble(self, v, i=0):
