@@ -75,7 +75,6 @@ class QubitCNOTLinear(Gateset):
 class QubitCRZLinear(Gateset):
     def __init__(self):
         self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
         self.crz = CRZStep()
         self.d = 2
 
@@ -83,13 +82,12 @@ class QubitCRZLinear(Gateset):
         return fill_row(self.single_step, n)
 
     def search_layers(self, n):
-        return linear_topology(self.crz, self.single_step, n, self.d, single_alt=self.single_alt)
+        return linear_topology(self.crz, self.single_step, n, self.d)
 
 
 class QubitCNOTRing(Gateset):
     def __init__(self):
         self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
         self.cnot = CNOTStep()
         self.d = 2
 
@@ -98,10 +96,10 @@ class QubitCNOTRing(Gateset):
 
     def search_layers(self, n):
         I = IdentityStep(2)
-        steps = linear_topology(self.cnot, self.single_step, n, self.d, identity_step=I, single_alt=self.single_alt)
+        steps = linear_topology(self.cnot, self.single_step, n, self.d, identity_step=I)
         if n == 2:
             return steps
-        finisher = ProductStep(NonadjacentCNOTStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt))
+        finisher = ProductStep(NonadjacentCNOTStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_step))
         return steps + [finisher]
 
 
