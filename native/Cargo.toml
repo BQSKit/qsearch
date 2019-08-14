@@ -5,16 +5,17 @@ authors = ["Ethan Smith <ethan@ethanhs.me>"]
 edition = "2018"
 
 [dependencies]
-num-complex = "0.2"
-ndarray = { version = "0.12.1", features = ["blas"], path="/home/ethanhs/ndarray" }
-blas-src = { version = "0.2.0", default-features = false, features = ["openblas"] }
-openblas-src = { version = "0.6.0", default-features = false, features = ["cblas", "system"] }
-better-panic = "*"
+num-complex = {version = "0.2", features = ["serde"] }
+ndarray = "0.12.1"
 enum_dispatch = { path = "/home/ethanhs/enum_dispatch" }
-cmaes = { git = "https://github.com/ethanhs/cmaes", branch = "testsingle" }
-rayon = "1.1"
-num_cpus = "*"
-numpy = { version = "0.6.0", path="/home/ethanhs/rust-numpy" }
+numpy = "0.6.0"
+rblas = { version = "*", git = "https://github.com/ethanhs/rust-blas" }
+libc = "*"
+num-traits = "0.2"
+reduce = "0.1"
+serde = {version = "1.0", features = ["derive"] }
+bincode = "1.1.4"
+better-panic = "*"
 
 [dependencies.pyo3]
 version = "0.7.0"

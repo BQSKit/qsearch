@@ -1,48 +1,47 @@
-use ndarray::arr2;
 use num_complex::Complex64;
-
-use crate::utils::{kron, rot_x, rot_y, rot_z};
-use crate::ComplexUnitary;
-
+use crate::matrix::ComplexUnitary;
+use crate::{i,r};
 use enum_dispatch::enum_dispatch;
+use reduce::Reduce;
+use serde::{Serialize, Deserialize};
+
+use core::f64::consts::PI;
+
+#[enum_dispatch]
+pub trait QuantumGate: Clone {
+    fn mat(&self, v: &[f64]) -> ComplexUnitary;
+    fn inputs(&self) -> usize;
+}
 
 #[enum_dispatch(QuantumGate)]
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum Gate {
-    RX(GateRX),
-    RY(GateRY),
-    RZ(GateRZ),
     Identity(GateIdentity),
     CNOT(GateCNOT),
-    SingleQubit(GateSingleQubit),
+    U3(GateU3),
+    XZXZ(GateXZXZ),
     Kronecker(GateKronecker),
     Product(GateProduct),
 }
 
-#[enum_dispatch]
-pub trait QuantumGate {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary;
-    fn assemble(&self, v: &[f64]);
-    fn inputs(&self) -> usize;
-}
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 struct QuantumGateData {
     pub d: u8,
     pub dits: u8,
     pub num_inputs: usize,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GateIdentity {
     data: QuantumGateData,
-    mat: ComplexUnitary,
+    matrix: ComplexUnitary,
 }
 
 impl GateIdentity {
     pub fn new(n: usize, dits: u8) -> Self {
         GateIdentity {
-            mat: ComplexUnitary::eye(n),
+            matrix: ComplexUnitary::eye(n as i32),
             data: QuantumGateData {
                 d: n as u8,
                 dits: dits,
@@ -53,112 +52,23 @@ impl GateIdentity {
 }
 
 impl QuantumGate for GateIdentity {
-    fn matrix(&self, _v: &[f64]) -> ComplexUnitary {
-        self.mat.clone()
+    fn mat(&self, _v: &[f64]) -> ComplexUnitary {
+        self.matrix.clone()
     }
-
-    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
     }
 }
 
-#[derive(Clone)]
-pub struct GateRZ {
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GateU3 {
     data: QuantumGateData,
 }
 
-impl GateRZ {
+impl GateU3 {
     pub fn new(d: u8) -> Self {
-        GateRZ {
-            data: QuantumGateData {
-                d: d,
-                dits: 1,
-                num_inputs: 1,
-            },
-        }
-    }
-}
-
-impl QuantumGate for GateRZ {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        rot_z(v[0])
-    }
-
-    fn assemble(&self, _v: &[f64]) {}
-
-    fn inputs(&self) -> usize {
-        self.data.num_inputs as usize
-    }
-}
-
-#[derive(Clone)]
-pub struct GateRX {
-    data: QuantumGateData,
-}
-
-impl GateRX {
-    pub fn new(d: u8) -> Self {
-        GateRX {
-            data: QuantumGateData {
-                d: d,
-                dits: 1,
-                num_inputs: 1,
-            },
-        }
-    }
-}
-
-impl QuantumGate for GateRX {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        rot_x(v[0])
-    }
-
-    fn assemble(&self, _v: &[f64]) {}
-
-    fn inputs(&self) -> usize {
-        self.data.num_inputs as usize
-    }
-}
-
-#[derive(Clone)]
-pub struct GateRY {
-    data: QuantumGateData,
-}
-
-impl GateRY {
-    pub fn new(d: u8) -> Self {
-        GateRY {
-            data: QuantumGateData {
-                d: d,
-                dits: 1,
-                num_inputs: 1,
-            },
-        }
-    }
-}
-
-impl QuantumGate for GateRY {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        rot_y(v[0])
-    }
-
-    fn assemble(&self, _v: &[f64]) {}
-
-    fn inputs(&self) -> usize {
-        self.data.num_inputs as usize
-    }
-}
-
-#[derive(Clone)]
-pub struct GateSingleQubit {
-    data: QuantumGateData,
-}
-
-impl GateSingleQubit {
-    pub fn new(d: u8) -> Self {
-        GateSingleQubit {
+        GateU3 {
             data: QuantumGateData {
                 d: d,
                 dits: 1,
@@ -169,32 +79,55 @@ impl GateSingleQubit {
 }
 
 /// based on https://quantumexperience.ng.bluemix.net/proxy/tutorial/full-user-guide/002-The_Weird_and_Wonderful_World_of_the_Qubit/004-advanced_qubit_gates.html
-impl QuantumGate for GateSingleQubit {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        let theta = v[0];
-        let phi = v[1];
-        let lambda = v[2];
-        let i_phi = Complex64::new(0.0, phi);
-        let i_lambda = Complex64::new(0.0, lambda);
-        let cos = (theta / 2.0).cos();
-        let sin = (theta / 2.0).sin();
-        arr2(&[
-            [Complex64::new(cos, 0.0), -(i_lambda.exp()) * sin],
-            [i_phi.exp() * sin, (i_phi + i_lambda).exp() * cos],
-        ])
+impl QuantumGate for GateU3 {
+    fn mat(&self, v: &[f64]) -> ComplexUnitary {
+        let ct = r!((v[0] * PI).cos());
+        let st = r!((v[0] * PI).sin());
+        let cp = (v[1] * PI * 2.0).cos();
+        let sp = (v[1] * PI * 2.0).sin();
+        let cl = (v[2] * PI * 2.0).cos();
+        let sl = (v[2] * PI * 2.0).sin();
+        ComplexUnitary::from_vec(vec![ct, -st * (cl + i!(1.0) * sl), st * (cp + i!(1.0) * sp), ct * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp)], 2)
     }
 
-    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
+pub struct GateXZXZ {
+    data: QuantumGateData,
+}
+
+impl GateXZXZ {
+    pub fn new(d: u8) -> Self {
+        GateXZXZ {
+            data: QuantumGateData {
+                d: d,
+                dits: 1,
+                num_inputs: 2,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateXZXZ {
+    fn mat(&self, v: &[f64]) -> ComplexUnitary {
+        ComplexUnitary::from_vec(vec![(-(i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0 + (-i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0)*(-i!(1.0)*v[1] * PI * 2.0 - PI/2.0).exp(), (-i!(1.0)*(i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0 - i!(1.0)*(-i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0)*(i!(1.0)*v[1] * PI * 2.0 - PI/2.0).exp(),
+                                      (-i!(1.0)*(i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0 - i!(1.0)*(-i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0)*(-i!(1.0)*v[1] * PI * 2.0 - PI/2.0).exp(), ((i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0 - (-i!(1.0)*v[0] * PI * 2.0 + PI/2.0).exp()/2.0)*(i!(1.0)*v[1] * PI * 2.0 - PI/2.0).exp()], 2)
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GateCNOT {
     data: QuantumGateData,
-    mat: ComplexUnitary,
+    matrix: ComplexUnitary,
 }
 
 impl GateCNOT {
@@ -207,29 +140,27 @@ impl GateCNOT {
                 dits: 1,
                 num_inputs: 2,
             },
-            mat: arr2(&[
-                [one, nil, nil, nil],
-                [nil, one, nil, nil],
-                [nil, nil, nil, one],
-                [nil, nil, one, nil],
-            ]),
+            matrix: ComplexUnitary::from_vec(vec![
+                one, nil, nil, nil,
+                nil, one, nil, nil,
+                nil, nil, nil, one,
+                nil, nil, one, nil,
+            ], 4),
         }
     }
 }
 
 impl QuantumGate for GateCNOT {
-    fn matrix(&self, _v: &[f64]) -> ComplexUnitary {
-        self.mat.clone()
+    fn mat(&self, _v: &[f64]) -> ComplexUnitary {
+        self.matrix.clone()
     }
-
-    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GateKronecker {
     data: QuantumGateData,
     substeps: Vec<Gate>,
@@ -246,35 +177,26 @@ impl GateKronecker {
             substeps: substeps,
         }
     }
-
-    pub fn push(mut self, other: Gate) -> Self {
-        self.data.num_inputs += other.inputs();
-        self.substeps.push(other);
-        self
-    }
 }
 
 impl QuantumGate for GateKronecker {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        let step0 = &self.substeps[0];
-        let mut u = step0.matrix(&v[..step0.inputs()]);
-        let mut index = step0.inputs();
-        for i in 1..self.substeps.len() {
-            let step = &self.substeps[i];
-            u = kron(&u, &(step.matrix(&v[index..index + step.inputs()])));
-            index += step.inputs()
-        }
-        u
+    fn mat(&self, v: &[f64]) -> ComplexUnitary {
+        let mut index = 0;
+        self.substeps.iter().map(|gate| {
+            let g = gate.mat(&v[index..index + gate.inputs()]);
+            index += gate.inputs();
+            g}
+            ).reduce(|mut a: ComplexUnitary, b: ComplexUnitary| {
+            a.kron(&b)
+        }).unwrap()
     }
-
-    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize
     }
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GateProduct {
     data: QuantumGateData,
     substeps: Vec<Gate>,
@@ -294,27 +216,19 @@ impl GateProduct {
         }
     }
 
-    pub fn push(&self, g: Gate) -> Self {
-        let mut substeps = self.substeps.clone();
-        substeps.push(g);
-        GateProduct::new(substeps)
-    }
 }
 
 impl QuantumGate for GateProduct {
-    fn matrix(&self, v: &[f64]) -> ComplexUnitary {
-        let step0 = &self.substeps[0];
-        let mut u = step0.matrix(&v[..step0.inputs()]);
-        let mut index = step0.inputs();
-        for i in 1..self.substeps.len() {
-            let step = &self.substeps[i];
-            u = u.dot(&(step.matrix(&v[index..index + step.inputs()])));
-            index += step.inputs()
-        }
-        u
+    fn mat(&self, v: &[f64]) -> ComplexUnitary {
+        let mut index = 0;
+        self.substeps.iter().map(|gate| {
+            let g = gate.mat(&v[index..index + gate.inputs()]);
+            index += gate.inputs();
+            g}
+            ).reduce(|mut a: ComplexUnitary, b: ComplexUnitary| {
+            a.matmul(&b)
+        }).unwrap()
     }
-
-    fn assemble(&self, _v: &[f64]) {}
 
     fn inputs(&self) -> usize {
         self.data.num_inputs as usize

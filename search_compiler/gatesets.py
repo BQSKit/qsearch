@@ -3,7 +3,8 @@ from . import sample_gates as gates
 from .logging import logprint
 from .circuits import *
 
-from search_compiler_rs import QubitCNOTLinearNative
+import search_compiler_rs
+from builtins import QubitCNOTLinearNative
 
 # Commonly used functions for generating gatesets
 def linear_topology(double_step, single_step, n, d, identity_step=None):
@@ -181,7 +182,7 @@ class QutritCPIPhaseLinear(Gateset):
 
 
 # commonly used defaults
-DefaultQubit = ZXZXZCNOTLinear
+DefaultQubit = QubitCNOTLinearNative
 DefaultQutrit = QutritCPIPhaseLinear
 Default = DefaultQubit
 

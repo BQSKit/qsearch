@@ -489,7 +489,7 @@ class ProductStep(QuantumStep):
     def __init__(self, *substeps):
         self.num_inputs = sum([step.num_inputs for step in substeps])
         self._substeps = substeps
-        self.dits = 0 if len(substeps) == 0 else substeps[0].dits
+        self.dits = 0 if len(substeps) == 0 else 1
 
     def matrix(self, v):
         matrices = []

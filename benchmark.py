@@ -3,12 +3,12 @@ import numpy as np
 import search_compiler as sc
 from search_compiler import sample_gates as gates
 
-project = sc.Project("benchmark-flamegraph")
+project = sc.Project("benchmark-blas")
 project.clear()
 #project.add_compilation("qft2", gates.qft(4), handle_existing="ignore")
 project.add_compilation("qft3", gates.qft(8), handle_existing="ignore")
 project.add_compilation("fredkin", gates.fredkin, handle_existing="ignore")
-#project.add_compilation("toffoli", gates.toffoli, handle_existing="ignore")
+'''#project.add_compilation("toffoli", gates.toffoli, handle_existing="ignore")
 #project.add_compilation("peres", gates.peres, handle_existing="ignore")
 
 theta = np.pi/3
@@ -73,9 +73,11 @@ HHL = circuit.matrix([])
 project.add_compilation("hhl", HHL, handle_existing="ignore")
 
 #project.add_compilation("qft4", gates.qft(16), handle_existing="ignore")
-
+'''
 project.configure_compiler('solver', sc.solver.COBYLA_Solver())
-project.configure_compiler('beams', 4)
-project.configure_compiler('blas_threads', 1)
+project.configure_compiler('beams', -1)
+#project.configure_compiler('blas_threads', 1)
+project.configure_compiler('gateset', sc.gatesets.QubitCNOTLinearNative())
+
 project.run()
 

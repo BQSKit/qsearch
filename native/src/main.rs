@@ -1,4 +1,4 @@
-use search_compiler::circuits::{
+/*use search_compiler::circuits::{
     Gate, GateCNOT, GateIdentity, GateKronecker, GateProduct, GateRX, GateRY, GateRZ,
     GateSingleQubit, QuantumGate,
 };
@@ -15,7 +15,7 @@ fn qft(n: usize) -> ComplexUnitary {
     let root = Complex64::new(E, 0f64).powc(Complex64::new(0f64, 2f64) * PI / n as f64);
     ComplexUnitary::from_shape_fn((n, n), |(x, y)| root.powf((x * y) as f64)) / (n as f64).sqrt()
 }
-/*
+
 fn test_qft(qubits: u8, target: &ComplexUnitary, solv: impl Solver) -> (ComplexUnitary, Vec<f64>) {
     let gateset = GateSetLinearCNOT::new();
     let initial = gateset.initial_layer(qubits, 2);

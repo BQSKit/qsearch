@@ -1,10 +1,11 @@
-use crate::circuits::{Gate, GateCNOT, GateIdentity, GateKronecker, GateProduct, GateSingleQubit};
+use crate::circuits::{Gate, GateCNOT, GateIdentity, GateKronecker, GateProduct, GateU3, GateXZXZ};
 
 use std::iter::repeat;
 
 fn linear_toplogy(
     double_step: &Gate,
     single_step: &Gate,
+    alt_single_step: &Gate,
     id: &Gate,
     dits: u8,
     _d: u8,
@@ -12,7 +13,7 @@ fn linear_toplogy(
     (0..(dits - 1))
         .map(move |i| {
             let mut layer: Vec<Gate> = repeat(id.clone()).take((dits - 2) as usize).collect();
-            let singles = GateKronecker::new(vec![single_step.clone(), single_step.clone()]);
+            let singles = GateKronecker::new(vec![alt_single_step.clone(), single_step.clone()]);
             let parameterized = GateProduct::new(vec![double_step.clone(), singles.into()]);
             layer.insert(i as usize, parameterized.into());
             let b: Gate = GateKronecker::new(layer).into();
@@ -38,11 +39,11 @@ pub trait GateSet {
     fn search_layers(&self, dits: u8, d: u8) -> Vec<Gate>;
 }
 
-pub struct GateSetLinearCNOT(Gate, Gate);
+pub struct GateSetLinearCNOT(Gate, Gate, Gate);
 
 impl GateSetLinearCNOT {
     pub fn new() -> Self {
-        GateSetLinearCNOT(GateSingleQubit::new(1).into(), GateCNOT::new().into())
+        GateSetLinearCNOT(GateU3::new(1).into(), GateXZXZ::new(1).into(), GateCNOT::new().into())
     }
 }
 
@@ -53,6 +54,6 @@ impl GateSet for GateSetLinearCNOT {
 
     fn search_layers(&self, dits: u8, d: u8) -> Vec<Gate> {
         let id = GateIdentity::new(d as usize, d).into();
-        linear_toplogy(&self.1, &self.0, &id, dits, d)
+        linear_toplogy(&self.2, &self.1, &self.0, &id, dits, d)
     }
 }
