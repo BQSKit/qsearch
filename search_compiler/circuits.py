@@ -339,10 +339,10 @@ class NonadjacentCNOTStep(QuantumStep):
         return self._U
 
     def assemble(self, v, i=0):
-        return [("gate", "CNOT", (), (control, target))]
+        return [("gate", "CNOT", (), (self.control, self.target))]
 
     def _draw_assemble(self, i=0):
-        return [("CNOT", "q{}".format(target), "q{}".format(control))]
+        return [("CNOT", "q{}".format(self.target), "q{}".format(self.control))]
 
     def __repr__(self):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
