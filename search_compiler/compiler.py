@@ -17,8 +17,8 @@ class Compiler():
 
 def evaluate_step(tup, U, error_func, solver, I):
     step, depth = tup
-    step = step._optimize(I)
-    return (step, solver.solve_for_unitary(step, U, error_func), depth)
+    ostep = step._optimize(I)
+    return (step, solver.solve_for_unitary(ostep, U, error_func), depth)
 
 class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):

@@ -104,12 +104,16 @@ def random_vector_evaluation(A, B, count=1000):
         p1 = np.real(np.multiply(fv1, np.conj(fv1)))
         p2 = np.real(np.multiply(fv2, np.conj(fv2)))
 
-        diff = 1-np.sum(np.abs(p1-p2))/2
-        total += diff
-        if diff > maxs:
-            maxs = diff
-        if diff < mins:
-            mins = diff
+        kl = 0
+        for i in range(0, len(p1)):
+            kl += p1[i] * np.log(p1[i]/p2[i]) / np.log(10)
+
+#        diff = 1-np.sum(np.abs(p1-p2))/2
+        total += kl
+        if kl > maxs:
+            maxs = kl
+        if kl < mins:
+            mins = kl
     return (maxs, total/count, mins)
 
 def remap(U, order, d=2):
