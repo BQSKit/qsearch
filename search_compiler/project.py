@@ -116,6 +116,7 @@ class Project:
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
+        depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
         compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
@@ -132,7 +133,7 @@ class Project:
             try:
                 from threadpoolctl import threadpool_limits
             except ImportError:
-                result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
+                result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
