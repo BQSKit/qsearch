@@ -519,6 +519,9 @@ class ProductStep(QuantumStep):
         self.num_inputs = sum([step.num_inputs for step in substeps])
         self._substeps = substeps
         self.dits = 0 if len(substeps) == 0 else substeps[0].dits
+        self.d = 0 if len(sbusteps) == 0 else substeps[0].d
+        self._buffer = np.matrix(np.eye(d**dits), dtype='complex128')
+        self._buffer2 = np.matrix(np.eye(d**dits), dtype='complex128')
 
     def matrix(self, v):
         matrices = []
@@ -529,7 +532,9 @@ class ProductStep(QuantumStep):
             index += step.num_inputs
         U = matrices[0]
         for matrix in matrices[1:]:
-            U = np.matmul(U, matrix)
+            U = np.matmul(U, matrix, out=self._buffer)
+            self._buffer = self._buffer2
+            self._buffer2 = U
         return U
 
     def assemble(self, v, i=0):
