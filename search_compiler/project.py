@@ -136,7 +136,7 @@ class Project:
                 result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
-                    result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
+                    result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure
