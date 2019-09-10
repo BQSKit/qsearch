@@ -1,16 +1,11 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
-
-cnot = np.matrix([[1,0,0,0],
-                  [0,1,0,0],
-                  [0,0,0,1],
-                  [0,0,1,0]
-                 ], dtype='complex128')
+from . import gates
 
 def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
-    result = np.eye(LU[0].shape[0])
+    result = np.matrix(np.eye(LU[0].shape[0]), dtype='complex128')
     for U in LU:
         result = np.dot(result, U, out=result)
     return result
@@ -35,16 +30,6 @@ def matrix_distance_squared(A,B):
 
 def matrix_distance(A,B):
     return np.sqrt(np.abs(matrix_distance_squared(A,B)))
-
-def rot_z(theta):
-    return np.matrix([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
-
-def rot_x(theta):
-    return np.matrix([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
-
-def rot_y(theta):
-    return np.matrix([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
-
 
 def re_rot_z(theta, old_z):
     old_z[0,0] = np.exp(-1j*theta/2)
@@ -119,11 +104,52 @@ def random_vector_evaluation(A, B, count=1000):
         p1 = np.real(np.multiply(fv1, np.conj(fv1)))
         p2 = np.real(np.multiply(fv2, np.conj(fv2)))
 
-        diff = 1-np.sum(np.abs(p1-p2))/2
-        total += diff
-        if diff > maxs:
-            maxs = diff
-        if diff < mins:
-            mins = diff
+        kl = 0
+        for i in range(0, len(p1)):
+            kl += p1[i] * np.log(p1[i]/p2[i]) / np.log(10)
+
+#        diff = 1-np.sum(np.abs(p1-p2))/2
+        total += kl
+        if kl > maxs:
+            maxs = kl
+        if kl < mins:
+            mins = kl
     return (maxs, total/count, mins)
+
+def remap(U, order, d=2):
+    U = np.matrix(U, dtype='complex128')
+    if d != 2:
+        raise NotImplementedError("This function is not yet implemented for dits other than qubits because I have not implemented the swap for those qudits yet.")
+
+    dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
+    beforemat = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
+    aftermat  = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
+    I = np.matrix(np.eye(d), dtype = 'complex128')
+    if dits == 1:
+        return U
+    current_order = [i for i in range(0, dits)]
+    for i in range(0, dits):
+        if not order[i] == current_order[i]:
+            target_loc = i
+            current_loc = current_order.index(order[i])
+            print(current_loc)
+            while not target_loc == current_loc:
+                if current_loc > target_loc:
+                    # perform the swap current_loc and current_loc - 1
+                    swapmat = matrix_kron(*[I]*(current_loc-1), gates.swap, *[I]*(dits - current_loc - 1))
+#                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
+                    current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
+                    beforemat = np.dot(beforemat, swapmat)
+                    aftermat  = np.dot(swapmat, aftermat)
+                    current_loc = current_loc - 1
+                else:
+                    # perform the swap current_loc and current_loc + 1
+                    swapmat = matrix_kron(*[I]*(current_loc), gates.swap, *[I]*(dits - current_loc - 2))
+ #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
+                    current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
+                    beforemat = np.dot(beforemat, swapmat)
+                    aftermat  = np.dot(swapmat, aftermat)
+                    current_loc = current_loc + 1
+
+    return matrix_product(beforemat, U, aftermat)
 

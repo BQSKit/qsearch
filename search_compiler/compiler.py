@@ -8,19 +8,20 @@ from .circuits import *
 from . import gatesets as gatesets
 from .solver import default_solver
 from .logging import logprint
-from . import checkpoint, utils, heuristics
+from . import checkpoint, utils, heuristics, circuits
 
 class Compiler():
     def compile(self, U, depth):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None, None)
 
-def evaluate_step(tup, U, error_func, solver):
-    step, depth, initial_guess = tup
-    return (step, solver.solve_for_unitary(step, U, error_func, initial_guess), depth)
+def evaluate_step(tup, U, error_func, solver, I):
+    step, depth = tup
+    ostep = step._optimize(I)
+    return (step, solver.solve_for_unitary(ostep, U, error_func), depth)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=0.01, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
+    def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=1):
         self.threshold = threshold
         self.error_func = error_func
         self.heuristic = heuristic
@@ -34,6 +35,8 @@ class SearchCompiler(Compiler):
 
         if self.gateset.d**dits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
+
+        I = circuits.IdentityStep(self.gateset.d)
 
         initial_layer = self.gateset.initial_layer(dits)
         search_layers = self.gateset.search_layers(dits)
@@ -65,10 +68,9 @@ class SearchCompiler(Compiler):
         tiebreaker = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            root.index = 0
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
-            best_pair = (result[0], root, result[1])
+            best_pair = (result[0], root._optimize(I), result[1])
             logprint("New best! {} at depth 0".format(best_value/10))
             if depth == 0:
                 return best_pair
@@ -93,21 +95,18 @@ class SearchCompiler(Compiler):
                     break
                 tup = heapq.heappop(queue)
                 popped.append(tup)
-                logprint("Popped a node with score: {} at depth: {} with branch index: {}".format((tup[2]), tup[1], tup[5].index))
+                logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]))
 
             then = timer()
-            new_steps = [(current_tup[5].appending(search_layer), current_tup[1], current_tup[4]) for search_layer in search_layers for current_tup in popped]
-            for i in range(0, len(new_steps)):
-                new_steps[i][0].index = i
+            new_steps = [(current_tup[5].appending(search_layer), current_tup[1]) for search_layer in search_layers for current_tup in popped]
 
-            for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver), new_steps):
+            for step, result, current_depth in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, solver=self.solver, I=I), new_steps):
                 current_value = self.error_func(U, result[0])
-                logprint("{}\t{}".format(current_value, current_depth+1), custom="heuristic-test")
                 if (current_value < best_value and (best_value >= self.threshold or current_depth + 1 <= best_depth)) or (current_value < self.threshold and current_depth + 1 < best_depth):
                     best_value = current_value
-                    best_pair = (result[0], step, result[1])
+                    best_pair = (result[0], step._optimize(I), result[1])
                     best_depth = current_depth + 1
-                    logprint("New best! score: {} at depth: {} with branch index: {}".format(best_value, current_depth + 1, step.index))
+                    logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
                 if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
@@ -119,8 +118,5 @@ class SearchCompiler(Compiler):
         pool.terminate()
         pool.join()
         logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
-        logprint("final depth: {}".format(best_depth), custom="heuristic-depth")
-        if statefile == None:
-            checkpoint.delete()
         return best_pair
 

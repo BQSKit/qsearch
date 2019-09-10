@@ -1,6 +1,5 @@
 import numpy as np
-
-from . import utils, graphics
+from . import utils, graphics, gates
 
 class QuantumStep:
     def __init__(self):
@@ -27,6 +26,9 @@ class QuantumStep:
     def copy(self):
         return self
 
+    def _parts(self):
+        return [self]
+
     def __copy__(self):
         return self
 
@@ -52,16 +54,14 @@ class IdentityStep(QuantumStep):
 
     def __repr__(self):
         return "IdentityStep({})".format(self._n)
-    
-
 
 class ZXZXZQubitStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 3
         self.dits = 1
 
-        self._x90 = utils.rot_x(np.pi/2)
-        self._rot_z = utils.rot_z(0)
+        self._x90 = gates.rot_x(np.pi/2)
+        self._rot_z = gates.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -96,8 +96,8 @@ class XZXZPartialQubitStep(QuantumStep):
         self.num_inputs = 2
         self.dits = 1
 
-        self._x90 = utils.rot_x(np.pi/2)
-        self._rot_z = utils.rot_z(0)
+        self._x90 = gates.rot_x(np.pi/2)
+        self._rot_z = gates.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -122,7 +122,7 @@ class XZXZPartialQubitStep(QuantumStep):
         return [("U", "q{}".format(i))] 
     
     def __repr__(self):
-        return "ZXZXZQubitStep()"
+        return "XZXZPartialQubitStep()"
 
 class QiskitU3QubitStep(QuantumStep):
     def __init__(self):
@@ -146,12 +146,6 @@ class QiskitU3QubitStep(QuantumStep):
 
     def __repr__(self):
         return "QiskitU3QubitStep()"
-
-# NOTE: Consider this code DEPRECATED and expect it to be deleted before a real release.  Use QiskitU3QubitStep or ZXZXZQubitStep instead.
-class SingleQubitStep(ZXZXZQubitStep):
-    def __repr__(self):
-        return "SingleQubitStep()"
-
 
 class SingleQutritStep(QuantumStep):
     def __init__(self):
@@ -334,37 +328,34 @@ class CNOTStep(QuantumStep):
         return "CNOTStep()"
 
 class NonadjacentCNOTStep(QuantumStep):
-    def __init__(self, n, control, target):
-        self.dits = n
+    def __init__(self, dits, control, target):
+        self.dits = dits
         self.num_inputs = 0
         self.control = control
         self.target = target
-        self._U = gates.arbitrary_cnot(n, control, target)
+        self._U = gates.arbitrary_cnot(dits, control, target)
 
     def matrix(self, v):
         return self._U
 
     def assemble(self, v, i=0):
-        return [("gate", "CNOT", (), (control, target))]
+        return [("gate", "CNOT", (), (self.control, self.target))]
 
     def _draw_assemble(self, i=0):
-        return [("CNOT", "q{}".format(target), "q{}".format(control))]
+        return [("CNOT", "q{}".format(self.target), "q{}".format(self.control))]
 
     def __repr__(self):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 class CRZStep(QuantumStep):
-    _cnr = np.matrix([[1,0,0,0],
-                       [0,1,0,0],
-                       [0,0,0.5+0.5j,0.5-0.5j],
-                       [0,0,0.5-0.5j,0.5+0.5j]])
-    _I = np.matrix(np.eye(2))
+    _cnr = gates.sqrt_cnot
+    _I = np.matrix(np.eye(2), dtype='complex128')
     def __init__(self):
         self.num_inputs = 1
         self.dits = 2
 
     def matrix(self, v):
-        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, utils.rot_z(v[0]))) # TODO fix this line
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]*np.pi*2)))
         return np.dot(U, CRZStep._cnr)
 
     def assemble(self, v, i=0):
@@ -376,6 +367,41 @@ class CRZStep(QuantumStep):
 
     def __repr__(self):
         return "CQubitStep()"
+
+class NonadjacentCRZStep(QuantumStep):
+    _I = np.matrix(np.eye(2), dtype='complex128')
+
+    def __init__(self, dits, control, target):
+        self.dits = dits
+        self.num_inputs = 1
+        self.control = control
+        self.target = target
+        self._cnr = utils.matrix_kron(gates.sqrt_cnot, *[NonadjacentCRZStep._I]*(dits-2))
+        neworder = [i for i in range(0, dits)]
+        ci = 0
+        ti = 1
+        neworder[ci] = control
+        neworder[control] = ci
+        if ti == ci:
+            ti = control
+        elif ti == control:
+            ti = ci
+        tmp = neworder[ti]
+        neworder[ti] = neworder[target]
+        neworder[target] = tmp
+        self._cnr = utils.remap(self._cnr, neworder)
+
+    def matrix(self, v):
+        return self._cnr
+
+    def assemble(self, v, i=0):
+        return [("gate", "sqrt(CNOT)", (), (control, target)), ("gate", "RZ", (v[0],), (target,)), ("gate", "sqrt(CNOT)", (), (control, target))]
+
+    def _draw_assemble(self, i=0):
+        return [("CRZ", "q{}".format(target), "q{}".format(control))]
+
+    def __repr__(self):
+        return "NonadjacentCRZStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 
 # TODO fix this code or deprecate it
@@ -479,6 +505,9 @@ class KroneckerStep(QuantumStep):
             i += step.dits
         return endlist
 
+    def _parts(self):
+        return self._substeps
+
     def __deepcopy__(self, memo):
         return KroneckerStep(self._substeps.__deepcopy__(memo))
 
@@ -499,8 +528,12 @@ class ProductStep(QuantumStep):
             matrices.append(U)
             index += step.num_inputs
         U = matrices[0]
+        buffer1 = U.copy()
+        buffer2 = U
         for matrix in matrices[1:]:
-            U = np.matmul(U, matrix)
+            U = np.matmul(U, matrix, out=buffer1)
+            buffer1 = buffer2
+            buffer2 = U
         return U
 
     def assemble(self, v, i=0):
@@ -510,6 +543,104 @@ class ProductStep(QuantumStep):
             out += step.assemble(v[index:index+step.num_inputs], i)
             index += step.num_inputs
         return out
+
+
+    def _optimize(self, I):
+        steps = self._substeps
+        for size in range(2, self.dits):
+            latest = [None for _ in range(0, self.dits)]
+            connected = [set() for _ in range(0, self.dits)]
+            newsteps = []
+            for step in steps:
+                index = 0
+                for part in step._parts():
+                    nextindex = index + part.dits
+                    if type(part) is IdentityStep:
+                        index = nextindex
+                        continue
+                    part_connections = set(range(index, index + part.dits))
+                    for qudit in part_connections:
+                        part_connections = part_connections.union(connected[qudit])
+                    if len(part_connections) >= size:
+                        qudit = 0
+                        newkron = []
+                        while qudit < self.dits:
+                            if qudit in part_connections:
+                                newstep = latest[qudit]
+                                if newstep == None:
+                                    newstep = I
+                                newkron.append(newstep)
+                                for i in range(qudit, qudit+newstep.dits):
+                                    latest[i] = None
+                                    connected[i] = set()
+                                qudit += newstep.dits
+                            else:
+                                newkron.append(I)
+                                qudit += 1
+                        newsteps.append(KroneckerStep(*newkron))
+                        part_connections = set(range(index, index + part.dits))
+                        for i in part_connections:
+                            latest[i] = None
+                            connected[i] = set()
+                        for i in range(index, index + part.dits):
+                            latest[i] = part
+                            connected[i] = set(range(index, index + part.dits))
+                    else:
+                        qudit = min(part_connections)
+                        if len(part_connections) > part.dits:
+                            part = KroneckerStep(*[I]*(index - min(part_connections)), part, *[I]*(max(part_connections) - index + part.dits))
+                        if type(part) is ProductStep:
+                            part_pieces = part._substeps
+                        else:
+                            part_pieces = [part]
+                        newq = latest[qudit]
+                        if newq is None:
+                            newq = I
+                        qudit += newq.dits
+                        while newq.dits < part.dits:
+                            qtwo = latest[qudit]
+                            if qtwo is None:
+                                qtwo = I
+                            qudit += qtwo.dits
+                            if type(qtwo) is KroneckerStep:
+                                qtwo = qtwo._substeps
+                            else:
+                                qtwo = [qtwo]
+                            if type(newq) is KroneckerStep:
+                                newq = newq.appending(*qtwo)
+                            else:
+                                newq = KroneckerStep(newq, *qtwo)
+                        if type(newq) is IdentityStep:
+                            newq = part
+                        elif type(newq) is ProductStep:
+                            newq = newq.appending(*part_pieces)
+                        else:
+                            newq = ProductStep(newq, *part_pieces)
+                        for i in part_connections:
+                            latest[i] = newq
+                            connected[i] = part_connections
+                    index = nextindex
+            qudit = 0
+            newkron = []
+            while qudit < self.dits:
+                if qudit in part_connections:
+                    newstep = latest[qudit]
+                    if newstep == None:
+                        newstep = I
+                    newkron.append(newstep)
+                    for i in range(qudit, qudit+newstep.dits):
+                        latest[i] = None
+                        connected[i] = set()
+                    qudit += newstep.dits
+                else:
+                    newkron.append(I)
+                    qudit += 1
+            newsteps.append(KroneckerStep(*newkron))
+            steps = newsteps
+        return ProductStep(*steps)
+
+
+
 
     def _draw_assemble(self, i=0):
         endlist = []

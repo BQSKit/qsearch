@@ -1,4 +1,3 @@
-from threadpoolctl import threadpool_limits
 import numpy as np
 from numpy import matrix, array
 from .circuits import *
@@ -56,21 +55,35 @@ class Project:
         self._compilations[name] = (U, {"debug" : debug})
         self._save()
 
-    def configure_compiler(self, keyword, value, force=False):
-        if not force:
-            for name in self._compilations:
-                s = self.compilation_status(name)
-                if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
-                    warn("This project contains compilations which have been completed or have been started.  Changing the compiler configuration will delete the existing progress.  Call configure_compiler with the 'force' option set to True to reset these compilations and reconfigure the compiler.", RuntimeWarning, stacklevel=2)
-                    self.status()
-                    return
-        else:
-            for name in self._compilations:
-                U, cdict = self._compilations[name]
-                self.add_compilation(name, U, debug=cdict["debug"], handle_existing="overwrite")
-
+    def __setitem__(self, keyword, value):
+        for name in self._compilations:
+            s = self.compilation_status(name)
+            if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
+                warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.", RuntimeWarning, stacklevel=2)
+                return
         self._compiler_config[keyword] = value
         self._save()
+
+    def __getitem__(self, keyword):
+        return self._compiler_config[keyword]
+
+    def configure(self, dictionary):
+        for key in dictionary:
+            self[key] = dictionary[key]
+ 
+    def reset(self, name=None):
+        if name is None:
+            [self.reset(n) for n in self._compilations]
+        else:
+            statefile = self._checkpoint_path(name)
+            if os.path.exists(statefile):
+                os.remove(statefile)
+                self._save()
+            U, cdict = self._compilations[name]
+            cdict.pop("vector", None)
+            cdict.pop("structure", None)
+            self._compilations[name] = (U, cdict)
+
 
     def remove_compilation(self, name):
         statefile = self._checkpoint_path(name)
@@ -103,6 +116,7 @@ class Project:
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
         beams = self._config("beams", 1)
+        depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
         compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
@@ -116,8 +130,13 @@ class Project:
 
             logging.output_file = os.path.splitext(self.projfile)[0] + "-{}".format(name)
             logging.logprint("Starting compilation of {}".format(name))
-            with threadpool_limits(limits=blas_threads, user_api='blas'):
-                result, structure, vector = compiler.compile(U, depth=None, statefile=statefile)
+            try:
+                from threadpoolctl import threadpool_limits
+            except ImportError:
+                result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
+            else:
+                with threadpool_limits(limits=blas_threads, user_api='blas'):
+                    result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             logging.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure
@@ -138,6 +157,8 @@ class Project:
         return True
 
     def status(self):
+        complete = True
+        started = False
         for name in self._compilations:
             s = self.compilation_status(name)
             msg = ""
@@ -150,7 +171,17 @@ class Project:
             elif s == PROJECT_STATUS_DEBUGING:
                 msg = "Debug."
 
+            if s != PROJECT_STATUS_COMPLETE:
+                complete = False
+            if s != PROJECT_STATUS_NOTBEGUN:
+                started = True
             print("{}\t{}".format(name,msg))
+        if complete:
+            return PROJECT_STATUS_COMPLETE
+        elif started:
+            return PROJECT_STATUS_PROGRESS
+        else:
+            return PROJECT_STATUS_NOTBEGUN
 
     def compilation_status(self, name):
         _, cdict = self._compilations[name]
