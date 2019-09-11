@@ -16,6 +16,7 @@ reduce = "0.1"
 serde = {version = "1.0", features = ["derive"] }
 bincode = "1.1.4"
 better-panic = "*"
+complexmat = { path = "./complexmat" }
 
 [dependencies.pyo3]
 version = "0.7.0"
@@ -26,10 +27,6 @@ features = ["extension-module"]
 name = "search_compiler_rs"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "test_srcrs"
-path = "src/main.rs"
 
 [profile.release]
 lto = true

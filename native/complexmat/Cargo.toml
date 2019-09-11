@@ -1,0 +1,15 @@
+[package]
+name = "complexmat"
+version = "0.1.0"
+authors = ["Ethan Smith <ethan@ethanhs.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+num-complex = {version = "0.2", features = ["serde"] }
+ndarray = "0.12"
+rblas = { version = "*", git = "https://github.com/ethanhs/rust-blas" }
+libc = "0.2"
+serde = {version = "1.0", features = ["derive"] }
+float-cmp = "0.5"

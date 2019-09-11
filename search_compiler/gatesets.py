@@ -2,8 +2,10 @@ from . import gates
 from .logging import logprint
 from .circuits import *
 
+# TODO: Remove this massive hack once new pyo3/rust-numpy is released
 import search_compiler_rs
 from builtins import QubitCNOTLinearNative
+
 #TODO: rename all the n's in here to "dits" as appropriate
 
 # Commonly used functions for generating gatesets

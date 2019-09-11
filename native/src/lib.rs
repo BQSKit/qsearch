@@ -2,10 +2,10 @@
 #![feature(custom_attribute)]
 use num_complex::Complex64;
 
-use numpy::{PyArray2, PyArray1};
-use pyo3::prelude::*;
-use pyo3::types::{PyTuple, PyBytes, PyString};
+use numpy::{PyArray1, PyArray2};
 use pyo3::class::basic::PyObjectProtocol;
+use pyo3::prelude::*;
+use pyo3::types::{IntoPyDict, PyBytes, PyTuple};
 
 use bincode::{deserialize, serialize};
 
@@ -13,8 +13,7 @@ use better_panic::install;
 
 pub mod circuits;
 pub mod gatesets;
-//pub mod utils;
-pub mod matrix;
+pub mod utils;
 
 #[macro_export]
 macro_rules! c {
@@ -37,12 +36,52 @@ macro_rules! i {
     };
 }
 
-
 pub type PyComplexUnitary = PyArray2<Complex64>;
 
-use gatesets::{GateSetLinearCNOT, GateSet};
 use circuits::{Gate, QuantumGate};
+use gatesets::{GateSet, GateSetLinearCNOT};
 
+fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyObject> {
+    Ok(match gate {
+        Gate::CNOT(..) => {
+            let gate: PyObject = circuits.get("CNOTStep")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::Identity(id) => {
+            let gate: PyObject = circuits.get("IdentityStep")?.extract()?;
+            let args = PyTuple::new(py, vec![id.data.d, id.data.dits]);
+            gate.call1(py, args)?
+        }
+        Gate::U3(..) => {
+            let gate: PyObject = circuits.get("QiskitU3QubitStep")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::XZXZ(..) => {
+            let gate: PyObject = circuits.get("XZXZPartialQubitStep")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::Kronecker(kron) => {
+            let gate: PyObject = circuits.get("KroneckerStep")?.extract()?;
+            let steps: Vec<PyObject> = kron
+                .substeps
+                .iter()
+                .map(|i| gate_to_object(i, py, circuits).unwrap())
+                .collect();
+            let substeps = PyTuple::new(py, steps);
+            gate.call1(py, substeps)?
+        }
+        Gate::Product(prod) => {
+            let gate: PyObject = circuits.get("ProductStep")?.extract()?;
+            let steps: Vec<PyObject> = prod
+                .substeps
+                .iter()
+                .map(|i| gate_to_object(i, py, circuits).unwrap())
+                .collect();
+            let substeps = PyTuple::new(py, steps);
+            gate.call1(py, substeps)?
+        }
+    })
+}
 
 #[pyclass(name=Gate, dict)]
 struct PyGateWrapper {
@@ -74,7 +113,7 @@ impl PyGateWrapper {
             Gate::U3(..) => String::from("U3"),
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
-            Gate::Product(..) => String::from("Profuct"),
+            Gate::Product(..) => String::from("Product"),
         })
     }
 
@@ -94,15 +133,20 @@ impl PyGateWrapper {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let cls = slf.to_object(py).getattr(py, "__class__")?;
-        //let cls = PyString::new(py, "search_compiler_rs.QubitCNOTLinearNative").into_object(py);
-        //let dict = PyDict::new(py).into_object(py);
-        Ok((cls, (PyBytes::new(py, &serialize(&slf.gate).unwrap()).into_object(py),).into_object(py)))
+        Ok((
+            cls,
+            (PyBytes::new(py, &serialize(&slf.gate).unwrap()).into_object(py),).into_object(py),
+        ))
+    }
+
+    pub fn as_python(&self, py: Python) -> PyResult<PyObject> {
+        let circuits = py.import("search_compiler.circuits")?;
+        gate_to_object(&self.gate, py, circuits)
     }
 }
 
 #[pyproto]
 impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
-
     fn __str__(&self) -> PyResult<String> {
         self.kind()
     }
@@ -110,13 +154,12 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
     fn __repr__(&self) -> PyResult<String> {
         self.kind()
     }
-
 }
 
 #[pyclass(name=QubitCNOTLinearNative, dict)]
 struct PyGateSetLinearCNOT {
     gateset: GateSetLinearCNOT,
-    #[pyo3(get, set)]
+    #[pyo3(get)]
     d: u8,
 }
 
@@ -131,7 +174,13 @@ impl PyGateSetLinearCNOT {
     }
 
     pub fn initial_layer(&self, py: Python, n: u8) -> Py<PyGateWrapper> {
-        Py::new(py, PyGateWrapper { gate: self.gateset.initial_layer(n, self.d) } ).unwrap()
+        Py::new(
+            py,
+            PyGateWrapper {
+                gate: self.gateset.initial_layer(n, self.d),
+            },
+        )
+        .unwrap()
     }
 
     pub fn search_layers(&self, py: Python, n: u8) -> Vec<Py<PyGateWrapper>> {
@@ -139,7 +188,7 @@ impl PyGateSetLinearCNOT {
         let mut pygates = Vec::with_capacity(layers.len());
         for i in layers {
             pygates.push(Py::new(py, PyGateWrapper { gate: i }).unwrap())
-        };
+        }
         pygates
     }
 
@@ -147,18 +196,14 @@ impl PyGateSetLinearCNOT {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let cls = slf.to_object(py).getattr(py, "__class__")?;
-        //let cls = PyString::new(py, "search_compiler_rs.QubitCNOTLinearNative").into_object(py);
-        //let dict = PyDict::new(py).into_object(py);
         Ok((cls, PyTuple::empty(py).into_object(py)))
     }
 }
 
-
 #[pymodule]
 fn search_compiler_rs(py: Python, _m: &PyModule) -> PyResult<()> {
     install();
-    //m.add_class::<PyGateSetLinearCNOT>().unwrap();
-    //m.add_class::<PyGateWrapper>().unwrap();
+    // TODO: Remove this massive hack. Essentially we put our classes in builtins so that they work with pickling
     let builtins = py.import("builtins")?;
     builtins.add_class::<PyGateSetLinearCNOT>()?;
     builtins.add_class::<PyGateWrapper>()?;
@@ -166,4 +211,3 @@ fn search_compiler_rs(py: Python, _m: &PyModule) -> PyResult<()> {
     pyo3::type_object::initialize_type::<PyGateWrapper>(py, Some("builtins"))?;
     Ok(())
 }
-

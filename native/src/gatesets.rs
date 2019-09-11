@@ -43,7 +43,11 @@ pub struct GateSetLinearCNOT(Gate, Gate, Gate);
 
 impl GateSetLinearCNOT {
     pub fn new() -> Self {
-        GateSetLinearCNOT(GateU3::new(1).into(), GateXZXZ::new(1).into(), GateCNOT::new().into())
+        GateSetLinearCNOT(
+            GateU3::new(1).into(),
+            GateXZXZ::new(1).into(),
+            GateCNOT::new().into(),
+        )
     }
 }
 
