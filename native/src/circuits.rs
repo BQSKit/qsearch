@@ -27,7 +27,6 @@ pub enum Gate {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct QuantumGateData {
-    pub d: u8,
     pub dits: u8,
     pub num_inputs: usize,
 }
@@ -35,16 +34,15 @@ pub struct QuantumGateData {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GateIdentity {
     pub data: QuantumGateData,
-    matrix: ComplexUnitary,
+    pub matrix: ComplexUnitary,
 }
 
 impl GateIdentity {
-    pub fn new(n: usize, dits: u8) -> Self {
+    pub fn new(n: usize) -> Self {
         GateIdentity {
             matrix: ComplexUnitary::eye(n as i32),
             data: QuantumGateData {
-                d: n as u8,
-                dits: dits,
+                dits: 1,
                 num_inputs: 0,
             },
         }
@@ -67,10 +65,9 @@ pub struct GateU3 {
 }
 
 impl GateU3 {
-    pub fn new(d: u8) -> Self {
+    pub fn new() -> Self {
         GateU3 {
             data: QuantumGateData {
-                d: d,
                 dits: 1,
                 num_inputs: 3,
             },
@@ -110,10 +107,9 @@ pub struct GateXZXZ {
 }
 
 impl GateXZXZ {
-    pub fn new(d: u8) -> Self {
+    pub fn new() -> Self {
         GateXZXZ {
             data: QuantumGateData {
-                d: d,
                 dits: 1,
                 num_inputs: 2,
             },
@@ -147,7 +143,6 @@ impl GateCNOT {
         let nil = Complex64::new(0.0, 0.0);
         GateCNOT {
             data: QuantumGateData {
-                d: 2,
                 dits: 1,
                 num_inputs: 0,
             },
@@ -181,7 +176,6 @@ impl GateKronecker {
     pub fn new(substeps: Vec<Gate>) -> Self {
         GateKronecker {
             data: QuantumGateData {
-                d: 1,
                 dits: 1,
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
@@ -220,7 +214,6 @@ impl GateProduct {
     pub fn new(substeps: Vec<Gate>) -> Self {
         GateProduct {
             data: QuantumGateData {
-                d: 1,
                 dits: 1,
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },

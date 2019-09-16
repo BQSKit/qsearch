@@ -44,8 +44,8 @@ pub struct GateSetLinearCNOT(Gate, Gate, Gate);
 impl GateSetLinearCNOT {
     pub fn new() -> Self {
         GateSetLinearCNOT(
-            GateU3::new(1).into(),
-            GateXZXZ::new(1).into(),
+            GateU3::new().into(),
+            GateXZXZ::new().into(),
             GateCNOT::new().into(),
         )
     }
@@ -57,7 +57,7 @@ impl GateSet for GateSetLinearCNOT {
     }
 
     fn search_layers(&self, dits: u8, d: u8) -> Vec<Gate> {
-        let id = GateIdentity::new(d as usize, d).into();
+        let id = GateIdentity::new(d as usize).into();
         linear_toplogy(&self.2, &self.1, &self.0, &id, dits, d)
     }
 }
