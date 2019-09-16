@@ -120,6 +120,8 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
 
 #[pyclass(name=Gate, dict)]
 struct PyGateWrapper {
+    #[pyo3(get)]
+    dits: u8,
     gate: Gate,
 }
 
@@ -127,8 +129,10 @@ struct PyGateWrapper {
 impl PyGateWrapper {
     #[new]
     pub fn new(obj: &PyRawObject, gate: &PyBytes) {
+        let gate: Gate = deserialize(gate.as_bytes()).unwrap();
         obj.init(PyGateWrapper {
-            gate: deserialize(gate.as_bytes()).unwrap(),
+            dits: gate.dits(),
+            gate: gate,
         });
     }
 
@@ -209,10 +213,12 @@ impl PyGateSetLinearCNOT {
     }
 
     pub fn initial_layer(&self, py: Python, n: u8) -> Py<PyGateWrapper> {
+        let gate = self.gateset.initial_layer(n, self.d);
         Py::new(
             py,
             PyGateWrapper {
-                gate: self.gateset.initial_layer(n, self.d),
+                dits: gate.dits(),
+                gate: gate,
             },
         )
         .unwrap()
@@ -222,7 +228,16 @@ impl PyGateSetLinearCNOT {
         let layers = self.gateset.search_layers(n, self.d);
         let mut pygates = Vec::with_capacity(layers.len());
         for i in layers {
-            pygates.push(Py::new(py, PyGateWrapper { gate: i }).unwrap())
+            pygates.push(
+                Py::new(
+                    py,
+                    PyGateWrapper {
+                        dits: i.dits(),
+                        gate: i,
+                    },
+                )
+                .unwrap(),
+            )
         }
         pygates
     }
@@ -237,10 +252,12 @@ impl PyGateSetLinearCNOT {
 
 #[pyfunction]
 fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> {
+    let gate = object_to_gate(&obj, py)?;
     Py::new(
         py,
         PyGateWrapper {
-            gate: object_to_gate(&obj, py)?,
+            dits: gate.dits(),
+            gate: gate,
         },
     )
 }

@@ -25,6 +25,19 @@ pub enum Gate {
     Product(GateProduct),
 }
 
+impl Gate {
+    pub fn dits(&self) -> u8 {
+        match self {
+            Gate::Identity(i) => i.data.dits,
+            Gate::CNOT(c) => c.data.dits,
+            Gate::U3(u) => u.data.dits,
+            Gate::XZXZ(x) => x.data.dits,
+            Gate::Kronecker(k) => k.data.dits,
+            Gate::Product(p) => p.data.dits,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct QuantumGateData {
     pub dits: u8,
@@ -143,7 +156,7 @@ impl GateCNOT {
         let nil = Complex64::new(0.0, 0.0);
         GateCNOT {
             data: QuantumGateData {
-                dits: 1,
+                dits: 2,
                 num_inputs: 0,
             },
             matrix: ComplexUnitary::from_vec(
@@ -176,7 +189,7 @@ impl GateKronecker {
     pub fn new(substeps: Vec<Gate>) -> Self {
         GateKronecker {
             data: QuantumGateData {
-                dits: 1,
+                dits: substeps.iter().map(|i| i.dits()).sum(),
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
             substeps: substeps,
@@ -214,7 +227,7 @@ impl GateProduct {
     pub fn new(substeps: Vec<Gate>) -> Self {
         GateProduct {
             data: QuantumGateData {
-                dits: 1,
+                dits: substeps[0].dits(),
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
             substeps: substeps,
