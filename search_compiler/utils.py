@@ -1,7 +1,7 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
-from . import gates
+from . import unitaries
 
 def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
@@ -136,7 +136,7 @@ def remap(U, order, d=2):
             while not target_loc == current_loc:
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
-                    swapmat = matrix_kron(*[I]*(current_loc-1), gates.swap, *[I]*(dits - current_loc - 1))
+                    swapmat = matrix_kron(*[I]*(current_loc-1), unitaries.swap, *[I]*(dits - current_loc - 1))
 #                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
                     current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
@@ -144,7 +144,7 @@ def remap(U, order, d=2):
                     current_loc = current_loc - 1
                 else:
                     # perform the swap current_loc and current_loc + 1
-                    swapmat = matrix_kron(*[I]*(current_loc), gates.swap, *[I]*(dits - current_loc - 2))
+                    swapmat = matrix_kron(*[I]*(current_loc), unitaries.swap, *[I]*(dits - current_loc - 2))
  #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
                     current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)

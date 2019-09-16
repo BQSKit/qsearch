@@ -1,5 +1,5 @@
 import numpy as np
-from . import utils, graphics, gates
+from . import utils, graphics, unitaries
 
 class QuantumStep:
     def __init__(self):
@@ -60,8 +60,8 @@ class ZXZXZQubitStep(QuantumStep):
         self.num_inputs = 3
         self.dits = 1
 
-        self._x90 = gates.rot_x(np.pi/2)
-        self._rot_z = gates.rot_z(0)
+        self._x90 = unitaries.rot_x(np.pi/2)
+        self._rot_z = unitaries.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -96,8 +96,8 @@ class XZXZPartialQubitStep(QuantumStep):
         self.num_inputs = 2
         self.dits = 1
 
-        self._x90 = gates.rot_x(np.pi/2)
-        self._rot_z = gates.rot_z(0)
+        self._x90 = unitaries.rot_x(np.pi/2)
+        self._rot_z = unitaries.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
@@ -333,7 +333,7 @@ class NonadjacentCNOTStep(QuantumStep):
         self.num_inputs = 0
         self.control = control
         self.target = target
-        self._U = gates.arbitrary_cnot(dits, control, target)
+        self._U = unitaries.arbitrary_cnot(dits, control, target)
 
     def matrix(self, v):
         return self._U
@@ -348,18 +348,18 @@ class NonadjacentCNOTStep(QuantumStep):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 class CRZStep(QuantumStep):
-    _cnr = gates.sqrt_cnot
+    _cnr = unitaries.sqrt_cnot
     _I = np.matrix(np.eye(2), dtype='complex128')
     def __init__(self):
         self.num_inputs = 1
         self.dits = 2
 
     def matrix(self, v):
-        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]*np.pi*2)))
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, unitaries.rot_z(v[0]*np.pi*2)))
         return np.dot(U, CRZStep._cnr)
 
     def assemble(self, v, i=0):
-        raise NotImplementedError("I haven't implemented CRZ assemble.  Probably just delete and rely on sqrtcnot and z as separate gates.")
+        raise NotImplementedError("I haven't implemented CRZ assemble.  Probably just delete and rely on sqrtcnot and z as separate unitaries.")
         #return "CNOTROOT q{} q{}\nZ({}) q{}\nCNOTROOT q{} q{}".format(i, i+1, v[0], i+1, i, i+1)
 
     def _draw_assemble(Self, i=0):
@@ -376,7 +376,7 @@ class NonadjacentCRZStep(QuantumStep):
         self.num_inputs = 1
         self.control = control
         self.target = target
-        self._cnr = utils.matrix_kron(gates.sqrt_cnot, *[NonadjacentCRZStep._I]*(dits-2))
+        self._cnr = utils.matrix_kron(unitaries.sqrt_cnot, *[NonadjacentCRZStep._I]*(dits-2))
         neworder = [i for i in range(0, dits)]
         ci = 0
         ti = 1
