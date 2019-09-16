@@ -14,6 +14,8 @@ use std::ops::{Div, Mul};
 
 use float_cmp::*;
 
+use smallvec::{smallvec, SmallVec};
+
 #[macro_export]
 macro_rules! c {
     ($re:expr, $im:expr) => {
@@ -37,7 +39,7 @@ macro_rules! i {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ComplexUnitary {
-    data: Vec<Complex64>,
+    data: SmallVec<[Complex64; 32]>,
     pub size: i32,
 }
 
@@ -56,12 +58,15 @@ impl ComplexUnitary {
     }
 
     pub fn from_vec(v: Vec<Complex64>, size: i32) -> Self {
-        ComplexUnitary { data: v, size }
+        ComplexUnitary {
+            data: SmallVec::from_vec(v),
+            size,
+        }
     }
 
     pub fn zeros(size: i32) -> Self {
         ComplexUnitary {
-            data: vec![r!(0.0); (size * size) as usize],
+            data: smallvec![r!(0.0); (size * size) as usize],
             size,
         }
     }
@@ -105,7 +110,11 @@ impl ComplexUnitary {
     }
 
     pub fn into_ndarray(self) -> Array2<Complex64> {
-        Array2::from_shape_vec((self.size as usize, self.size as usize), self.data).unwrap()
+        Array2::from_shape_vec(
+            (self.size as usize, self.size as usize),
+            self.data.into_vec(),
+        )
+        .unwrap()
     }
 
     pub fn dot(&self, other: &ComplexUnitary) -> Complex64 {
