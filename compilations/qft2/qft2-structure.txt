@@ -1,1 +1,0 @@
-ProductStep(KroneckerStep(SingleQubitStep(), SingleQubitStep()), KroneckerStep(CQubitStep(),), KroneckerStep(SingleQubitStep(), SingleQubitStep()), KroneckerStep(CQubitStep(),), KroneckerStep(SingleQubitStep(), SingleQubitStep()), KroneckerStep(CQubitStep(),), KroneckerStep(SingleQubitStep(), SingleQubitStep()))
