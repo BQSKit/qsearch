@@ -65,7 +65,8 @@ class ZXZXZQubitStep(QuantumStep):
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
-        
+       
+    # TODO flip if test of flips is successful
     def matrix(self, v):
         utils.re_rot_z(v[0]*np.pi*2, self._rot_z)
         self._out = np.dot(self._rot_z, self._x90, out=self._out)
@@ -104,10 +105,10 @@ class XZXZPartialQubitStep(QuantumStep):
         
     def matrix(self, v):
         utils.re_rot_z(v[0]*np.pi*2 + np.pi, self._rot_z)
-        self._buffer = np.dot(self._x90, self._rot_z, out=self._buffer)
-        self._out = np.dot(self._buffer, self._x90, out=self._out)
+        self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
-        return np.dot(self._out, self._rot_z)
+        return np.dot(self._rot_z, self._out)
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
@@ -354,6 +355,7 @@ class CRZStep(QuantumStep):
         self.num_inputs = 1
         self.dits = 2
 
+# TODO flip if test of flips is successful
     def matrix(self, v):
         U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]*np.pi*2)))
         return np.dot(U, CRZStep._cnr)
