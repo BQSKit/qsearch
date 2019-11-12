@@ -83,6 +83,7 @@ class Project:
             cdict.pop("vector", None)
             cdict.pop("structure", None)
             self._compilations[name] = (U, cdict)
+        self._save()
 
 
     def remove_compilation(self, name):
