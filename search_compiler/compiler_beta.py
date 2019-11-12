@@ -15,11 +15,13 @@ class Compiler():
 class HeapqIter(list):
     def __iter__(self):
         return self
+
     def __next__(self):
         if len(self) == 0:
             raise StopIteration
         else:
             return heapq.heappop(self)
+
     def push(self, item):
         heapq.heappush(self, item)
 
