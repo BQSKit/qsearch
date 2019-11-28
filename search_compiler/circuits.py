@@ -533,7 +533,7 @@ class ProductStep(QuantumStep):
         buffer1 = U.copy()
         buffer2 = U
         for matrix in matrices[1:]:
-            U = np.matmul(U, matrix, out=buffer1)
+            U = np.matmul(matrix, U, out=buffer1)
             buffer1 = buffer2
             buffer2 = U
         return U
