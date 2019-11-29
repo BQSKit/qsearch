@@ -7,7 +7,7 @@ def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
     result = np.matrix(np.eye(LU[0].shape[0]), dtype='complex128')
     for U in LU:
-        result = np.dot(result, U, out=result)
+        result = np.matmul(U, result, out=result)
     return result
 
 def matrix_kron(*LU):
@@ -152,4 +152,9 @@ def remap(U, order, d=2):
                     current_loc = current_loc + 1
 
     return matrix_product(beforemat, U, aftermat)
+
+
+def endian_reverse(U, d=2):
+    n = int(np.log(U.shape[0])/np.log(d))
+    return remap(U, list(reversed(range(0, n))))
 

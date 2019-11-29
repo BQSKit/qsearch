@@ -18,13 +18,14 @@ class RZStep(circuits.QuantumStep):
         self._dits = 1
 
     def matrix(self, v):
-        return np.matrix([[np.exp(-1j*v[0]/2), 0],[0, np.exp(1j*v[0]/2)]], dtype='complex128')
+        x = v[0] * np.pi * 2
+        return np.matrix([[np.exp(-1j*x/2), 0],[0, np.exp(1j*x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RZ", list(v)]
 
     def assemble(self, v, i=0):
-        return "RZ({}) q{}".format(*v, i)
+        return [("gate", "Z", (v[0]*np.pi*2,), (i,))]
 
     def __repr__(self):
         return "RZStep()"
@@ -35,13 +36,14 @@ class RXStep(circuits.QuantumStep):
         self._dits = 1
 
     def matrix(self, v):
-        return np.matrix([[np.cos(v[0]/2), -1j*np.sin(v[0]/2)],[-1j*np.sin(v[0]/2), np.cos(v[0]/2)]], dtype='complex128')
+        x = v[0] * np.pi * 2
+        return np.matrix([[np.cos(x/2), -1j*np.sin(x/2)],[-1j*np.sin(x/2), np.cos(x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RX", list(v)]
 
     def assemble(self, v, i=0):
-        return "RX({}) q{}".format(*v, i)
+        return [("gate", "X", (v[0]*np.pi*2,), (i,))]
 
     def __repr__(self):
         return "RXStep()"
@@ -52,13 +54,14 @@ class RYStep(circuits.QuantumStep):
         self._dits = 1
 
     def matrix(self, v):
-        return np.matrix([[np.cos(v[0]/2), -np.sin(v[0]/2)],[np.sin(v[0]/2), np.cos(v[0]/2)]], dtype='complex128')
+        x = v[0] * np.pi*2
+        return np.matrix([[np.cos(x/2), -np.sin(x/2)],[np.sin(x/2), np.cos(x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RY", list(v)]
 
     def assemble(self, v, i=0):
-        return "RY({}) q{}".format(*v, i)
+        return [("gate", "Y", (v[0]*np.pi*2,), (i,))]
 
     def __repr__(self):
         return "RYStep()"
