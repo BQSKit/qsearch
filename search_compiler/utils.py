@@ -153,3 +153,8 @@ def remap(U, order, d=2):
 
     return matrix_product(beforemat, U, aftermat)
 
+
+def endian_reverse(U, d=2):
+    n = int(np.log(U.shape[0])/np.log(d))
+    return remap(U, list(reversed(range(0, n))))
+
