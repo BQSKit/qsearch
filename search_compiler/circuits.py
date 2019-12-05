@@ -1,5 +1,6 @@
 import numpy as np
 from . import utils, graphics, unitaries
+from zlib import adler32
 
 class QuantumStep:
     def __init__(self):
@@ -19,6 +20,12 @@ class QuantumStep:
         gates = self._draw_assemble()
         labels = ["q{}".format(i) for i in range(0, self.dits)]
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return adler32(repr(self).encode())
 
     def _draw_assemble(self, i=0):
         return []
@@ -392,7 +399,6 @@ class ProductStep(QuantumStep):
             index += step.num_inputs
         return out
 
-
     def _optimize(self, I):
         steps = self._substeps
         for size in range(2, self.dits):
@@ -486,9 +492,6 @@ class ProductStep(QuantumStep):
             newsteps.append(KroneckerStep(*newkron))
             steps = newsteps
         return ProductStep(*steps)
-
-
-
 
     def _draw_assemble(self, i=0):
         endlist = []
