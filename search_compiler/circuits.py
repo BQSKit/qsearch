@@ -285,6 +285,27 @@ class NonadjacentCNOTStep(QuantumStep):
     def __repr__(self):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
+class UStep(QuantumStep):
+    def __init__(self, U, d=2):
+        self.d = d
+        self.U = U
+        self.dits = int(np.log(U.shape[0])/np.log(2))
+
+    def matrix(self, v):
+        return U
+
+    def assemble(self, v, i=0):
+        return [("gate", "CUSTOM", (), (i,))]
+
+    def _draw_assemble(self. i=0):
+        return [("?", "q{}".format(i))]
+
+    def __repr__(self):
+        if self.d == 2:
+            return "UStep({})".format(repr(U))
+        else:
+            return "UStep({}, d={})".format(repr(U), self.d)
+
 class CRZStep(QuantumStep):
     _cnr = unitaries.sqrt_cnot
     _I = np.matrix(np.eye(2), dtype='complex128')
