@@ -40,7 +40,7 @@ class HeapIter(list):
                     raise StopIteration
                 node = heapq.heappop(self)
             self._in_progress[hash(node[-1])] = node
-            logstandard("Popped", node[0], node[2], node[1], hash(node[1]))
+            logstandard("Popped", node[0], node[2], node[1], hash(node[-1]))
             return node
 
     def add_target(self, target):
