@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 from functools import partial
 from timeit import default_timer as timer
 import heapq
@@ -8,7 +8,7 @@ from . import heuristics, gatesets, utils, circuits, checkpoint
 from .solver import default_solver
 from .logging import logprint, logstandard
 
-
+process_lock = Lock()
 class Compiler():
     def compile(self, U, depth):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
@@ -19,7 +19,9 @@ class HeapIter(list):
         return self
 
     def __next__(self):
+        process_lock.acquire()
         if len(self) == 0:
+            process_lock.release()
             raise StopIteration
         else:
             i = 0
@@ -30,17 +32,19 @@ class HeapIter(list):
                 else:
                     i += 1
             if len(self.targets) > 0:
-                node = self.targets.pop(0)
-                logstandard("Prioritized", node[0], node[2], node[1], hash(node[-1]))
+                node = self.targets.pop()
+                logstandard("Prioritized", node[0], node[2], node[1], hash(node[-1]), len(self))
                 self._in_progress[hash(node[-1])] = node
-                return node
-            node = heapq.heappop(self)
-            while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
-                if len(self) < 1:
-                    raise StopIteration
+            else:
                 node = heapq.heappop(self)
-            self._in_progress[hash(node[-1])] = node
-            logstandard("Popped", node[0], node[2], node[1], hash(node[-1]))
+                while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
+                    if len(self) < 1:
+                        process_lock.release()
+                        raise StopIteration
+                    node = heapq.heappop(self)
+                self._in_progress[hash(node[-1])] = node
+                logstandard("Popped", node[0], node[2], node[1], hash(node[-1]), len(self))
+            process_lock.release()
             return node
 
     def add_target(self, target):
@@ -106,7 +110,7 @@ class SearchCompiler(Compiler):
             best_value = self.error_func(U, result[0])
             best_depth = 0
             best_pair = (result[0], root._optimize(I), result[1])
-            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(root))
+            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(root), 0)
 
             if depth == 0 or best_value < self.threshold:
                 return best_pair
@@ -138,10 +142,13 @@ class SearchCompiler(Compiler):
 
         while len(process_queue) > 0:
             for step, vector, current_depth, value, h, old_h, old_v in pool.imap_unordered(partial(run_optimization, U=U, error_func=self.error_func, solver=self.solver, I=I, heuristic=self.heuristic), process_queue):
-                logstandard("Processed", old_h, old_v, current_depth - 1, hash(step))
+                process_lock.acquire()
+                logstandard("Processed", old_h, old_v, current_depth - 1, hash(step), len(process_queue))
                 # generate the successors
                 successors = [step.appending(layer) for layer in search_layers]
                 # add the latest results
+                if hash(step) in results:
+                    logprint("CONFIRMED CASE OF DUP: {}".format(hash(step)))
                 results[hash(step)] = (h, current_depth, value, tiebreaker, vector, successors)
                 tiebreaker += 1
                 # only add successors to the process queue if the depth limit has not been exceeded and the threshold limit has not been met
@@ -152,13 +159,14 @@ class SearchCompiler(Compiler):
 
                 # progress the search queue, if possible
                 all_evaluated = True
+                updated = False
                 while all_evaluated:
                     waitingcount = 0
                     for waiter in search_head[1]:
                         if not hash(waiter) in results:
                             all_evaluated = False
                             waitingcount += 1
-                            if not hash(waiter) in process_queue._in_progress:
+                            if updated and not hash(waiter) in process_queue._in_progress:
                                 process_queue.add_target((search_head[3], search_head[4], search_head[5], tiebreaker, waiter))
                                 tiebreaker += 1
 
@@ -168,14 +176,17 @@ class SearchCompiler(Compiler):
                             search_queue.push((rw[0], rw[1], rw[2], rw[3], rw[4], rw[5], waiter))
                         new_results = search_queue.pop()
                         search_head = (new_results[-1], new_results[-2], new_results[-3], new_results[0], new_results[1], new_results[2])
-                        logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]))
+                        #logprint("New Search Head is {}".format(hash(search_head[0])))
+                        #logprint("Next successors are {}".format([hash(s) for s in search_head[1]]))
+                        updated = True
+                        logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]), len(process_queue))
                         if new_results[2] < best_value:
                             best_value = new_results[2]
                             best_depth = new_results[1]
                             opt = new_results[-1]._optimize(I)
                             vector = new_results[-3]
                             best_pair = (opt.matrix(vector), opt, vector)
-                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(new_results[-1]))
+                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(new_results[-1]), len(process_queue))
                             if best_value <= self.threshold:
                                 logprint("Solution that passes threshold found!")
                                 search_queue = []
@@ -188,6 +199,7 @@ class SearchCompiler(Compiler):
                     break
                 process_queue.finish(hash(step))
                 checkpoint.save((search_head, results.copy(), search_queue.copy(), process_queue.copy(), best_depth, best_value, best_pair, tiebreaker, process_queue._in_progress.copy()), statefile)
+                process_lock.release()
 
         pool.close()
         pool.terminate()
