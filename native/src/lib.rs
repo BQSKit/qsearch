@@ -190,7 +190,12 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        self.kind()
+        Ok(format!("{:?}", self.gate))
+    }
+
+    fn __hash__(&self) -> PyResult<isize> {
+        let digest = md5::compute(format!("{:?}", self.gate).as_bytes());
+        Ok(digest.iter().enumerate().fold(0, |acc, (i, j)| acc + *j as isize * (256isize).pow(i as u32)))
     }
 }
 

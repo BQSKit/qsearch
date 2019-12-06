@@ -6,7 +6,8 @@ use num_complex::Complex64;
 use reduce::Reduce;
 use serde::{Deserialize, Serialize};
 
-use core::f64::consts::PI;
+use std::f64::consts::PI;
+use std::fmt;
 
 #[enum_dispatch]
 pub trait QuantumGate: Clone {
@@ -35,6 +36,38 @@ impl Gate {
             Gate::Kronecker(k) => k.data.dits,
             Gate::Product(p) => p.data.dits,
         }
+    }
+}
+
+impl fmt::Debug for Gate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Gate::CNOT(..) => write!(f, "CNOTStep()")?,
+            Gate::Identity(GateIdentity { matrix, ..}) => write!(f, "IdentityStep({})", matrix.size)?,
+            Gate::U3(..) => write!(f, "QiskitU3QubitStep()")?,
+            Gate::XZXZ(..) => write!(f, "XZXZPartialQubitStep()")?,
+            Gate::Kronecker(GateKronecker {substeps, ..}) => {
+                write!(f, "KroneckerStep(")?;
+                for (i, step) in substeps.iter().enumerate() {
+                    write!(f, "{:?}", step)?;
+                    if i != substeps.len() - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+                write!(f, ")")?;
+            },
+            Gate::Product(GateProduct {substeps, ..}) => {
+                write!(f, "ProductStep(")?;
+                for (i, step) in substeps.iter().enumerate() {
+                    write!(f, "{:?}", step)?;
+                    if i != substeps.len() - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+                write!(f, ")")?;
+            },
+        };
+        Ok(())
     }
 }
 

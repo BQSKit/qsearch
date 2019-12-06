@@ -2,6 +2,11 @@ import numpy as np
 from . import utils, graphics, unitaries
 from zlib import adler32
 
+try:
+    from search_compiler_rs import native_from_object
+except ImportError:
+    native_from_object = None
+
 class QuantumStep:
     def __init__(self):
         raise NotImplementedError("Subclasses of QuantumStep should declare their own initializers.")
@@ -421,6 +426,9 @@ class ProductStep(QuantumStep):
         return out
 
     def _optimize(self, I):
+        has_native = any([hasattr(step, "as_python") for step in self._substeps])
+        if has_native:
+            self._substeps = [step.as_python() if hasattr(step, "as_python") else step for step in self._substeps]
         steps = self._substeps
         for size in range(2, self.dits):
             latest = [None for _ in range(0, self.dits)]
@@ -512,6 +520,8 @@ class ProductStep(QuantumStep):
                     qudit += 1
             newsteps.append(KroneckerStep(*newkron))
             steps = newsteps
+        if has_native and native_from_object is not None:
+            return native_from_object(ProductStep(*steps))
         return ProductStep(*steps)
 
     def _draw_assemble(self, i=0):

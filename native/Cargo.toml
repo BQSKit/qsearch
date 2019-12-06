@@ -5,18 +5,19 @@ authors = ["Ethan Smith <ethan@ethanhs.me>"]
 edition = "2018"
 
 [dependencies]
-num-complex = { version = "0.2.3", features = ["serde"] }
+num-complex = { version = "0.2", features = ["serde"] }
 ndarray = "0.13"
 enum_dispatch = { git = "https://github.com/ethanhs/enum_dispatch.git" }
-numpy = "0.7.0"
+numpy = "0.7"
 rblas = { version = "*", git = "https://github.com/ethanhs/rust-blas" }
-libc = "0.2.66"
-num-traits = "0.2.10"
-reduce = "0.1.2"
-serde = { version = "1.0.103", features = ["derive"] }
-bincode = "1.2.0"
-better-panic = "0.2.0"
+libc = "0.2"
+num-traits = "0.2"
+reduce = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+bincode = "1.2"
+better-panic = "0.2"
 complexmat = { path = "./complexmat" }
+md5 = "0.7"
 
 [dependencies.pyo3]
 version = "0.8.3"
