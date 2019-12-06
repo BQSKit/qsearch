@@ -8,7 +8,6 @@ from . import heuristics, gatesets, utils, circuits, checkpoint
 from .solver import default_solver
 from .logging import logprint, logstandard
 
-process_lock = Lock()
 class Compiler():
     def compile(self, U, depth):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
@@ -19,9 +18,7 @@ class HeapIter(list):
         return self
 
     def __next__(self):
-        process_lock.acquire()
         if len(self) == 0:
-            process_lock.release()
             raise StopIteration
         else:
             i = 0
@@ -39,12 +36,10 @@ class HeapIter(list):
                 node = heapq.heappop(self)
                 while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
                     if len(self) < 1:
-                        process_lock.release()
                         raise StopIteration
                     node = heapq.heappop(self)
                 self._in_progress[hash(node[-1])] = node
                 logstandard("Popped", node[0], node[2], node[1], hash(node[-1]), len(self))
-            process_lock.release()
             return node
 
     def add_target(self, target):
@@ -139,7 +134,6 @@ class SearchCompiler(Compiler):
             tiebreaker += 1
         while len(process_queue) > 0:
             for step, vector, current_depth, value, h, old_h, old_v in pool.imap_unordered(partial(run_optimization, U=U, error_func=self.error_func, solver=self.solver, I=I, heuristic=self.heuristic), process_queue):
-                process_lock.acquire()
                 logstandard("Processed", old_h, old_v, current_depth - 1, hash(step), len(process_queue))
                 # generate the successors
                 successors = [step.appending(layer) for layer in search_layers]
@@ -194,7 +188,6 @@ class SearchCompiler(Compiler):
                     break
                 process_queue.finish(hash(step))
                 checkpoint.save((search_head, results.copy(), search_queue.copy(), process_queue.copy(), best_depth, best_value, best_pair, tiebreaker, process_queue._in_progress.copy()), statefile)
-                process_lock.release()
 
         pool.close()
         pool.terminate()
