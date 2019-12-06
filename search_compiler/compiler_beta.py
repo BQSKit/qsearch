@@ -1,4 +1,4 @@
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 from functools import partial
 from timeit import default_timer as timer
 import heapq
@@ -7,7 +7,6 @@ import numpy as np
 from . import heuristics, gatesets, utils, circuits, checkpoint
 from .solver import default_solver
 from .logging import logprint, logstandard
-
 
 class Compiler():
     def compile(self, U, depth):
@@ -30,17 +29,17 @@ class HeapIter(list):
                 else:
                     i += 1
             if len(self.targets) > 0:
-                node = self.targets.pop(0)
-                logstandard("Prioritized", node[0], node[2], node[1], hash(node[-1]))
+                node = self.targets.pop()
+                logstandard("Prioritized", node[0], node[2], node[1], hash(node[-1]), len(self))
                 self._in_progress[hash(node[-1])] = node
-                return node
-            node = heapq.heappop(self)
-            while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
-                if len(self) < 1:
-                    raise StopIteration
+            else:
                 node = heapq.heappop(self)
-            self._in_progress[hash(node[-1])] = node
-            logstandard("Popped", node[0], node[2], node[1], hash(node[-1]))
+                while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
+                    if len(self) < 1:
+                        raise StopIteration
+                    node = heapq.heappop(self)
+                self._in_progress[hash(node[-1])] = node
+                logstandard("Popped", node[0], node[2], node[1], hash(node[-1]), len(self))
             return node
 
     def add_target(self, target):
@@ -99,20 +98,18 @@ class SearchCompiler(Compiler):
         logprint("Creating a pool of {} workers.".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
-        #TODO re-implement checkpointing for the new way things work
         if recovered_state == None:
             root = circuits.ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
             best_depth = 0
             best_pair = (result[0], root._optimize(I), result[1])
-            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(root))
+            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(root), 0)
 
             if depth == 0 or best_value < self.threshold:
                 return best_pair
 
             root_successors = [root.appending(layer) for layer in search_layers]
-            #search_queue = HeapIter([(self.heuristic(best_value, 0), 0, best_value, -1, result[1], root_successors, root)])
             search_queue = HeapIter([])
             results = {hash(root) : (self.heuristic(best_value, 0), 0, best_value, -1, result[1], root_successors)}
             search_head = (root, root_successors, result[1], self.heuristic(best_value, best_depth), best_depth, best_value)
@@ -135,10 +132,9 @@ class SearchCompiler(Compiler):
         for successor in search_head[1]:
             process_queue.add_target((search_head[3], search_head[4], search_head[5], tiebreaker, successor))
             tiebreaker += 1
-
         while len(process_queue) > 0:
             for step, vector, current_depth, value, h, old_h, old_v in pool.imap_unordered(partial(run_optimization, U=U, error_func=self.error_func, solver=self.solver, I=I, heuristic=self.heuristic), process_queue):
-                logstandard("Processed", old_h, old_v, current_depth - 1, hash(step))
+                logstandard("Processed", old_h, old_v, current_depth - 1, hash(step), len(process_queue))
                 # generate the successors
                 successors = [step.appending(layer) for layer in search_layers]
                 # add the latest results
@@ -152,30 +148,34 @@ class SearchCompiler(Compiler):
 
                 # progress the search queue, if possible
                 all_evaluated = True
+                updated = False
                 while all_evaluated:
                     waitingcount = 0
                     for waiter in search_head[1]:
                         if not hash(waiter) in results:
                             all_evaluated = False
                             waitingcount += 1
-                            if not hash(waiter) in process_queue._in_progress:
+                            if updated and not hash(waiter) in process_queue._in_progress:
                                 process_queue.add_target((search_head[3], search_head[4], search_head[5], tiebreaker, waiter))
                                 tiebreaker += 1
 
                     if all_evaluated:
                         for waiter in search_head[1]:
+                            if hash(waiter) == 3273027901:
+                                waiter.draw()
                             rw = results[hash(waiter)]
                             search_queue.push((rw[0], rw[1], rw[2], rw[3], rw[4], rw[5], waiter))
                         new_results = search_queue.pop()
                         search_head = (new_results[-1], new_results[-2], new_results[-3], new_results[0], new_results[1], new_results[2])
-                        logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]))
+                        updated = True
+                        logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]), len(process_queue))
                         if new_results[2] < best_value:
                             best_value = new_results[2]
                             best_depth = new_results[1]
                             opt = new_results[-1]._optimize(I)
                             vector = new_results[-3]
                             best_pair = (opt.matrix(vector), opt, vector)
-                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(new_results[-1]))
+                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(new_results[-1]), len(process_queue))
                             if best_value <= self.threshold:
                                 logprint("Solution that passes threshold found!")
                                 search_queue = []
