@@ -1,5 +1,6 @@
 import numpy as np
-from . import utils, graphics, gates
+from . import utils, graphics, unitaries
+from zlib import adler32
 
 class QuantumStep:
     def __init__(self):
@@ -19,6 +20,12 @@ class QuantumStep:
         gates = self._draw_assemble()
         labels = ["q{}".format(i) for i in range(0, self.dits)]
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+
+    def __hash__(self):
+        return adler32(repr(self).encode())
 
     def _draw_assemble(self, i=0):
         return []
@@ -60,20 +67,20 @@ class ZXZXZQubitStep(QuantumStep):
         self.num_inputs = 3
         self.dits = 1
 
-        self._x90 = gates.rot_x(np.pi/2)
-        self._rot_z = gates.rot_z(0)
+        self._x90 = unitaries.rot_x(np.pi/2)
+        self._rot_z = unitaries.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
-        
+       
     def matrix(self, v):
         utils.re_rot_z(v[0]*np.pi*2, self._rot_z)
-        self._out = np.dot(self._rot_z, self._x90, out=self._out)
+        self._out = np.dot(self._x90, self._rot_z, out=self._out)
         utils.re_rot_z(v[1]*np.pi*2 + np.pi, self._rot_z)
-        self._buffer = np.dot(self._out, self._rot_z, out=self._buffer)
-        self._out = np.dot(self._buffer, self._x90, out=self._out)
+        self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
-        return np.dot(self._out, self._rot_z)
+        return np.dot(self._rot_z, self._out)
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
@@ -96,18 +103,18 @@ class XZXZPartialQubitStep(QuantumStep):
         self.num_inputs = 2
         self.dits = 1
 
-        self._x90 = gates.rot_x(np.pi/2)
-        self._rot_z = gates.rot_z(0)
+        self._x90 = unitaries.rot_x(np.pi/2)
+        self._rot_z = unitaries.rot_z(0)
         self._out = np.matrix(np.eye(2), dtype='complex128')
         self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
         
     def matrix(self, v):
         utils.re_rot_z(v[0]*np.pi*2 + np.pi, self._rot_z)
-        self._buffer = np.dot(self._x90, self._rot_z, out=self._buffer)
-        self._out = np.dot(self._buffer, self._x90, out=self._out)
+        self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
-        return np.dot(self._out, self._rot_z)
+        return np.dot(self._rot_z, self._out)
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
@@ -160,75 +167,6 @@ class SingleQutritStep(QuantumStep):
     
     def __repr__(self):
         return "SingleQutritStep()"
-
-class UStep(QuantumStep):
-    def __init__(self, U, name=None, dits=1):
-        self.name = name
-        self.num_inputs = 0
-        self._U = U
-        self.dits = dits
-
-    def matrix(self, v):
-        return self._U
-
-    def assemble(self, v, i=0):
-        if self.name is None:
-            return [("gate", "UNKNOWN", (), (i,))]
-        else:
-            return [("gate", self.name, (), (i,))]
-
-    def __repr__(self):
-        if self.name is None:
-            return "UStep({})".format(repr(self._U))
-        elif self.dits == 1:
-            return "UStep({}, name={})".format(repr(self._U), repr(self.name))
-        else:
-            return "UStep({}, name={}, dits={})".format(repr(self._U), repr(self.name), repr(self.dits))
-
-# TODO needs a rewrite or to be deprecated
-class CUStep(QuantumStep):
-    def __init__(self, U, name=None, flipped=False):
-        self.name = name
-        self.flipped = flipped
-        self.num_inputs = 0
-        self._U = U
-        n = np.shape(U)[0]
-        I = np.matrix(np.eye(n))
-        top = np.pad(self._U if flipped else I, [(0,n),(0,n)], 'constant')
-        bot = np.pad(I if flipped else self._U, [(n,0),(n,0)], 'constant')
-        self._CU = np.matrix(top + bot)
-        self.dits = 2
-
-    def matrix(self, v):
-        return self._CU
-
-    def assemble(self, v, i=0):
-        first = i+1 if self.flipped else i
-        second = i if self.flipped else i+1
-        if self.name is None:
-            return "CONTROLLED-UNKNOWN q{} q{}".format(first, second)
-        else:
-            return "C{} q{} q{}".format(self.name, first, second)
-
-    def __repr__(self):
-        return "CUStep(" + str(repr(self._U)) + ("" if self.name is None else ", name={}".format(repr(self.name))) + ("flipped=True" if self.flipped else "") + ")"
-
-# TODO needs updates or to be deprecated
-class InvertStep(QuantumStep):
-    def __init__(self, step):
-        self._step = step
-        self.num_inputs = step.num_inputs
-        self.dits = step.dits
-
-    def matrix(self, v):
-        return self._step.matrix(v).H
-
-    def assemble(self, v, i=0):
-        return "REVERSE {\n" + self._step.assemble(v, i) + "\n}"
-
-    def __repr__(self):
-        return "InvertStep({})".format(repr(self._step))
-
 
 class CSUMStep(QuantumStep):
     _csum =  np.matrix([[1,0,0, 0,0,0, 0,0,0],
@@ -333,7 +271,7 @@ class NonadjacentCNOTStep(QuantumStep):
         self.num_inputs = 0
         self.control = control
         self.target = target
-        self._U = gates.arbitrary_cnot(dits, control, target)
+        self._U = unitaries.arbitrary_cnot(dits, control, target)
 
     def matrix(self, v):
         return self._U
@@ -347,108 +285,46 @@ class NonadjacentCNOTStep(QuantumStep):
     def __repr__(self):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
+class UStep(QuantumStep):
+    def __init__(self, U, d=2):
+        self.d = d
+        self.U = U
+        self.dits = int(np.log(U.shape[0])/np.log(2))
+
+    def matrix(self, v):
+        return U
+
+    def assemble(self, v, i=0):
+        return [("gate", "CUSTOM", (), (i,))]
+
+    def _draw_assemble(self, i=0):
+        return [("?", "q{}".format(i))]
+
+    def __repr__(self):
+        if self.d == 2:
+            return "UStep({})".format(repr(U))
+        else:
+            return "UStep({}, d={})".format(repr(U), self.d)
+
 class CRZStep(QuantumStep):
-    _cnr = gates.sqrt_cnot
+    _cnr = unitaries.sqrt_cnot
     _I = np.matrix(np.eye(2), dtype='complex128')
     def __init__(self):
         self.num_inputs = 1
         self.dits = 2
 
     def matrix(self, v):
-        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, gates.rot_z(v[0]*np.pi*2)))
+        U = np.dot(CRZStep._cnr, np.kron(CRZStep._I, unitaries.rot_z(v[0]*np.pi*2)))
         return np.dot(U, CRZStep._cnr)
 
     def assemble(self, v, i=0):
-        raise NotImplementedError("I haven't implemented CRZ assemble.  Probably just delete and rely on sqrtcnot and z as separate gates.")
-        #return "CNOTROOT q{} q{}\nZ({}) q{}\nCNOTROOT q{} q{}".format(i, i+1, v[0], i+1, i, i+1)
+        return [("gate", "sqrt(CNOT)", (), (i, i+1)), ("gate", "Z", (v[0],), (i+1,)), ("gate", "sqrt(CNOT", (), (i, i+1))]
 
     def _draw_assemble(Self, i=0):
         return [("CRZ", "q{}".format(i+1), "q{}".format(i))]
 
     def __repr__(self):
         return "CQubitStep()"
-
-class NonadjacentCRZStep(QuantumStep):
-    _I = np.matrix(np.eye(2), dtype='complex128')
-
-    def __init__(self, dits, control, target):
-        self.dits = dits
-        self.num_inputs = 1
-        self.control = control
-        self.target = target
-        self._cnr = utils.matrix_kron(gates.sqrt_cnot, *[NonadjacentCRZStep._I]*(dits-2))
-        neworder = [i for i in range(0, dits)]
-        ci = 0
-        ti = 1
-        neworder[ci] = control
-        neworder[control] = ci
-        if ti == ci:
-            ti = control
-        elif ti == control:
-            ti = ci
-        tmp = neworder[ti]
-        neworder[ti] = neworder[target]
-        neworder[target] = tmp
-        self._cnr = utils.remap(self._cnr, neworder)
-
-    def matrix(self, v):
-        return self._cnr
-
-    def assemble(self, v, i=0):
-        return [("gate", "sqrt(CNOT)", (), (control, target)), ("gate", "RZ", (v[0],), (target,)), ("gate", "sqrt(CNOT)", (), (control, target))]
-
-    def _draw_assemble(self, i=0):
-        return [("CRZ", "q{}".format(target), "q{}".format(control))]
-
-    def __repr__(self):
-        return "NonadjacentCRZStep({}, {}, {})".format(self.dits, self.control, self.target)
-
-
-# TODO fix this code or deprecate it
-class RemapStep(QuantumStep):
-
-    def __init__(self, step, dits, source, target, name=None, d=2):
-        self._step = step
-        self._source = source
-        self._target = target
-        self.dits = dits
-        self._d = d
-        self._name = name
-        self.num_inputs = step.num_inputs
-        def g(a,b):
-            def f(i,j):
-                i_v = []
-                j_v = []
-                for k in range(0, dits):
-                    i_v.append(i%d)
-                    j_v.append(j%d)
-                    i = i // d
-                    j = j // d
-                j_v[b], j_v[a] = j_v[a], j_v[b]
-                eq = np.equal(i_v, j_v)
-                return np.all(eq, axis=0)
-            return f
-        targetswap = target if source == 1 else 1
-        swap_source = np.matrix(np.fromfunction(g(0,source), (d**dits,d**dits)), dtype='complex128')
-        swap_target = np.matrix(np.fromfunction(g(targetswap, target), (d**dits,d**dits)), dtype='complex128')
-        self._prefix = np.dot(swap_source, swap_target)
-        self._postfix = np.dot(swap_target, swap_source)
-
-
-    def matrix(self, v):
-       return utils.matrix_product(self._prefix, np.kron(self._step.matrix(v), np.eye(self._d**(self.dits-2))), self._postfix)
-
-    def assemble(self, v, i=0):
-        raise NotImplementedError("This whole class should probably be redone, and this can be rewritten then")
-        if self._name == None:
-            return "REMAP q{} q{} [{}]".format(self._source, self._target, self._step.assemble(v, i))
-        else:
-            return "{} q{} q{}".format(self._name, self._source, self._target)
-
-    def __repr__(self):
-        return "RemapStep({}, {}, {}, {}, name={}, d={})".format(self._step, self.dits, self._source, self._target, self._name, self._d)
-
-
 
 class CNOTRootStep(QuantumStep):
     _cnr = np.matrix([[1,0,0,0],
@@ -531,7 +407,7 @@ class ProductStep(QuantumStep):
         buffer1 = U.copy()
         buffer2 = U
         for matrix in matrices[1:]:
-            U = np.matmul(U, matrix, out=buffer1)
+            U = np.matmul(matrix, U, out=buffer1)
             buffer1 = buffer2
             buffer2 = U
         return U
@@ -543,7 +419,6 @@ class ProductStep(QuantumStep):
             out += step.assemble(v[index:index+step.num_inputs], i)
             index += step.num_inputs
         return out
-
 
     def _optimize(self, I):
         steps = self._substeps
@@ -638,9 +513,6 @@ class ProductStep(QuantumStep):
             newsteps.append(KroneckerStep(*newkron))
             steps = newsteps
         return ProductStep(*steps)
-
-
-
 
     def _draw_assemble(self, i=0):
         endlist = []

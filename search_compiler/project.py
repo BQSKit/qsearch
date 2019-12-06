@@ -5,7 +5,7 @@ from warnings import warn
 import os
 import shutil
 import pickle
-from .compiler import SearchCompiler
+from .compiler_beta import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 
@@ -83,6 +83,7 @@ class Project:
             cdict.pop("vector", None)
             cdict.pop("structure", None)
             self._compilations[name] = (U, cdict)
+        self._save()
 
 
     def remove_compilation(self, name):
@@ -115,10 +116,9 @@ class Project:
 
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
-        beams = self._config("beams", 1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver)
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]
