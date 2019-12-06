@@ -4,7 +4,7 @@ use num_complex::Complex64;
 use numpy::{PyArray1, PyArray2};
 use pyo3::class::basic::PyObjectProtocol;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyTuple};
+use pyo3::types::{PyBytes, PyTuple, PyDict};
 use pyo3::wrap_pyfunction;
 
 use bincode::{deserialize, serialize};
@@ -117,7 +117,7 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
     })
 }
 
-#[pyclass(name=Gate, dict)]
+#[pyclass(name=Gate, dict, module = "search_compiler_rs")]
 struct PyGateWrapper {
     #[pyo3(get)]
     dits: u8,
@@ -194,7 +194,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
     }
 }
 
-#[pyclass(name=QubitCNOTLinearNative, dict)]
+#[pyclass(name=QubitCNOTLinearNative, dict, module = "search_compiler_rs")]
 struct PyGateSetLinearCNOT {
     gateset: GateSetLinearCNOT,
     #[pyo3(get)]
@@ -261,15 +261,24 @@ fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> 
     )
 }
 
+
+fn add_module(module: &PyModule, py: Python) -> PyResult<()> {
+    py.import("sys")?
+        .dict()
+        .get_item("modules")
+        .unwrap()
+        .downcast_mut::<PyDict>()?
+        .set_item(module.name()?, module)
+}
+
 #[pymodule]
 fn search_compiler_rs(py: Python, m: &PyModule) -> PyResult<()> {
     install();
     m.add_wrapped(wrap_pyfunction!(native_from_object))?;
-    // TODO: Remove this massive hack. Essentially we put our classes in builtins so that they work with pickling
-    let builtins = py.import("builtins")?;
-    builtins.add_class::<PyGateSetLinearCNOT>()?;
-    builtins.add_class::<PyGateWrapper>()?;
-    pyo3::type_object::initialize_type::<PyGateSetLinearCNOT>(py, Some("builtins"))?;
-    pyo3::type_object::initialize_type::<PyGateWrapper>(py, Some("builtins"))?;
+    m.add_class::<PyGateSetLinearCNOT>()?;
+    m.add_class::<PyGateWrapper>()?;
+    add_module(m, py)?;
+    pyo3::type_object::initialize_type::<PyGateSetLinearCNOT>(py, Some(m.name()?))?;
+    pyo3::type_object::initialize_type::<PyGateWrapper>(py, Some(m.name()?))?;
     Ok(())
 }
