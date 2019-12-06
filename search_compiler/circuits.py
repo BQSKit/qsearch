@@ -297,7 +297,7 @@ class UStep(QuantumStep):
     def assemble(self, v, i=0):
         return [("gate", "CUSTOM", (), (i,))]
 
-    def _draw_assemble(self. i=0):
+    def _draw_assemble(self, i=0):
         return [("?", "q{}".format(i))]
 
     def __repr__(self):
