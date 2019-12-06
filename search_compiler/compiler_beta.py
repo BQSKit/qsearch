@@ -31,7 +31,8 @@ class HeapIter(list):
                     i += 1
             if len(self.targets) > 0:
                 node = self.targets.pop(0)
-                logstandard("Prioritized", node[0], node[2], node[1])
+                logstandard("Prioritized", node[0], node[2], node[1], hash(node[-1]))
+                self._in_progress[hash(node[-1])] = node
                 return node
             node = heapq.heappop(self)
             while hash(node[-1]) in self.completed or hash(node[-1]) in self._in_progress:
@@ -39,7 +40,7 @@ class HeapIter(list):
                     raise StopIteration
                 node = heapq.heappop(self)
             self._in_progress[hash(node[-1])] = node
-            logstandard("Popped", node[0], node[2], node[1])
+            logstandard("Popped", node[0], node[2], node[1], hash(node[1]))
             return node
 
     def add_target(self, target):
@@ -99,13 +100,13 @@ class SearchCompiler(Compiler):
 
         recovered_state = checkpoint.recover(statefile)
         #TODO re-implement checkpointing for the new way things work
-        if recovered_state == None or True:
+        if recovered_state == None:
             root = circuits.ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
             best_depth = 0
             best_pair = (result[0], root._optimize(I), result[1])
-            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth)
+            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(root))
 
             if depth == 0 or best_value < self.threshold:
                 return best_pair
@@ -128,7 +129,7 @@ class SearchCompiler(Compiler):
             process_queue = HeapIter(process_queue)
             for key in in_progress:
                 process_queue.push(in_progress[key])
-            print("Recovered a state with best result H: {} V: {} D: {}".format(self.heuristic(best_value, best_depth), best_value, best_depth))
+            logprint("Recovered a state with best result H: {} V: {} D: {}".format(self.heuristic(best_value, best_depth), best_value, best_depth))
 
         process_queue.add_helper(results)
         head_value = self.error_func(search_head[0].matrix(search_head[2]), U)
@@ -138,7 +139,7 @@ class SearchCompiler(Compiler):
 
         while len(process_queue) > 0:
             for step, vector, current_depth, value, h, old_h, old_v in pool.imap_unordered(partial(run_optimization, U=U, error_func=self.error_func, solver=self.solver, I=I, heuristic=self.heuristic), process_queue):
-                logstandard("Processed", old_h, old_v, current_depth - 1)
+                logstandard("Processed", old_h, old_v, current_depth - 1, hash(step))
                 # generate the successors
                 successors = [step.appending(layer) for layer in search_layers]
                 # add the latest results
@@ -168,14 +169,14 @@ class SearchCompiler(Compiler):
                             search_queue.push((rw[0], rw[1], rw[2], rw[3], rw[4], rw[5], waiter))
                         new_results = search_queue.pop()
                         search_head = (new_results[-1], new_results[-2], new_results[-3], new_results[0], new_results[1], new_results[2])
-                        logstandard("Searched", new_results[0], new_results[2], new_results[1])
+                        logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]))
                         if new_results[2] < best_value:
                             best_value = new_results[2]
                             best_depth = new_results[1]
                             opt = new_results[-1]._optimize(I)
                             vector = new_results[-3]
                             best_pair = (opt.matrix(vector), opt, vector)
-                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth)
+                            logstandard("New best!", self.heuristic(best_value, best_depth), best_value, best_depth, hash(new_results[-1]))
                             if best_value <= self.threshold:
                                 logprint("Solution that passes threshold found!")
                                 search_queue = []
