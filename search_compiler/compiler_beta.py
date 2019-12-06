@@ -103,7 +103,6 @@ class SearchCompiler(Compiler):
         logprint("Creating a pool of {} workers.".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
-        #TODO re-implement checkpointing for the new way things work
         if recovered_state == None:
             root = circuits.ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func)
@@ -116,7 +115,6 @@ class SearchCompiler(Compiler):
                 return best_pair
 
             root_successors = [root.appending(layer) for layer in search_layers]
-            #search_queue = HeapIter([(self.heuristic(best_value, 0), 0, best_value, -1, result[1], root_successors, root)])
             search_queue = HeapIter([])
             results = {hash(root) : (self.heuristic(best_value, 0), 0, best_value, -1, result[1], root_successors)}
             search_head = (root, root_successors, result[1], self.heuristic(best_value, best_depth), best_depth, best_value)
@@ -139,7 +137,6 @@ class SearchCompiler(Compiler):
         for successor in search_head[1]:
             process_queue.add_target((search_head[3], search_head[4], search_head[5], tiebreaker, successor))
             tiebreaker += 1
-
         while len(process_queue) > 0:
             for step, vector, current_depth, value, h, old_h, old_v in pool.imap_unordered(partial(run_optimization, U=U, error_func=self.error_func, solver=self.solver, I=I, heuristic=self.heuristic), process_queue):
                 process_lock.acquire()
@@ -147,8 +144,6 @@ class SearchCompiler(Compiler):
                 # generate the successors
                 successors = [step.appending(layer) for layer in search_layers]
                 # add the latest results
-                if hash(step) in results:
-                    logprint("CONFIRMED CASE OF DUP: {}".format(hash(step)))
                 results[hash(step)] = (h, current_depth, value, tiebreaker, vector, successors)
                 tiebreaker += 1
                 # only add successors to the process queue if the depth limit has not been exceeded and the threshold limit has not been met
@@ -172,12 +167,12 @@ class SearchCompiler(Compiler):
 
                     if all_evaluated:
                         for waiter in search_head[1]:
+                            if hash(waiter) == 3273027901:
+                                waiter.draw()
                             rw = results[hash(waiter)]
                             search_queue.push((rw[0], rw[1], rw[2], rw[3], rw[4], rw[5], waiter))
                         new_results = search_queue.pop()
                         search_head = (new_results[-1], new_results[-2], new_results[-3], new_results[0], new_results[1], new_results[2])
-                        #logprint("New Search Head is {}".format(hash(search_head[0])))
-                        #logprint("Next successors are {}".format([hash(s) for s in search_head[1]]))
                         updated = True
                         logstandard("Searched", new_results[0], new_results[2], new_results[1], hash(new_results[-1]), len(process_queue))
                         if new_results[2] < best_value:

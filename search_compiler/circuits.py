@@ -1,6 +1,6 @@
 import numpy as np
 from . import utils, graphics, unitaries
-from zlib import adler32
+from hashlib import md5
 
 class QuantumStep:
     def __init__(self):
@@ -25,7 +25,7 @@ class QuantumStep:
         return hash(self) == hash(other)
 
     def __hash__(self):
-        return adler32(repr(self).encode())
+        return int(md5(repr(self).encode()).hexdigest(), 16)
 
     def _draw_assemble(self, i=0):
         return []
