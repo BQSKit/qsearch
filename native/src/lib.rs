@@ -1,5 +1,4 @@
 #![feature(arbitrary_self_types)]
-#![feature(custom_attribute)]
 use num_complex::Complex64;
 
 use numpy::{PyArray1, PyArray2};
@@ -137,7 +136,7 @@ impl PyGateWrapper {
     }
 
     pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PyComplexUnitary> {
-        PyComplexUnitary::from_array(py, &self.gate.mat(v.as_slice()).into_ndarray()).to_owned()
+        PyComplexUnitary::from_array(py, &self.gate.mat(v.as_slice().unwrap()).into_ndarray()).to_owned()
     }
 
     #[getter]
@@ -165,7 +164,7 @@ impl PyGateWrapper {
     }
 
     pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
-        Ok(PyBytes::new(py, &serialize(&self.gate).unwrap()).into_object(py))
+        Ok(PyBytes::new(py, &serialize(&self.gate).unwrap()).to_object(py))
     }
 
     pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
@@ -174,7 +173,7 @@ impl PyGateWrapper {
         let cls = slf.to_object(py).getattr(py, "__class__")?;
         Ok((
             cls,
-            (PyBytes::new(py, &serialize(&slf.gate).unwrap()).into_object(py),).into_object(py),
+            (PyBytes::new(py, &serialize(&slf.gate).unwrap()).to_object(py),).to_object(py),
         ))
     }
 
@@ -246,7 +245,7 @@ impl PyGateSetLinearCNOT {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let cls = slf.to_object(py).getattr(py, "__class__")?;
-        Ok((cls, PyTuple::empty(py).into_object(py)))
+        Ok((cls, PyTuple::empty(py).to_object(py)))
     }
 }
 
