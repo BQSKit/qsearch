@@ -132,9 +132,8 @@ class SearchCompiler(Compiler):
             logprint("Recovered a state with best result H: {} V: {} D: {}".format(self.heuristic(best_value, best_depth), best_value, best_depth))
 
         process_queue.add_helper(results)
-        head_value = self.error_func(search_head[0].matrix(search_head[2]), U)
         for successor in search_head[1]:
-            process_queue.add_target((self.heuristic(head_value, search_head[3]), search_head[3], head_value, tiebreaker, successor))
+            process_queue.add_target((search_head[3], search_head[4], search_head[5], tiebreaker, successor))
             tiebreaker += 1
 
         while len(process_queue) > 0:
