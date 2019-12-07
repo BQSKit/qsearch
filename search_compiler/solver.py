@@ -7,6 +7,10 @@ import scipy.optimize
 from . import circuits as circuits
 from . import utils as util
 
+try:
+    from search_compiler_rs import native_from_object
+except ImportError:
+    native_from_object = None
 
 def default_solver():
     return COBYLA_Solver()
@@ -46,3 +50,6 @@ class DIY_Solver():
         initial_guess = np.array(np.random.rand(circuit.num_inputs))
         x = f(eval_func, initial_guess)
 
+class COBYLA_SolverNative(COBYLA_Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
+        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
