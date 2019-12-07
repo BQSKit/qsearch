@@ -49,9 +49,9 @@ impl fmt::Debug for Gate {
             Gate::Kronecker(GateKronecker {substeps, ..}) => {
                 write!(f, "KroneckerStep(")?;
                 for (i, step) in substeps.iter().enumerate() {
-                    write!(f, "{:?}", step)?;
+                    write!(f, "{:?},", step)?;
                     if i != substeps.len() - 1 {
-                        write!(f, ", ")?;
+                        write!(f, " ")?;
                     }
                 }
                 write!(f, ")")?;
@@ -59,9 +59,9 @@ impl fmt::Debug for Gate {
             Gate::Product(GateProduct {substeps, ..}) => {
                 write!(f, "ProductStep(")?;
                 for (i, step) in substeps.iter().enumerate() {
-                    write!(f, "{:?}", step)?;
+                    write!(f, "{:?},", step)?;
                     if i != substeps.len() - 1 {
-                        write!(f, ", ")?;
+                        write!(f, " ")?;
                     }
                 }
                 write!(f, ")")?;
