@@ -5,7 +5,7 @@ from warnings import warn
 import os
 import shutil
 import pickle
-from .compiler_beta import SearchCompiler
+from .compiler import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 
