@@ -60,7 +60,7 @@ class DictionaryAssembly(QuantumAssembly):
         return self.dictionary[segment[1]].format(*segment[2], *segment[3])
 
 qiskitdict = {
-        "initial" : "qc = QuantumCircuit({})\n",
+        "initial" : "num_qubits = {}\nqr = QuantumRegister(num_qubits)\ncr = ClassicalRegister(num_qubits)\nqc = QuantumCircuit(qr,cr)\n",
         "X" : "qc.rx({}, {})\n",
         "Y" : "qc.ry({}, {})\n",
         "Z" : "qc.rz({}, {})\n",

@@ -116,9 +116,10 @@ class Project:
 
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
+        beams = self._config("beams", 1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]
@@ -222,5 +223,5 @@ class Project:
 
         out = assembler.assemble(cdict["structure"], cdict["vector"], language, write_location)
         if write_location == None:
-            print(out)
+            return out
 
