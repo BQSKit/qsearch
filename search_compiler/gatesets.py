@@ -1,4 +1,3 @@
-from . import gates
 from .logging import logprint
 from .circuits import *
 

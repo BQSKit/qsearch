@@ -1,4 +1,3 @@
-from . import gates
 from search_compiler.circuits import *
 import scipy as sp
 

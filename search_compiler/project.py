@@ -223,5 +223,5 @@ class Project:
 
         out = assembler.assemble(cdict["structure"], cdict["vector"], language, write_location)
         if write_location == None:
-            print(out)
+            return out
 
