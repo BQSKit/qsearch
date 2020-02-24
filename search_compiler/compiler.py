@@ -20,6 +20,7 @@ def evaluate_step(tup, U, error_func, solver, I):
     step, depth = tup
     #ostep = self.optimize_circuit(step, I)
     #ostep = step._optimize(I)
+    ostep = step # disabled optimization rn because both implementations are broken
     return (step, solver.solve_for_unitary(ostep, U, error_func), depth)
 
 class SearchCompiler(Compiler):
