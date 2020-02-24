@@ -1,5 +1,6 @@
 from multiprocessing import Pool, cpu_count
 from functools import partial
+from itertools import chain
 from timeit import default_timer as timer
 import heapq
 
