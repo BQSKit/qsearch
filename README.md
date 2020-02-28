@@ -54,4 +54,4 @@ We use the physics convention of using big endian when naming our qubits.  Some 
 little_endian = sc.utils.endian_reverse(big_endian) # you can use the same function to convert in the other direction as well
 ```
 
-## Find information on customizing the compiler in the wiki.
+## Find information on customizing the compiler in the [wiki](https://github.com/WolfLink/search_compiler/wiki).
