@@ -104,8 +104,7 @@ class QubitCNOTRing(Gateset):
         return steps + [finisher]
 
 
-# TODO this code is untested
-class QubitCNOTAdjancencyList(Gateset):
+class QubitCNOTAdjacencyList(Gateset):
     def __init__(self, adjacency):
         self.single_step = QiskitU3QubitStep()
         self.single_alt = XZXZPartialQubitStep()

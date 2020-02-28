@@ -10,9 +10,6 @@ class QuantumStep:
     def matrix(self, v):
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the matrix(v) method.")
 
-    def path(self, v):
-        raise NotImplementedError("Subclasses of QuantumStep are required to implement the path(v) method.")
-
     def assemble(self, v, i=0):
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the assemble(v, i) method.")
 
