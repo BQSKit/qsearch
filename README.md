@@ -12,7 +12,7 @@ Then you can import the library as any other python package:
 import search_compiler as sc
 ```
 
-# Getting Started - search_compiler Projects
+# Getting Started: search_compiler Projects
 The simplest way to use the search_compiler library is by using a Project. When you create a project, you provide a path where a directory will be created to contain the project's files.
 ```
 import search_compiler as sc
