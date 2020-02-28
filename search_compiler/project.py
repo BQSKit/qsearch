@@ -58,7 +58,7 @@ class Project:
         self._save()
 
     def __setitem__(self, keyword, value):
-        if self._compiler_config[keyword] == value:
+        if keyword in self._compiler_config and self._compiler_config[keyword] == value:
             return # no need to send out a warning if nothing is being changed
         for name in self._compilations:
             s = self._compilation_status(name)

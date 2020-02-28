@@ -447,6 +447,7 @@ class ProductStep(QuantumStep):
 
     def _optimize(self, I):
         return self # disabling optimization because its broken rn
+        # for more detail: This code will make your circuits run faster, but will sometimes remove single qubit gates unintentionally, which is bad.  I am working on an improved version of this function, but it is a problem which will take some time to find a good algorithm for.
         steps = self._substeps
         for size in range(2, self.dits):
             latest = [None for _ in range(0, self.dits)]

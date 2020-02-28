@@ -18,9 +18,7 @@ class Compiler():
 
 def evaluate_step(tup, U, error_func, solver, I):
     step, depth = tup
-    #ostep = self.optimize_circuit(step, I)
-    #ostep = step._optimize(I)
-    ostep = step # disabled optimization rn because both implementations are broken
+    ostep = step._optimize(I)
     return (step, solver.solve_for_unitary(ostep, U, error_func), depth)
 
 class SearchCompiler(Compiler):
@@ -33,6 +31,7 @@ class SearchCompiler(Compiler):
         self.beams = int(beams)
 
     def compile(self, U, depth=None, statefile=None):
+        startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = self.heuristic
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(self.gateset.d)))
 
@@ -69,6 +68,7 @@ class SearchCompiler(Compiler):
         best_value = 0
         best_pair  = 0
         tiebreaker = 0
+        rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func)
@@ -83,7 +83,7 @@ class SearchCompiler(Compiler):
             #             0            1      2         3         4        5
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
         else:
-            queue, best_depth, best_value, best_pair, tiebreaker = recovered_state
+            queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         while len(queue) > 0:
@@ -114,12 +114,12 @@ class SearchCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logprint("Layer completed after {} seconds".format(timer() - then))
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
 
 
         pool.close()
         pool.terminate()
         pool.join()
-        logprint("Finished compilation at depth {} with score {}.".format(best_depth, best_value/10))
+        logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
         return best_pair
 
