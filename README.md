@@ -1,6 +1,16 @@
 # search_compiler
 A compiler for quantum computers based on A* and numerical optimization.
 
+# Installation
+This is a python package which can be installed using pip:
+```
+git clone git@github.com:WolfLink/search_compiler.git
+python3 -m pip install ./search_compiler
+```
+Then you can import the library as any other python package:
+```
+import search_compiler as sc
+```
 
 # Getting Started - search_compiler Projects
 The simplest way to use the search_compiler library is by using a Project. When you create a project, you provide a path where a directory will be created to contain the project's files.
