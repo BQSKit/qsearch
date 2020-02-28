@@ -107,7 +107,8 @@ class QubitCNOTRing(Gateset):
 # TODO this code is untested
 class QubitCNOTAdjancencyList(Gateset):
     def __init__(self, adjacency):
-        self.single_step = EfficientQubitStep()
+        self.single_step = QiskitU3QubitStep()
+        self.single_alt = XZXZPartialQubitStep()
         self.I = IdentityStep(2)
         self.adjacency = adjacency # a list of tuples of control-target.  It is not recommended to add bidirectional links, because that difference can be handled more efficiently via single qubit gates.
         self.d = 2
@@ -124,7 +125,7 @@ class QubitCNOTAdjancencyList(Gateset):
             if pair[0] >= n or pair[1] >= n:
                 continue
             cnot = NonadjacentCNOTStep(n, pair[0], pair[1])
-            single_steps = [self.single_step if i in pair else self.I for i in range(0, n)]
+            single_steps = [self.single_step if i == pair[0] else self.single_alt if i == pair[1] else self.I for i in range(0, n)]
             steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
         return steps
 

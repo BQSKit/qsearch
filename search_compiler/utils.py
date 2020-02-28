@@ -132,7 +132,6 @@ def remap(U, order, d=2):
         if not order[i] == current_order[i]:
             target_loc = i
             current_loc = current_order.index(order[i])
-            print(current_loc)
             while not target_loc == current_loc:
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
