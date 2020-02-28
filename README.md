@@ -10,7 +10,7 @@ myproject = sc.Project("desired/path/to/project/directory")
 ```
 You can then add unitaries to compile, and set compiler properties. Unitary matrices should be provided as `numpy` matrices using `dtype="complex128"`. Details on compiler options are provided in a later section.
 ```
-myproject.add_compilation("gate_name", gate_matrix)
+myproject.add_compilation("gate_name", gate_unitary)
 myproject["compiler_option"] = value
 ```
 Once your project is configured, you can start your project by calling `run()`. The compiler uses an automatic checkpoint system, so if it is killed while in-progress, it can be resumed by calling `run()` again.
@@ -45,7 +45,7 @@ You can configure options that the compiler used by a project using `myproject["
 - **`threshold`** is a `float` that defines the termination condition of the compilation. The compiler will return when it finds a circuit with a `error_func` value less than this threshold. The default value is `1e-10`.
 - **`gateset`** is a `search_compiler.gatesets.Gateset` object that is used by the compiler. The default value is `search_compiler.gatesets.QubitCNOTLinear()`.
 - **`error_func`** is a distance function that compares two `numpy.matrix` objects. It must return `float` values that greater than or equal to zero such that input matrices that are close to the same will result in outputs close to zero. The default value is `search_compiler.utils.matrix_distance_squared`.
-- **`search_type`** is a `string` that can be set to `"breadth"` to perform a breadth-first search, or `"greedy"` to perform a greedy search using only `error_func`. When set to any other value, including the default, astar search is performed using `heuristic`.
+- **`search_type`** is a `string` that can be set to `"breadth"` to perform a breadth-first search, or `"greedy"` to perform a greedy search using only `error_func`. When set to any other value, including the default, A* search is performed using `heuristic`.
 - **`heuristic`** is a function that takes a value from `error_func` and a search depth, and returns a `float`. It is used to order the priority queue used for searching. Setting this option overrides `search_type`.
 - **`solver`** is a solver object as defined in `search_compiler.solver`. It is used to set the numerical optimizer used to solve for circuit parameters. The default is `search_compiler.solver.COBYLA_Solver()`.
 - **`beams`** can be sets the number of nodes popped off of the priority queue during each search layer. The default is `1`. Setting a higher value will cause the compiler to examine multiple search paths in parallel, and may result in faster runtimes. Setting a negative value will have the compiler calculate a number of beams to maximize CPU utilization. This does not always result in a speedup, so caution is advised when adjusting this value.

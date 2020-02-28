@@ -446,6 +446,7 @@ class ProductStep(QuantumStep):
         return out
 
     def _optimize(self, I):
+        return self # disabling optimization because its broken rn
         steps = self._substeps
         for size in range(2, self.dits):
             latest = [None for _ in range(0, self.dits)]
