@@ -120,7 +120,7 @@ class Project:
 
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
-        beams = self._config("beams", 1)
+        beams = self._config("beams", -1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
         compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
