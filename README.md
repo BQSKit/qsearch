@@ -18,7 +18,7 @@ The simplest way to use the search_compiler library is by using a Project. When 
 import search_compiler as sc
 myproject = sc.Project("desired/path/to/project/directory")
 ```
-You can then add unitaries to compile, and set compiler properties. Unitary matrices should be provided as `numpy` matrices using `dtype="complex128"`. Details on compiler options are provided in a later section.
+You can then add unitaries to compile, and set compiler properties. Unitary matrices should be provided as `numpy` matrices using `dtype="complex128"`.
 ```
 myproject.add_compilation("gate_name", gate_unitary)
 myproject["compiler_option"] = value
