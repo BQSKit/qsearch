@@ -46,7 +46,7 @@ class Project:
     def add_compilation(self, name, U, debug=False, handle_existing=None):
         if name in self._compilations:
             s = self._compilation_status(name)
-            if handle_existing == "ignore":
+            if handle_existing == "ignore" or np.array_equal(U, self._compilations[name][0]): # ignore if the ignore flag is specified or if the matrix is the same as the already existing one
                 return
             elif handle_existing == "overwrite":
                 self.remove_compilation(name)
