@@ -1,7 +1,7 @@
 # search_compiler
 An implementation of a quantum gate synthesis algorithm based on A* and numerical optimization.  It relies on [NumPy](https://numpy.org) and [SciPy](https://www.scipy.org).  It can export code for [Qiskit[(https://qiskit.org) and [OpenQASM](https://github.com/Qiskit/openqasm).
 
-This is an implementation of the algorithm described in the paper [Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727).
+This is an implementation of the algorithm described in the paper *[Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727)*.
 
 # Installation
 This is a python package which can be installed using pip:
