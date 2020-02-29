@@ -15,9 +15,6 @@ class QuantumStep:
     def matrix(self, v):
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the matrix(v) method.")
 
-    def path(self, v):
-        raise NotImplementedError("Subclasses of QuantumStep are required to implement the path(v) method.")
-
     def assemble(self, v, i=0):
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the assemble(v, i) method.")
 
@@ -295,9 +292,10 @@ class UStep(QuantumStep):
         self.d = d
         self.U = U
         self.dits = int(np.log(U.shape[0])/np.log(2))
+        self.num_inputs = 0
 
     def matrix(self, v):
-        return U
+        return self.U
 
     def assemble(self, v, i=0):
         return [("gate", "CUSTOM", (), (i,))]
@@ -310,6 +308,32 @@ class UStep(QuantumStep):
             return "UStep({})".format(repr(U))
         else:
             return "UStep({}, d={})".format(repr(U), self.d)
+
+class CUStep(QuantumStep):
+    def __init__(self, U, name=None, flipped=False):
+        self.name = name
+        self.flipped = flipped
+        self.num_inputs = 0
+        self._U = U
+        n = np.shape(U)[0]
+        I = np.matrix(np.eye(n))
+        top = np.pad(self._U if flipped else I, [(0,n),(0,n)], 'constant')
+        bot = np.pad(I if flipped else self._U, [(n,0),(n,0)], 'constant')
+        self._CU = np.matrix(top + bot)
+        self.dits = 2
+        self.num_inputs = 0
+
+    def matrix(self, v):
+        return self._CU
+
+    def _draw_assemble(self, i=0):
+        raise NotImplementedError("Need to finish this")
+
+    def assemble(self, v, i=0):
+        return [("gate", "CUSTOM", (), (i,i+1))]
+
+    def __repr__(self):
+        return "CUStep(" + str(repr(self._U)) + ("" if self.name is None else ", name={}".format(repr(self.name))) + ("flipped=True" if self.flipped else "") + ")"
 
 class CRZStep(QuantumStep):
     _cnr = unitaries.sqrt_cnot
@@ -410,11 +434,9 @@ class ProductStep(QuantumStep):
             index += step.num_inputs
         U = matrices[0]
         buffer1 = U.copy()
-        buffer2 = U
         for matrix in matrices[1:]:
             U = np.matmul(matrix, U, out=buffer1)
-            buffer1 = buffer2
-            buffer2 = U
+            buffer1 = matrix
         return U
 
     def assemble(self, v, i=0):
@@ -426,6 +448,8 @@ class ProductStep(QuantumStep):
         return out
 
     def _optimize(self, I):
+        return self # disabling optimization because its broken rn
+        # for more detail: This code will make your circuits run faster, but will sometimes remove single qubit gates unintentionally, which is bad.  I am working on an improved version of this function, but it is a problem which will take some time to find a good algorithm for.
         steps = self._substeps
         for size in range(2, self.dits):
             latest = [None for _ in range(0, self.dits)]

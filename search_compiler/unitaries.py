@@ -116,5 +116,5 @@ def arbitrary_cnot(dits, control, target):
         else:
             # if the control is true and matched and the target is matched, return 0
             return 0
-    return np.matrix(np.fromfunction(np.vectorize(f), (2**dits,2**dits)),dtype='int')
+    return np.matrix(np.fromfunction(np.vectorize(f), (2**dits,2**dits)),dtype='complex128')
 

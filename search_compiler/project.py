@@ -2,17 +2,19 @@ import numpy as np
 from numpy import matrix, array
 from .circuits import *
 from warnings import warn
+from enum import Enum
 import os
 import shutil
 import pickle
-from .compiler_beta import SearchCompiler
+from .compiler import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 
-PROJECT_STATUS_PROGRESS = 1
-PROJECT_STATUS_COMPLETE = 2
-PROJECT_STATUS_NOTBEGUN = 3
-PROJECT_STATUS_DEBUGING = 4
+class Project_Status(Enum):
+    PROGRESS = 1
+    COMPLETE = 2
+    NOTBEGUN = 3
+    DEUGGING = 4
 
 class Project:
     def __init__(self, path, debug=False):
@@ -43,12 +45,12 @@ class Project:
 
     def add_compilation(self, name, U, debug=False, handle_existing=None):
         if name in self._compilations:
-            s = self.compilation_status(name)
-            if handle_existing == "ignore":
+            s = self._compilation_status(name)
+            if handle_existing == "ignore" or np.array_equal(U, self._compilations[name][0]): # ignore if the ignore flag is specified or if the matrix is the same as the already existing one
                 return
             elif handle_existing == "overwrite":
                 self.remove_compilation(name)
-            elif s == PROJECT_STATUS_PROGRESS or s == PROJECT_STATUS_COMPLETE:
+            elif s == Project_Status.PROGRESS or s == Project_Status.COMPLETE:
                 warn("A compilation with name {} already exists.  To change it, remove it and then add it again.".format(name), RuntimeWarning, stacklevel=2)
                 return
         
@@ -56,9 +58,11 @@ class Project:
         self._save()
 
     def __setitem__(self, keyword, value):
+        if keyword in self._compiler_config and self._compiler_config[keyword] == value:
+            return # no need to send out a warning if nothing is being changed
         for name in self._compilations:
-            s = self.compilation_status(name)
-            if s == PROJECT_STATUS_COMPLETE or s == PROJECT_STATUS_PROGRESS:
+            s = self._compilation_status(name)
+            if s == Project_Status.COMPLETE or s == Project_Status.PROGRESS:
                 warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.", RuntimeWarning, stacklevel=2)
                 return
         self._compiler_config[keyword] = value
@@ -116,16 +120,17 @@ class Project:
 
         heuristic = self._config("heuristic", heuristic)
         solver = self._config("solver", default_solver())
+        beams = self._config("beams", -1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]
             statefile = self._checkpoint_path(name)
             if "debug" in cdict and cdict["debug"]:
                 statefile = None
-            if self.compilation_status(name) == PROJECT_STATUS_COMPLETE:
+            if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
 
             logging.output_file = os.path.splitext(self.projfile)[0] + "-{}".format(name)
@@ -150,49 +155,51 @@ class Project:
             self.status()
 
     def complete(self):
-        for name in self._compilations:
-            s = self.compilation_status(name)
-            if s == PROJECT_STATUS_PROGRESS or s == PROJECT_STATUS_NOTBEGUN:
-                return False
-        return True
+        return self._overall_status() == Project_Status.COMPLETE
 
-    def status(self):
-        complete = True
-        started = False
-        for name in self._compilations:
-            s = self.compilation_status(name)
+    def status(self, name=None):
+        namelist = [name] if name else self._compilations
+        for n in namelist:
+            s = self._compilation_status(n)
             msg = ""
-            if s == PROJECT_STATUS_COMPLETE:
+            if s == Project_Status.COMPLETE:
                 msg = "Complete!"
-            elif s == PROJECT_STATUS_PROGRESS:
+            elif s == Project_Status.PROGRESS:
                 msg = "In progress..."
-            elif s == PROJECT_STATUS_NOTBEGUN:
+            elif s == Project_Status.NOTBEGUN:
                 msg = "Not started."
-            elif s == PROJECT_STATUS_DEBUGING:
+            elif s == Project_Status.DEBUGING:
                 msg = "Debug."
-
-            if s != PROJECT_STATUS_COMPLETE:
-                complete = False
-            if s != PROJECT_STATUS_NOTBEGUN:
-                started = True
             print("{}\t{}".format(name,msg))
-        if complete:
-            return PROJECT_STATUS_COMPLETE
-        elif started:
-            return PROJECT_STATUS_PROGRESS
-        else:
-            return PROJECT_STATUS_NOTBEGUN
 
-    def compilation_status(self, name):
+    def _compilation_status(self, name):
         _, cdict = self._compilations[name]
         if "debug" in cdict and cdict["debug"]:
-            return PROJECT_STATUS_DEBUGING
+            return Project_Status.DEBUGING
         elif os.path.exists(self._checkpoint_path(name)):
-            return PROJECT_STATUS_PROGRESS
+            return Project_Status.PROGRESS
         elif "structure" in cdict and "vector" in cdict:
-            return PROJECT_STATUS_COMPLETE
+            return Project_Status.COMPLETE
         else:
-            return PROJECT_STATUS_NOTBEGUN
+            return Project_Status.NOTBEGUN
+
+    def _overall_status(self):
+        complete = True
+        started = False
+        if name:
+            return self._compilation_status(name)
+        for name in self._compilations:
+            s = self._compilation_status(name)
+            if s != Project_Status.COMPLETE:
+                complete = False
+            if s != Project_Status.NOTBEGUN:
+                started = True
+        if complete:
+            return Project_Status.COMPLETE
+        elif started:
+            return Project_Status.PROGRESS
+        else:
+            return Project_Status.NOTBEGUN
 
     def get_result(self, name):
         _, cdict = self._compilations[name]
@@ -222,5 +229,5 @@ class Project:
 
         out = assembler.assemble(cdict["structure"], cdict["vector"], language, write_location)
         if write_location == None:
-            print(out)
+            return out
 
