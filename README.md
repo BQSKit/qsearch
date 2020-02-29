@@ -10,10 +10,22 @@ pip3 install search_compiler
 ```
 You can instead install from source:
 ```
+git+https://github.com/Wolflink/search_compiler.git
+```
+
+
+You can also install from a downloaded copy of the repository:
+```
 git clone git@github.com:WolfLink/search_compiler.git
 pip3 install ./search_compiler
 ```
-Then you can import the library as any other python package:
+If you make changes to your local copy, you can reinstall the package:
+```
+pip3 install --upgrade ./search_compiler
+```
+
+
+Once installed, you can import the library like any other python package:
 ```
 import search_compiler as sc
 ```
