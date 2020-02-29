@@ -4,10 +4,14 @@ An implementation of a quantum gate synthesis algorithm based on A* and numerica
 This is an implementation of the algorithm described in the paper *[Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727)*.
 
 # Installation
-This is a python package which can be installed using pip:
+This is a python package which can be installed using pip.  You can install from [PyPi](https://pypi.org) using:
+```
+pip3 install search_compiler 
+```
+You can instead install from source:
 ```
 git clone git@github.com:WolfLink/search_compiler.git
-python3 -m pip install ./search_compiler
+pip3 install ./search_compiler
 ```
 Then you can import the library as any other python package:
 ```
