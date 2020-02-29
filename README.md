@@ -8,12 +8,6 @@ This is a python package which can be installed using pip.  You will need a Pyth
 ```
 pip3 install search_compiler 
 ```
-You can instead install from source:
-```
-git+https://github.com/Wolflink/search_compiler.git
-```
-
-
 You can also install from a downloaded copy of the repository:
 ```
 git clone git@github.com:WolfLink/search_compiler.git
