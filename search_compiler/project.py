@@ -170,7 +170,7 @@ class Project:
                 msg = "Not started."
             elif s == Project_Status.DEBUGING:
                 msg = "Debug."
-            print("{}\t{}".format(name,msg))
+            print("{}\t{}".format(n,msg))
 
     def _compilation_status(self, name):
         _, cdict = self._compilations[name]
