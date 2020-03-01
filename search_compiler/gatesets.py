@@ -1,6 +1,11 @@
 from .logging import logprint
 from .circuits import *
 
+try:
+    from search_compiler_rs import QubitCNOTLinearNative
+except ImportError:
+    pass
+
 #TODO: rename all the n's in here to "dits" as appropriate
 
 # Commonly used functions for generating gatesets

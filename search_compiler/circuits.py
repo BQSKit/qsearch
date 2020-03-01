@@ -2,6 +2,11 @@ import numpy as np
 from . import utils, graphics, unitaries
 from hashlib import md5
 
+try:
+    from search_compiler_rs import native_from_object
+except ImportError:
+    native_from_object = None
+
 class QuantumStep:
     def __init__(self):
         raise NotImplementedError("Subclasses of QuantumStep should declare their own initializers.")
