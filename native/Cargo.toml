@@ -7,7 +7,9 @@ edition = "2018"
 [dependencies]
 num-complex = { version = "0.2", features = ["serde"] }
 ndarray = "0.13"
-enum_dispatch = { git = "https://github.com/ethanhs/enum_dispatch.git" }
+blas-src = { version = "0.4.0", default-features = false, features = ["openblas"] }
+openblas-src = { version = "0.7.0", default-features = false, features = ["cblas", "system"] }
+enum_dispatch = "0.2.1"
 numpy = "0.7"
 rblas = { version = "*", git = "https://github.com/ethanhs/rust-blas" }
 libc = "0.2"
