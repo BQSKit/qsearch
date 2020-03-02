@@ -47,7 +47,7 @@ myproject.assemble("gate_name", write_location="path/to/output/file") # This wil
 ```
 
 # Compiling Without Projects
-If you would like to avoid working with Projects, you can call the compiler function directly.
+If you would like to avoid working with Projects, you can use the `SearchCompiler` class directly.
 ```
 import search_compiler as sc
 compiler = sc.SearchCompiler()
