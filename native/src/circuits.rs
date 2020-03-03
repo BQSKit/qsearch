@@ -24,6 +24,7 @@ pub enum Gate {
     XZXZ(GateXZXZ),
     Kronecker(GateKronecker),
     Product(GateProduct),
+    ConstantUnitary(GateConstantUnitary),
 }
 
 impl Gate {
@@ -35,6 +36,7 @@ impl Gate {
             Gate::XZXZ(x) => x.data.dits,
             Gate::Kronecker(k) => k.data.dits,
             Gate::Product(p) => p.data.dits,
+            Gate::ConstantUnitary(pl) => pl.data.dits,
         }
     }
 }
@@ -43,10 +45,12 @@ impl fmt::Debug for Gate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Gate::CNOT(..) => write!(f, "CNOTStep()")?,
-            Gate::Identity(GateIdentity { matrix, ..}) => write!(f, "IdentityStep({})", matrix.size)?,
+            Gate::Identity(GateIdentity { matrix, .. }) => {
+                write!(f, "IdentityStep({})", matrix.size)?
+            }
             Gate::U3(..) => write!(f, "QiskitU3QubitStep()")?,
             Gate::XZXZ(..) => write!(f, "XZXZPartialQubitStep()")?,
-            Gate::Kronecker(GateKronecker {substeps, ..}) => {
+            Gate::Kronecker(GateKronecker { substeps, .. }) => {
                 write!(f, "KroneckerStep(")?;
                 for (i, step) in substeps.iter().enumerate() {
                     write!(f, "{:?},", step)?;
@@ -55,8 +59,8 @@ impl fmt::Debug for Gate {
                     }
                 }
                 write!(f, ")")?;
-            },
-            Gate::Product(GateProduct {substeps, ..}) => {
+            }
+            Gate::Product(GateProduct { substeps, .. }) => {
                 write!(f, "ProductStep(")?;
                 for (i, step) in substeps.iter().enumerate() {
                     write!(f, "{:?},", step)?;
@@ -65,7 +69,10 @@ impl fmt::Debug for Gate {
                     }
                 }
                 write!(f, ")")?;
-            },
+            }
+            Gate::ConstantUnitary(GateConstantUnitary { matrix, ..}) => {
+                write!(f, "Unitary({:?})", matrix)?;
+            }
         };
         Ok(())
     }
@@ -78,6 +85,34 @@ pub struct QuantumGateData {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct GateConstantUnitary {
+    pub data: QuantumGateData,
+    pub matrix: ComplexUnitary,
+}
+
+impl GateConstantUnitary {
+    pub fn new(mat: ComplexUnitary, dits: u8) -> Self {
+        GateConstantUnitary {
+            data: QuantumGateData {
+                dits,
+                num_inputs: 0,
+            },
+            matrix: mat,
+        }
+    }
+}
+
+impl QuantumGate for GateConstantUnitary {
+    fn mat(&self, _v: &[f64]) -> ComplexUnitary {
+        self.matrix.clone()
+    }
+
+    fn inputs(&self) -> usize {
+        0
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GateIdentity {
     pub data: QuantumGateData,
     pub matrix: ComplexUnitary,
@@ -86,7 +121,7 @@ pub struct GateIdentity {
 impl GateIdentity {
     pub fn new(n: usize) -> Self {
         GateIdentity {
-            matrix: ComplexUnitary::eye(n as i32),
+            matrix: ComplexUnitary::eye(n as usize),
             data: QuantumGateData {
                 dits: 1,
                 num_inputs: 0,
