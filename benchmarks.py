@@ -15,7 +15,7 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 # 4 qubit benchmarks (WARNING: These may take days to run.)
 #project.add_compilation("qft4", unitaries.qft(16))
 #project.add_compilation("full adder", unitaries.full_adder)
-#project.add_compilation("ethelyne", advanced_unitaries.ethelyne)
+#project.add_compilation("ethylene", advanced_unitaries.ethylene)
 
 
 # compiler configuration example
