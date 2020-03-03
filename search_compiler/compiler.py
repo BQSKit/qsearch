@@ -81,7 +81,7 @@ class SearchCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
