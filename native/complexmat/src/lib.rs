@@ -40,13 +40,18 @@ macro_rules! i {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ComplexUnitary {
     data: SmallVec<[Complex64; 32]>,
-    pub size: i32,
+    pub size: usize,
 }
 
 impl ComplexUnitary {
-    pub fn from_size_fn<F>(n: i32, mut f: F) -> Self
+    pub fn from_ndarray(arr: Array2<Complex64>) -> Self {
+        let size = arr.ncols();
+        ComplexUnitary::from_vec(arr.into_raw_vec(), size)
+    }
+
+    pub fn from_size_fn<F>(n: usize, mut f: F) -> Self
     where
-        F: FnMut((i32, i32)) -> Complex64,
+        F: FnMut((usize, usize)) -> Complex64,
     {
         let mut s = ComplexUnitary::zeros(n);
         for i in 0..n {
@@ -57,21 +62,21 @@ impl ComplexUnitary {
         s
     }
 
-    pub fn from_vec(v: Vec<Complex64>, size: i32) -> Self {
+    pub fn from_vec(v: Vec<Complex64>, size: usize) -> Self {
         ComplexUnitary {
             data: SmallVec::from_vec(v),
             size,
         }
     }
 
-    pub fn zeros(size: i32) -> Self {
+    pub fn zeros(size: usize) -> Self {
         ComplexUnitary {
             data: smallvec![r!(0.0); (size * size) as usize],
             size,
         }
     }
 
-    pub fn eye(size: i32) -> Self {
+    pub fn eye(size: usize) -> Self {
         let mut s = Self::zeros(size);
         for i in 0..size {
             s.data[(i * size + i) as usize] = r!(1.0);
@@ -177,11 +182,11 @@ impl Div<f64> for ComplexUnitary {
 
 impl Matrix<Complex64> for ComplexUnitary {
     fn rows(&self) -> c_int {
-        self.size
+        self.size as c_int
     }
 
     fn cols(&self) -> c_int {
-        self.size
+        self.size as c_int
     }
 
     fn as_ptr(&self) -> *const Complex64 {
@@ -194,8 +199,8 @@ impl Matrix<Complex64> for ComplexUnitary {
 }
 
 impl Vector<Complex64> for ComplexUnitary {
-    fn len(&self) -> i32 {
-        self.data.len() as i32
+    fn len(&self) -> c_int {
+        self.data.len() as c_int
     }
 
     fn as_ptr(&self) -> *const Complex64 {

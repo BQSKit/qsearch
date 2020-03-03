@@ -18,8 +18,8 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 #project.add_compilation("ethelyne", advanced_unitaries.ethelyne)
 
 
-# compiler configuration
-project["beams"] = -1 # tell the compiler to use all available processors by using beams (this is usually a speedup, but not always)
+# compiler configuration example
+#project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
 
 project.run()
 
