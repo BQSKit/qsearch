@@ -24,7 +24,7 @@ class QuantumStep:
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
 
     def jac(self, v):
-        if self.num_units == 0:
+        if self.num_inputs == 0:
             return [] # a circuit component with no inputs has no jacobian to return
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the jac(v) method in order to be used with gradient optimizers.")
 
