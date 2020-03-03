@@ -89,6 +89,32 @@ class ZXZXZQubitStep(QuantumStep):
         utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
         return np.dot(self._rot_z, self._out)
 
+    def jac(self, v):
+        utils.re_rot_z_jac(v[0]*np.pi*2, self._rot_z, multiplier=np.pi*2)
+        self._out = np.dot(self._x90, self._rot_z, out=self._out)
+        utils.re_rot_z(v[1]*np.pi*2 + np.pi, self._rot_z)
+        self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
+        utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
+        J1 = np.dot(self._rot_z, self._out)
+
+        utils.re_rot_z(v[0]*np.pi*2, self._rot_z)
+        self._out = np.dot(self._x90, self._rot_z, out=self._out)
+        utils.re_rot_z_jac(v[1]*np.pi*2 + np.pi, self._rot_z, multiplier=np.pi*2)
+        self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
+        utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
+        J2 = np.dot(self._rot_z, self._out)
+
+        utils.re_rot_z(v[0]*np.pi*2, self._rot_z)
+        self._out = np.dot(self._x90, self._rot_z, out=self._out)
+        utils.re_rot_z(v[1]*np.pi*2 + np.pi, self._rot_z)
+        self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
+        utils.re_rot_z_jac(v[2]*np.pi*2-np.pi, self._rot_z, multiplier=np.pi*2)
+        J3 = np.dot(self._rot_z, self._out)
+        return [J1, J2, J3]
+
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
@@ -122,6 +148,20 @@ class XZXZPartialQubitStep(QuantumStep):
         self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
         return np.dot(self._rot_z, self._out)
+
+    def jac(self, v):
+        utils.re_rot_z_jac(v[0]*np.pi*2 + np.pi, self._rot_z, multiplier=np.pi*2)
+        self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
+        utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
+        J1 = np.dot(self._rot_z, self._out)
+
+        utils.re_rot_z(v[0]*np.pi*2 + np.pi, self._rot_z)
+        self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
+        self._out = np.dot(self._x90, self._buffer, out=self._out)
+        utils.re_rot_z_jac(v[1]*np.pi*2-np.pi, self._rot_z, multiplier=2*np.pi)
+        J2 = np.dot(self._rot_z, self._out)
+        return [J1, J2]
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing

@@ -44,6 +44,10 @@ def re_rot_z(theta, old_z):
     old_z[0,0] = np.exp(-1j*theta/2)
     old_z[1,1] = np.exp(1j*theta/2)
 
+def re_rot_z_jac(theta, old_z, multiplier=1):
+    old_z[0,0] = multiplier*0.5*(-np.sin(theta/2)-1j*np.cos(theta/2))
+    old_z[1,1] = multiplier*0.5*(-np.sin(theta/2)+1j*np.cos(theta/2))
+
 
 # copied from qnl_analysis.SimTools
 def q1_unitary(x):
