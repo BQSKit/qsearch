@@ -23,6 +23,11 @@ class QuantumStep:
         labels = ["q{}".format(i) for i in range(0, self.dits)]
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
 
+    def jac(self, v):
+        if self.num_units == 0:
+            return [] # a circuit component with no inputs has no jacobian to return
+        raise NotImplementedError("Subclasses of QuantumStep are required to implement the jac(v) method in order to be used with gradient optimizers.")
+
     def __eq__(self, other):
         return hash(self) == hash(other)
 
@@ -146,6 +151,18 @@ class QiskitU3QubitStep(QuantumStep):
         cl = np.cos(v[2] * np.pi * 2)
         sl = np.sin(v[2] * np.pi * 2)
         return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+
+    def jac(self, v):
+        ct = np.cos(v[0] * np.pi)
+        st = np.sin(v[0] * np.pi)
+        cp = np.cos(v[1] * np.pi * 2)
+        sp = np.sin(v[1] * np.pi * 2)
+        cl = np.cos(v[2] * np.pi * 2)
+        sl = np.sin(v[2] * np.pi * 2)
+        return [np.matrix([[-np.pi*st, -np.pi*ct * (cl + 1j * sl)], [np.pi*ct * (cp + 1j * sp), -np.pi*st * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128'),
+                np.matrix([[0, 0], [st * 2*np.pi*(-sp + 1j * cp), ct * 2*np.pi*(cl * -sp - sl * cp + 1j * cl * cp + 1j * sl * -sp)]], dtype='complex128'),
+                np.matrix([[0, -st * 2*np.pi*(-sl + 1j * cl)], [0, ct * 2*np.pi*(-sl * cp - cl * sp + 1j * -sl * sp + 1j * cl * cp)]], dtype='complex128')
+                ]
 
     def assemble(self, v, i=0):
         return [("gate", "U3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
@@ -391,6 +408,30 @@ class KroneckerStep(QuantumStep):
             U = np.kron(U, matrix)
         return U
 
+    def jac(self, v):
+        matrices = []
+        jacs = []
+        index = 0
+        for step in self._substeps:
+            U = step.matrix(v[index:index+step.num_inputs])
+            matrices.append(U)
+            index += step.num_inputs
+
+        index = 0
+        for i in range(len(self._substeps)):
+            jacstep = self._substeps[i]
+            if jacstep.num_inputs == 0:
+                continue
+            Js = jacstep.jac(v[index:index+jacstep.num_inputs])
+            index += jacstep.num_inputs
+            for J in Js:
+                M = J if i == 0 else matrices[0]
+                for k in range(1,len(matrices)):
+                    M1 = J if i == k else matrices[k]
+                    M = np.kron(M, M1)
+                jacs.append(M)
+        return jacs
+
     def assemble(self, v, i=0):
         out = []
         index = 0
@@ -434,10 +475,43 @@ class ProductStep(QuantumStep):
             index += step.num_inputs
         U = matrices[0]
         buffer1 = U.copy()
+        buffer2 = U.copy()
         for matrix in matrices[1:]:
             U = np.matmul(matrix, U, out=buffer1)
-            buffer1 = matrix
+            buffertmp = buffer2
+            buffer2 = buffer1
+            buffer1 = buffer2
         return U
+
+    def jac(self, v):
+        matrices = []
+        jacs = []
+        index = 0
+        for step in self._substeps:
+            U = step.matrix(v[index:index+step.num_inputs])
+            matrices.append(U)
+            index += step.num_inputs
+        
+        index = 0
+        for i in range(len(self._substeps)):
+            jacstep = self._substeps[i]
+            if jacstep.num_inputs == 0:
+                continue
+            Js = jacstep.jac(v[index:index+jacstep.num_inputs])
+            index += jacstep.num_inputs
+            for J in Js:
+                M = J if i == 0 else matrices[0]
+                buffer1 = U.copy()
+                buffer2 = U.copy()
+                for k in range(1,len(matrices)):
+                    M1 = J if i == k else matrices[k]
+                    M = np.matmul(M1, M, out=buffer1)
+                    buffertmp = buffer2
+                    buffer2 = buffer1
+                    buffer1 = buffer2
+                jacs.append(M)
+
+        return jacs
 
     def assemble(self, v, i=0):
         out = []

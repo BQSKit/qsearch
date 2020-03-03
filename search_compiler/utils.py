@@ -28,6 +28,15 @@ def matrix_distance_squared(A,B):
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.H))) / A.shape[0]
 
+def matrix_distance_squared_jac(U, M, J):
+    S = np.sum(np.multiply(U, np.conj(M)))
+    if S == 0:
+        return np.array([np.inf]*len(J))
+    JU = np.array([np.multiply(U,np.conj(K)) for K in J])
+    JUS = np.sum(JU, axis=(1,2))
+    return -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))*U.shape[0] / np.abs(S)
+
+
 def matrix_distance(A,B):
     return np.sqrt(np.abs(matrix_distance_squared(A,B)))
 

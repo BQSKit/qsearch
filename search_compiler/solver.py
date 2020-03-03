@@ -58,3 +58,33 @@ class DIY_Solver(Solver):
 class COBYLA_SolverNative(COBYLA_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
+
+class NM_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
+        eval_func = lambda v: error_func(U, circuit.matrix(v))
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='Nelder-Mead', options={"ftol":1e-14})
+        xopt = result.x
+        return (circuit.matrix(xopt), xopt)
+
+class Jac_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
+        eval_func = lambda v: error_func(U, circuit.matrix(v))
+        jac_func  = lambda v: util.matrix_distance_squared_jac(U, circuit.matrix(v), circuit.jac(v))
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=jac_func)
+        xopt = result.x
+        return (circuit.matrix(xopt), xopt)
+
+class CMA_Jac_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
+        try:
+            import cma
+        except ImportError:
+            print("ERROR: Could not find cma, try running pip install quantum_synthesis[cma]", file=sys.stderr)
+            sys.exit(1)
+        eval_func = lambda v: error_func(U, circuit.matrix(v))
+        jac_func  = lambda v: util.matrix_distance_squared_jac(U, circuit.matrix(v), circuit.jac(v))
+        initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)
+        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2, gradf=jac_func)
+        if circuit.num_inputs > 18:
+            raise Warning("Finished with {} evaluations".format(es.result[3]))
+        return (circuit.matrix(xopt), xopt)
