@@ -4,12 +4,14 @@ use num_complex::Complex64;
 use numpy::{PyArray1, PyArray2};
 use pyo3::class::basic::PyObjectProtocol;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyTuple, PyDict};
+use pyo3::types::{PyBytes, PyDict, PyTuple};
 use pyo3::wrap_pyfunction;
+use pyo3::exceptions;
 
 use bincode::{deserialize, serialize};
 
 use better_panic::install;
+use complexmat::ComplexUnitary;
 
 pub mod circuits;
 pub mod gatesets;
@@ -39,7 +41,8 @@ macro_rules! i {
 pub type PyComplexUnitary = PyArray2<Complex64>;
 
 use circuits::{
-    Gate, GateCNOT, GateIdentity, GateKronecker, GateProduct, GateU3, GateXZXZ, QuantumGate,
+    Gate, GateCNOT, GateIdentity, GateKronecker, GateConstantUnitary, GateProduct, GateU3, GateXZXZ,
+    QuantumGate,
 };
 use gatesets::{GateSet, GateSetLinearCNOT};
 
@@ -51,7 +54,7 @@ fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyOb
         }
         Gate::Identity(id) => {
             let gate: PyObject = circuits.get("IdentityStep")?.extract()?;
-            let args = PyTuple::new(py, vec![id.matrix.size, id.data.dits as i32]);
+            let args = PyTuple::new(py, vec![id.matrix.size, id.data.dits as usize]);
             gate.call1(py, args)?
         }
         Gate::U3(..) => {
@@ -81,7 +84,8 @@ fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyOb
                 .collect();
             let substeps = PyTuple::new(py, steps);
             gate.call1(py, substeps)?
-        }
+        },
+        _ => unreachable!(),
     })
 }
 
@@ -89,21 +93,21 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
     let cls = obj.getattr(py, "__class__")?;
     let dunder_name = cls.getattr(py, "__name__")?;
     let name: &str = dunder_name.extract(py)?;
-    Ok(match name {
-        "CNOTStep" => GateCNOT::new().into(),
+    match name {
+        "CNOTStep" => Ok(GateCNOT::new().into()),
         "IdentityStep" => {
             let n = obj.getattr(py, "_n")?.extract(py)?;
-            GateIdentity::new(n).into()
+            Ok(GateIdentity::new(n).into())
         }
-        "QiskitU3QubitStep" => GateU3::new().into(),
-        "XZXZPartialQubitStep" => GateXZXZ::new().into(),
+        "QiskitU3QubitStep" => Ok(GateU3::new().into()),
+        "XZXZPartialQubitStep" => Ok(GateXZXZ::new().into()),
         "ProductStep" => {
             let substeps: Vec<PyObject> = obj.getattr(py, "_substeps")?.extract(py)?;
             let steps: Vec<Gate> = substeps
                 .iter()
                 .map(|obj| object_to_gate(obj, py).unwrap())
                 .collect();
-            GateProduct::new(steps).into()
+            Ok(GateProduct::new(steps).into())
         }
         "KroneckerStep" => {
             let substeps: Vec<PyObject> = obj.getattr(py, "_substeps")?.extract(py)?;
@@ -111,10 +115,23 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
                 .iter()
                 .map(|obj| object_to_gate(obj, py).unwrap())
                 .collect();
-            GateKronecker::new(steps).into()
+            Ok(GateKronecker::new(steps).into())
         }
-        _ => unreachable!(),
-    })
+        _ => {
+            if obj.getattr(py, "num_inputs")?.extract::<usize>(py)? == 0 {
+                let dits = obj.getattr(py, "dits")?.extract::<u8>(py)?;
+                let args: Vec<u8> = vec![];
+                let pymat = obj.call_method(py, "matrix", (args,), None)?;
+                let mat = pymat.extract::<&PyArray2<Complex64>>(py)?;
+                Ok(GateConstantUnitary::new(ComplexUnitary::from_ndarray(mat.to_owned_array()), dits).into())
+            } else {
+                Err(exceptions::ValueError::py_err(format!(
+                    "Unknown gate {}",
+                    name
+                )))
+            }
+        }
+    }
 }
 
 #[pyclass(name=Gate, dict, module = "search_compiler_rs")]
@@ -136,7 +153,8 @@ impl PyGateWrapper {
     }
 
     pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PyComplexUnitary> {
-        PyComplexUnitary::from_array(py, &self.gate.mat(v.as_slice().unwrap()).into_ndarray()).to_owned()
+        PyComplexUnitary::from_array(py, &self.gate.mat(v.as_slice().unwrap()).into_ndarray())
+            .to_owned()
     }
 
     #[getter]
@@ -152,6 +170,7 @@ impl PyGateWrapper {
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
             Gate::Product(..) => String::from("Product"),
+            Gate::ConstantUnitary(..) => String::from("ConstantUnitary")
         })
     }
 
@@ -195,7 +214,9 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 
     fn __hash__(&self) -> PyResult<isize> {
         let digest = md5::compute(format!("{:?}", self.gate).as_bytes());
-        Ok(digest.iter().enumerate().fold(0, |acc, (i, j)| acc + *j as isize * (256isize).pow(i as u32)))
+        Ok(digest.iter().enumerate().fold(0, |acc, (i, j)| {
+            acc + *j as isize * (256isize).pow(i as u32)
+        }))
     }
 }
 
@@ -265,7 +286,6 @@ fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> 
         },
     )
 }
-
 
 fn add_module(module: &PyModule, py: Python) -> PyResult<()> {
     py.import("sys")?
