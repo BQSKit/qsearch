@@ -19,6 +19,14 @@ class Solver():
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         raise NotImplementedError
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if self.__module__ == Solver.__module__:
+            if type(self) == type(other):
+                return True
+        return False
+
 
 class CMA_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):

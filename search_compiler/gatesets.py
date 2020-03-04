@@ -38,6 +38,15 @@ class Gateset():
     def search_layers(self, dits):
         return [] # NOTES: Returns a LIST of gates
 
+    def __eq__(self, other):
+        if self is other:
+            return True
+        if self.__module__ == Gateset.__module__:
+            if type(self) == type(other):
+                if self.__dict__ == other.__dict__:
+                    return True
+        return False
+
 
 class ZXZXZCNOTLinear(Gateset):
     def __init__(self):
