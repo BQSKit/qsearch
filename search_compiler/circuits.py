@@ -437,6 +437,8 @@ class KroneckerStep(QuantumStep):
         self.dits = sum([step.dits for step in substeps])
 
     def matrix(self, v):
+        if len(self._substeps) < 2:
+            return self._substeps[0].matrix(v)
         matrices = []
         index = 0
         for step in self._substeps:
@@ -449,6 +451,8 @@ class KroneckerStep(QuantumStep):
         return U
 
     def jac(self, v):
+        if len(self._substeps) < 2:
+            return self._substeps[0].jac(v)
         matrices = []
         jacs = []
         index = 0
@@ -458,18 +462,20 @@ class KroneckerStep(QuantumStep):
             index += step.num_inputs
 
         index = 0
-        for i in range(len(self._substeps)):
-            jacstep = self._substeps[i]
-            if jacstep.num_inputs == 0:
-                continue
-            Js = jacstep.jac(v[index:index+jacstep.num_inputs])
+        B = None
+        for i, jacstep in enumerate(self._substeps):
+            if jacstep.num_inputs > 0:
+                A = None if i == len(self._substeps)-1 else matrices[i+1]
+                if i < len(self._substeps)-2:
+                    for matrix in matrices[i+2:]:
+                        A = np.kron(A, matrix)
+                for J in jacstep.jac(v[index:index+jacstep.num_inputs]):
+                    tmp = J if B is None else np.kron(B,J)
+                    tmp = tmp if A is None else np.kron(tmp, A)
+                    jacs.append(tmp)
+            B = matrices[0] if B is None else np.kron(B, matrices[i])
             index += jacstep.num_inputs
-            for J in Js:
-                M = J if i == 0 else matrices[0]
-                for k in range(1,len(matrices)):
-                    M1 = J if i == k else matrices[k]
-                    M = np.kron(M, M1)
-                jacs.append(M)
+
         return jacs
 
     def assemble(self, v, i=0):
@@ -507,6 +513,8 @@ class ProductStep(QuantumStep):
         self.dits = 0 if len(substeps) == 0 else substeps[0].dits
 
     def matrix(self, v):
+        if len(self._substeps) < 2:
+            return self._substeps[0].matrix(v)
         matrices = []
         index = 0
         for step in self._substeps:
@@ -524,6 +532,8 @@ class ProductStep(QuantumStep):
         return U
 
     def jac(self, v):
+        if len(self._substeps) < 2:
+            return self._substeps[0].jac(v)
         matrices = []
         jacs = []
         index = 0
@@ -533,24 +543,38 @@ class ProductStep(QuantumStep):
             index += step.num_inputs
         
         index = 0
-        for i in range(len(self._substeps)):
-            jacstep = self._substeps[i]
-            if jacstep.num_inputs == 0:
-                continue
-            Js = jacstep.jac(v[index:index+jacstep.num_inputs])
-            index += jacstep.num_inputs
-            for J in Js:
-                M = J if i == 0 else matrices[0]
-                buffer1 = U.copy()
-                buffer2 = U.copy()
-                for k in range(1,len(matrices)):
-                    M1 = J if i == k else matrices[k]
-                    M = np.matmul(M1, M, out=buffer1)
-                    buffertmp = buffer2
-                    buffer2 = buffer1
-                    buffer1 = buffer2
-                jacs.append(M)
+        B = np.eye(matrices[0].shape[0], dtype='complex128')
+        A = matrices[0]
+        buffer1 = A.copy()
+        buffer2 = A.copy()
+        for matrix in matrices[1:]:
+            A = np.matmul(matrix, A, out=buffer1)
+            buffertmp = buffer2
+            buffer2 = buffer1
+            buffer1 = buffer2
 
+        index = 0
+        ba1 = buffer1.copy()
+        ba2 = ba1.copy()
+        bb1 = ba1.copy()
+        bb2 = bb1.copy()
+        for i, jacstep in enumerate(self._substeps):
+            A = np.matmul(A, matrices[i].H, out=ba1) # remove the current matrix from the "after" array
+            for J in jacstep.jac(v[index:index+jacstep.num_inputs]):
+                tmp = np.matmul(J, B, out=buffer1)
+                buffertmp = buffer2
+                buffer2 = buffer1
+                buffer1 = buffer2
+                jacs.append(np.matmul(A, tmp))
+            B = np.matmul(matrices[i], B, out=bb1) # add the current matrix to the "before" array before progressing
+            index += jacstep.num_inputs
+            buffertmp = ba1
+            ba1 = ba2
+            ba2 = buffertmp
+            buffertmp = bb1
+            bb1 = bb2
+            bb2 = buffertmp
+            
         return jacs
 
     def assemble(self, v, i=0):
