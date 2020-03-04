@@ -12,7 +12,7 @@ use std::fmt;
 #[enum_dispatch]
 pub trait QuantumGate: Clone {
     fn mat(&self, v: &[f64]) -> ComplexUnitary;
-    fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary>;
+    fn mat_jac(&self, v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>);
     fn inputs(&self) -> usize;
 }
 
@@ -108,8 +108,8 @@ impl QuantumGate for GateConstantUnitary {
         self.matrix.clone()
     }
 
-    fn jac(&self, _v: &[f64]) -> Vec<ComplexUnitary> {
-        vec![]
+    fn mat_jac(&self, _v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
+        (self.matrix.clone(), vec![])
     }
 
     fn inputs(&self) -> usize {
@@ -140,8 +140,8 @@ impl QuantumGate for GateIdentity {
         self.matrix.clone()
     }
 
-    fn jac(&self, _v: &[f64]) -> Vec<ComplexUnitary> {
-        vec![]
+    fn mat_jac(&self, _v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
+        (self.matrix.clone(), vec![])
     }
 
     fn inputs(&self) -> usize {
@@ -185,46 +185,57 @@ impl QuantumGate for GateU3 {
         )
     }
 
-    fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
+    fn mat_jac(&self, v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
         let ct = r!((v[0] * PI).cos());
         let st = r!((v[0] * PI).sin());
         let cp = (v[1] * PI * 2.0).cos();
         let sp = (v[1] * PI * 2.0).sin();
         let cl = (v[2] * PI * 2.0).cos();
         let sl = (v[2] * PI * 2.0).sin();
-        vec![
+        (
             ComplexUnitary::from_vec(
                 vec![
-                    -PI * st,
-                    -PI * ct * (cl + i!(1.0) * sl),
-                    PI * ct * (cp + i!(1.0) * sp),
-                    -PI * st * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp),
+                    ct,
+                    -st * (cl + i!(1.0) * sl),
+                    st * (cp + i!(1.0) * sp),
+                    ct * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp),
                 ],
                 2,
             ),
-            ComplexUnitary::from_vec(
-                vec![
-                    r!(0.0),
-                    r!(0.0),
-                    st * r!(2.0) * PI * (-sp + i!(1.0) * cp),
-                    ct * r!(2.0)
-                        * PI
-                        * (cl * -sp - sl * cp + i!(1.0) * cl * cp + i!(1.0) * sl * -sp),
-                ],
-                2,
-            ),
-            ComplexUnitary::from_vec(
-                vec![
-                    r!(0.0),
-                    -st * r!(2.0) * PI * (-sl + i!(1.0) * cl),
-                    r!(0.0),
-                    ct * r!(2.0)
-                        * PI
-                        * (-sl * cp - cl * sp + i!(1.0) * -sl * sp + i!(1.0) * cl * cp),
-                ],
-                2,
-            ),
-        ]
+            vec![
+                ComplexUnitary::from_vec(
+                    vec![
+                        -PI * st,
+                        -PI * ct * (cl + i!(1.0) * sl),
+                        PI * ct * (cp + i!(1.0) * sp),
+                        -PI * st * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp),
+                    ],
+                    2,
+                ),
+                ComplexUnitary::from_vec(
+                    vec![
+                        r!(0.0),
+                        r!(0.0),
+                        st * r!(2.0) * PI * (-sp + i!(1.0) * cp),
+                        ct * r!(2.0)
+                            * PI
+                            * (cl * -sp - sl * cp + i!(1.0) * cl * cp + i!(1.0) * sl * -sp),
+                    ],
+                    2,
+                ),
+                ComplexUnitary::from_vec(
+                    vec![
+                        r!(0.0),
+                        -st * r!(2.0) * PI * (-sl + i!(1.0) * cl),
+                        r!(0.0),
+                        ct * r!(2.0)
+                            * PI
+                            * (-sl * cp - cl * sp + i!(1.0) * -sl * sp + i!(1.0) * cl * cp),
+                    ],
+                    2,
+                ),
+            ],
+        )
     }
 
     fn inputs(&self) -> usize {
@@ -259,7 +270,7 @@ impl QuantumGate for GateXZXZ {
     }
 
     #[allow(non_snake_case)]
-    fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
+    fn mat_jac(&self, v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
         let rotz = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
         let buffer = self.x90.matmul(&rotz);
         let out = buffer.matmul(&self.x90);
@@ -269,7 +280,10 @@ impl QuantumGate for GateXZXZ {
         let buffer2 = self.x90.matmul(&rotz2);
         let out2 = buffer2.matmul(&self.x90);
         let J2 = out2.matmul(&rot_z_jac(v[1] * PI * 2.0 - PI, Some(PI * 2.0)));
-        vec![J1, J2]
+
+        let U = out2.matmul(&rot_z(v[1] * PI * 2.0 - PI));
+
+        (U, vec![J1, J2])
     }
 
     fn inputs(&self) -> usize {
@@ -307,8 +321,8 @@ impl QuantumGate for GateCNOT {
         self.matrix.clone()
     }
 
-    fn jac(&self, _v: &[f64]) -> Vec<ComplexUnitary> {
-        vec![]
+    fn mat_jac(&self, _v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
+        (self.matrix.clone(), vec![])
     }
 
     fn inputs(&self) -> usize {
@@ -352,61 +366,39 @@ impl QuantumGate for GateKronecker {
     }
 
     #[allow(non_snake_case)]
-    fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
+    fn mat_jac(&self, v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
         if self.substeps.len() < 2 {
-            return self.substeps[0].jac(v);
+            return self.substeps[0].mat_jac(v);
         }
         let mut index = 0;
-        let mut jacs = Vec::with_capacity(self.substeps.len());
-        let matrices: Vec<ComplexUnitary> = self
+        let matjacs: Vec<(ComplexUnitary, Vec<ComplexUnitary>)> = self
             .substeps
             .iter()
             .map(|gate| {
-                let g = gate.mat(&v[index..index + gate.inputs()]);
+                let MJ = gate.mat_jac(&v[index..index + gate.inputs()]);
                 index += gate.inputs();
-                g
+                MJ
             })
             .collect();
-        index = 0;
-        let mut B: Option<ComplexUnitary> = None;
-        for (i, jacstep) in self.substeps.iter().enumerate() {
-            if jacstep.inputs() > 0 {
-                let mut A = if i == self.substeps.len() - 1 {
-                    None
+
+        let mut jacs: Vec<ComplexUnitary> = Vec::with_capacity(self.substeps.len());
+        let mut U: Option<ComplexUnitary> = None;
+        for (M, Js) in matjacs {
+            jacs = jacs.iter_mut().map(|J| J.kron(&M)).collect();
+            for J in Js {
+                jacs.push(if let Some(ref mut u) = U {
+                    u.kron(&J)
                 } else {
-                    Some(matrices[i + 1].clone())
-                };
-                if i < self.substeps.len() - 2 {
-                    for mat in &matrices[i + 2..] {
-                        if let Some(ref mut a) = A {
-                            A = Some(a.kron(&mat));
-                        } else {
-                            unreachable!();
-                        }
-                    }
-                }
-                for J in jacstep.jac(&v[index..index + jacstep.inputs()]) {
-                    let mut tmp = if let Some(ref mut b) = B {
-                        b.kron(&J)
-                    } else {
-                        J
-                    };
-                    tmp = if let Some(ref a) = A {
-                        tmp.kron(&a)
-                    } else {
-                        tmp
-                    };
-                    jacs.push(tmp)
-                }
+                    J.clone()
+                });
             }
-            B = if let Some(mut b) = B {
-                Some(b.kron(&matrices[i]))
+            U = if let Some(ref mut u) = U {
+                Some(u.kron(&M))
             } else {
-                Some(matrices[0].clone())
+                Some(M.clone())
             };
-            index += jacstep.inputs();
         }
-        jacs
+        (U.unwrap(), jacs)
     }
 
     fn inputs(&self) -> usize {
@@ -452,23 +444,21 @@ impl QuantumGate for GateProduct {
     }
 
     #[allow(non_snake_case)]
-    fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
+    fn mat_jac(&self, v: &[f64]) -> (ComplexUnitary, Vec<ComplexUnitary>) {
         if self.substeps.len() < 2 {
-            return self.substeps[0].jac(v);
+            return self.substeps[0].mat_jac(v);
         }
         let mut index = 0;
-        let mut jacs = Vec::with_capacity(self.substeps.len());
-        let matrices: Vec<ComplexUnitary> = self
-            .substeps
-            .iter()
-            .map(|gate| {
-                let g = gate.mat(&v[index..index + gate.inputs()]);
-                index += gate.inputs();
-                g
-            })
-            .collect();
+        let mut submats: Vec<ComplexUnitary> = Vec::with_capacity(self.substeps.len());
+        let mut subjacs: Vec<Vec<ComplexUnitary>> = Vec::with_capacity(self.substeps.len());
+        for gate in &self.substeps {
+            let (U, Js) = gate.mat_jac(&v[index..index + gate.inputs()]);
+            submats.push(U);
+            subjacs.push(Js);
+            index += gate.inputs();
+        }
+        let mut B = ComplexUnitary::eye(submats[0].size);
         index = 0;
-        let mut B = ComplexUnitary::eye(matrices[0].size);
         let mut A = self
             .substeps
             .iter()
@@ -479,17 +469,16 @@ impl QuantumGate for GateProduct {
             })
             .reduce(|a: ComplexUnitary, b: ComplexUnitary| a.matmul(&b))
             .unwrap();
-        index = 0;
-        for (i, jacstep) in self.substeps.iter().enumerate() {
-            A = matrices[i].clone().H().matmul(&A);
-            for J in jacstep.jac(&v[index..index + jacstep.inputs()]) {
+        let mut jacs = Vec::with_capacity(self.substeps.len());
+        for (i, Js) in subjacs.iter().enumerate() {
+            A = submats[i].clone().H().matmul(&A);
+            for J in Js {
                 let tmp = B.matmul(&J);
                 jacs.push(tmp.matmul(&A));
             }
-            B = B.matmul(&matrices[i].clone());
-            index += jacstep.inputs();
+            B = B.matmul(&submats[i].clone());
         }
-        jacs
+        (B, jacs)
     }
 
     fn inputs(&self) -> usize {

@@ -156,12 +156,18 @@ impl PyGateWrapper {
         });
     }
 
-    pub fn jac(&self, py: Python, v: &PyArray1<f64>) -> Vec<Py<PyComplexUnitary>> {
-        self.gate
-            .jac(v.as_slice().unwrap())
-            .iter()
-            .map(|m| PyComplexUnitary::from_array(py, &m.clone().into_ndarray()).to_owned())
-            .collect()
+    pub fn mat_jac(
+        &self,
+        py: Python,
+        v: &PyArray1<f64>,
+    ) -> (Py<PyComplexUnitary>, Vec<Py<PyComplexUnitary>>) {
+        let (m, jac) = self.gate.mat_jac(v.as_slice().unwrap());
+        (
+            PyComplexUnitary::from_array(py, &m.clone().into_ndarray()).to_owned(),
+            jac.iter()
+                .map(|j| PyComplexUnitary::from_array(py, &j.clone().into_ndarray()).to_owned())
+                .collect(),
+        )
     }
 
     pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PyComplexUnitary> {
