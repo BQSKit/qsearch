@@ -146,6 +146,31 @@ impl ComplexUnitary {
     pub fn conj(&self) -> ComplexUnitary {
         ComplexUnitary::from_vec(self.data.iter().map(|i| i.conj()).collect(), self.size)
     }
+
+    #[allow(non_snake_case)]
+    pub fn T(&self) -> ComplexUnitary {
+        let mut out = ComplexUnitary::zeros(self.size);
+        for i in 0..self.size {
+            for j in 0..self.size {
+                out.data[i * self.size + j] = self.data[j * self.size + i];
+                out.data[j * self.size + i] = self.data[i * self.size + j];
+            }
+        }
+        out
+    }
+
+    #[allow(non_snake_case)]
+    pub fn H(&self) -> ComplexUnitary {
+        let mut out = ComplexUnitary::zeros(self.size);
+        for i in 0..self.size {
+            for j in 0..self.size {
+                out.data[i * self.size + j] = self.data[j * self.size + i].conj();
+                out.data[j * self.size + i] = self.data[i * self.size + j].conj();
+            }
+        }
+        out
+    }
+
 }
 
 impl Mul<Complex64> for ComplexUnitary {
