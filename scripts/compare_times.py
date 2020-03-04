@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from glob import glob
 from pathlib import Path
 import sys
@@ -6,7 +6,9 @@ import sys
 def quit(err):
     print(err)
     sys.exit(1)
-
+avg = '--avg' in sys.argv
+if avg:
+    sys.argv.remove('--avg')
 args = [Path(p) for p in sys.argv[1:]]
 logs = {}
 for dir in args:
@@ -30,5 +32,8 @@ def get_time(file):
 
 for bench, files in logs.items():
     print(f"{bench}:")
-    for run in files:
-        print(run, get_time(files[run]))
+    if not avg:
+        for run in files:
+            print(run, get_time(files[run]))
+    else:
+        print(sum([get_time(run) for run in files.values()], start=timedelta())/len(args))
