@@ -246,6 +246,7 @@ impl QuantumGate for GateXZXZ {
         out.matmul(&rot_z(v[1] * PI * 2.0 - PI))
     }
 
+    #[allow(non_snake_case)]
     fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
         let rotz = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
         let buffer = self.x90.matmul(&rotz);
@@ -335,6 +336,7 @@ impl QuantumGate for GateKronecker {
             .unwrap()
     }
 
+    #[allow(non_snake_case)]
     fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
         let mut index = 0;
         let mut jacs = Vec::with_capacity(self.substeps.len());
@@ -404,6 +406,7 @@ impl QuantumGate for GateProduct {
             .unwrap()
     }
 
+    #[allow(non_snake_case)]
     fn jac(&self, v: &[f64]) -> Vec<ComplexUnitary> {
         let mut index = 0;
         let mut jacs = Vec::with_capacity(self.substeps.len());
