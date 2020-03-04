@@ -11,7 +11,7 @@ use pyo3::wrap_pyfunction;
 use bincode::{deserialize, serialize};
 
 use better_panic::install;
-use complexmat::ComplexUnitary;
+use squaremat::SquareMatrix;
 
 pub mod circuits;
 pub mod gatesets;
@@ -38,7 +38,7 @@ macro_rules! i {
     };
 }
 
-pub type PyComplexUnitary = PyArray2<Complex64>;
+pub type PySquareMatrix = PyArray2<Complex64>;
 
 use circuits::{
     Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct, GateU3,
@@ -124,7 +124,7 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
                 let pymat = obj.call_method(py, "matrix", (args,), None)?;
                 let mat = pymat.extract::<&PyArray2<Complex64>>(py)?;
                 Ok(GateConstantUnitary::new(
-                    ComplexUnitary::from_ndarray(mat.to_owned_array()),
+                    SquareMatrix::from_ndarray(mat.to_owned_array()),
                     dits,
                 )
                 .into())
@@ -160,18 +160,18 @@ impl PyGateWrapper {
         &self,
         py: Python,
         v: &PyArray1<f64>,
-    ) -> (Py<PyComplexUnitary>, Vec<Py<PyComplexUnitary>>) {
+    ) -> (Py<PySquareMatrix>, Vec<Py<PySquareMatrix>>) {
         let (m, jac) = self.gate.mat_jac(v.as_slice().unwrap());
         (
-            PyComplexUnitary::from_array(py, &m.clone().into_ndarray()).to_owned(),
+            PySquareMatrix::from_array(py, &m.clone().into_ndarray()).to_owned(),
             jac.iter()
-                .map(|j| PyComplexUnitary::from_array(py, &j.clone().into_ndarray()).to_owned())
+                .map(|j| PySquareMatrix::from_array(py, &j.clone().into_ndarray()).to_owned())
                 .collect(),
         )
     }
 
-    pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PyComplexUnitary> {
-        PyComplexUnitary::from_array(py, &self.gate.mat(v.as_slice().unwrap()).into_ndarray())
+    pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PySquareMatrix> {
+        PySquareMatrix::from_array(py, &self.gate.mat(v.as_slice().unwrap()).into_ndarray())
             .to_owned()
     }
 

@@ -38,22 +38,22 @@ macro_rules! i {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ComplexUnitary {
+pub struct SquareMatrix {
     data: SmallVec<[Complex64; 32]>,
     pub size: usize,
 }
 
-impl ComplexUnitary {
+impl SquareMatrix {
     pub fn from_ndarray(arr: Array2<Complex64>) -> Self {
         let size = arr.ncols();
-        ComplexUnitary::from_vec(arr.into_raw_vec(), size)
+        SquareMatrix::from_vec(arr.into_raw_vec(), size)
     }
 
     pub fn from_size_fn<F>(n: usize, mut f: F) -> Self
     where
         F: FnMut((usize, usize)) -> Complex64,
     {
-        let mut s = ComplexUnitary::zeros(n);
+        let mut s = SquareMatrix::zeros(n);
         for i in 0..n {
             for j in 0..n {
                 s.data[(i * n + j) as usize] = f((i, j));
@@ -63,14 +63,14 @@ impl ComplexUnitary {
     }
 
     pub fn from_vec(v: Vec<Complex64>, size: usize) -> Self {
-        ComplexUnitary {
+        SquareMatrix {
             data: SmallVec::from_vec(v),
             size,
         }
     }
 
     pub fn zeros(size: usize) -> Self {
-        ComplexUnitary {
+        SquareMatrix {
             data: smallvec![r!(0.0); (size * size) as usize],
             size,
         }
@@ -84,18 +84,18 @@ impl ComplexUnitary {
         s
     }
 
-    pub fn matmul(&self, other: &ComplexUnitary) -> ComplexUnitary {
+    pub fn matmul(&self, other: &SquareMatrix) -> SquareMatrix {
         assert_eq!(self.size, other.size);
         let t = Transpose::NoTrans;
-        let mut out = ComplexUnitary::zeros(self.size);
+        let mut out = SquareMatrix::zeros(self.size);
         Gemm::gemm(&r!(1.0), t, self, t, other, &r!(0.0), &mut out);
         out
     }
 
-    pub fn kron(&mut self, other: &ComplexUnitary) -> ComplexUnitary {
+    pub fn kron(&mut self, other: &SquareMatrix) -> SquareMatrix {
         let row_a = self.size;
         let row_b = other.size;
-        let mut out = ComplexUnitary::zeros(row_a * row_b);
+        let mut out = SquareMatrix::zeros(row_a * row_b);
 
         for i in 0..row_a {
             for j in 0..row_a {
@@ -122,7 +122,7 @@ impl ComplexUnitary {
         .unwrap()
     }
 
-    pub fn dot(&self, other: &ComplexUnitary) -> Complex64 {
+    pub fn dot(&self, other: &SquareMatrix) -> Complex64 {
         assert_eq!(self.size, other.size);
         Dotc::dotc(other, self)
     }
@@ -131,9 +131,9 @@ impl ComplexUnitary {
         self.data.iter().sum()
     }
 
-    pub fn multiply(&self, other: &ComplexUnitary) -> ComplexUnitary {
+    pub fn multiply(&self, other: &SquareMatrix) -> SquareMatrix {
         assert_eq!(self.size, other.size);
-        ComplexUnitary::from_vec(
+        SquareMatrix::from_vec(
             self.data
                 .iter()
                 .zip(other.data.iter())
@@ -143,13 +143,13 @@ impl ComplexUnitary {
         )
     }
 
-    pub fn conj(&self) -> ComplexUnitary {
-        ComplexUnitary::from_vec(self.data.iter().map(|i| i.conj()).collect(), self.size)
+    pub fn conj(&self) -> SquareMatrix {
+        SquareMatrix::from_vec(self.data.iter().map(|i| i.conj()).collect(), self.size)
     }
 
     #[allow(non_snake_case)]
-    pub fn T(&self) -> ComplexUnitary {
-        let mut out = ComplexUnitary::zeros(self.size);
+    pub fn T(&self) -> SquareMatrix {
+        let mut out = SquareMatrix::zeros(self.size);
         for i in 0..self.size {
             for j in 0..self.size {
                 out.data[i * self.size + j] = self.data[j * self.size + i];
@@ -160,8 +160,8 @@ impl ComplexUnitary {
     }
 
     #[allow(non_snake_case)]
-    pub fn H(&self) -> ComplexUnitary {
-        let mut out = ComplexUnitary::zeros(self.size);
+    pub fn H(&self) -> SquareMatrix {
+        let mut out = SquareMatrix::zeros(self.size);
         for i in 0..self.size {
             for j in 0..self.size {
                 out.data[i * self.size + j] = self.data[j * self.size + i].conj();
@@ -173,7 +173,7 @@ impl ComplexUnitary {
 
 }
 
-impl Mul<Complex64> for ComplexUnitary {
+impl Mul<Complex64> for SquareMatrix {
     type Output = Self;
     fn mul(mut self, rhs: Complex64) -> Self {
         Scal::scal_mat(&rhs, &mut self);
@@ -181,7 +181,7 @@ impl Mul<Complex64> for ComplexUnitary {
     }
 }
 
-impl Mul<f64> for ComplexUnitary {
+impl Mul<f64> for SquareMatrix {
     type Output = Self;
     fn mul(mut self, rhs: f64) -> Self {
         Scal::scal_mat(&r!(rhs), &mut self);
@@ -189,7 +189,7 @@ impl Mul<f64> for ComplexUnitary {
     }
 }
 
-impl Div<Complex64> for ComplexUnitary {
+impl Div<Complex64> for SquareMatrix {
     type Output = Self;
     fn div(mut self, rhs: Complex64) -> Self {
         Scal::scal_mat(&(1.0 / rhs), &mut self);
@@ -197,7 +197,7 @@ impl Div<Complex64> for ComplexUnitary {
     }
 }
 
-impl Div<f64> for ComplexUnitary {
+impl Div<f64> for SquareMatrix {
     type Output = Self;
     fn div(mut self, rhs: f64) -> Self {
         Scal::scal_mat(&Complex64::new(1.0 / rhs, 0.0), &mut self);
@@ -205,7 +205,7 @@ impl Div<f64> for ComplexUnitary {
     }
 }
 
-impl Matrix<Complex64> for ComplexUnitary {
+impl Matrix<Complex64> for SquareMatrix {
     fn rows(&self) -> c_int {
         self.size as c_int
     }
@@ -223,7 +223,7 @@ impl Matrix<Complex64> for ComplexUnitary {
     }
 }
 
-impl Vector<Complex64> for ComplexUnitary {
+impl Vector<Complex64> for SquareMatrix {
     fn len(&self) -> c_int {
         self.data.len() as c_int
     }
@@ -237,7 +237,7 @@ impl Vector<Complex64> for ComplexUnitary {
     }
 }
 
-impl PartialEq for ComplexUnitary {
+impl PartialEq for SquareMatrix {
     fn eq(&self, other: &Self) -> bool {
         self.size == other.size
             && self
@@ -248,9 +248,9 @@ impl PartialEq for ComplexUnitary {
     }
 }
 
-impl Eq for ComplexUnitary {}
+impl Eq for SquareMatrix {}
 
-impl fmt::Debug for ComplexUnitary {
+impl fmt::Debug for SquareMatrix {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[ ")?;
         for i in 0..self.size {
