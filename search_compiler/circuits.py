@@ -23,10 +23,10 @@ class QuantumStep:
         labels = ["q{}".format(i) for i in range(0, self.dits)]
         return graphics.plot_quantum_circuit(gates, labels=labels, plot_labels=False)
 
-    def jac(self, v):
+    def mat_jac(self, v):
         if self.num_inputs == 0:
-            return [] # a circuit component with no inputs has no jacobian to return
-        raise NotImplementedError("Subclasses of QuantumStep are required to implement the jac(v) method in order to be used with gradient optimizers.")
+            return (self.matrix(v), []) # a circuit component with no inputs has no jacobian to return
+        raise NotImplementedError("Subclasses of QuantumStep are required to implement the mat_jac(v) method in order to be used with gradient optimizers.")
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -89,7 +89,7 @@ class ZXZXZQubitStep(QuantumStep):
         utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
         return np.dot(self._rot_z, self._out)
 
-    def jac(self, v):
+    def mat_jac(self, v):
         utils.re_rot_z_jac(v[0]*np.pi*2, self._rot_z, multiplier=np.pi*2)
         self._out = np.dot(self._x90, self._rot_z, out=self._out)
         utils.re_rot_z(v[1]*np.pi*2 + np.pi, self._rot_z)
@@ -113,7 +113,10 @@ class ZXZXZQubitStep(QuantumStep):
         self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z_jac(v[2]*np.pi*2-np.pi, self._rot_z, multiplier=np.pi*2)
         J3 = np.dot(self._rot_z, self._out)
-        return [J1, J2, J3]
+        
+        utils.re_rot_z(v[2]*np.pi*2-np.pi, self._rot_z)
+        U = np.dot(self._rot_z, self._out)
+        return (U, [J1, J2, J3])
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
@@ -149,7 +152,7 @@ class XZXZPartialQubitStep(QuantumStep):
         utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
         return np.dot(self._rot_z, self._out)
 
-    def jac(self, v):
+    def mat_jac(self, v):
         utils.re_rot_z_jac(v[0]*np.pi*2 + np.pi, self._rot_z, multiplier=np.pi*2)
         self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
         self._out = np.dot(self._x90, self._buffer, out=self._out)
@@ -161,7 +164,10 @@ class XZXZPartialQubitStep(QuantumStep):
         self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z_jac(v[1]*np.pi*2-np.pi, self._rot_z, multiplier=2*np.pi)
         J2 = np.dot(self._rot_z, self._out)
-        return [J1, J2]
+
+        utils.re_rot_z(v[1]*np.pi*2-np.pi, self._rot_z)
+        U = np.dot(self._rot_z, self._out)
+        return (U, [J1, J2])
 
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
@@ -192,17 +198,19 @@ class QiskitU3QubitStep(QuantumStep):
         sl = np.sin(v[2] * np.pi * 2)
         return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
 
-    def jac(self, v):
+    def mat_jac(self, v):
         ct = np.cos(v[0] * np.pi)
         st = np.sin(v[0] * np.pi)
         cp = np.cos(v[1] * np.pi * 2)
         sp = np.sin(v[1] * np.pi * 2)
         cl = np.cos(v[2] * np.pi * 2)
         sl = np.sin(v[2] * np.pi * 2)
-        return [np.matrix([[-np.pi*st, -np.pi*ct * (cl + 1j * sl)], [np.pi*ct * (cp + 1j * sp), -np.pi*st * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128'),
-                np.matrix([[0, 0], [st * 2*np.pi*(-sp + 1j * cp), ct * 2*np.pi*(cl * -sp - sl * cp + 1j * cl * cp + 1j * sl * -sp)]], dtype='complex128'),
-                np.matrix([[0, -st * 2*np.pi*(-sl + 1j * cl)], [0, ct * 2*np.pi*(-sl * cp - cl * sp + 1j * -sl * sp + 1j * cl * cp)]], dtype='complex128')
-                ]
+
+        U = np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+        J1 = np.matrix([[-np.pi*st, -np.pi*ct * (cl + 1j * sl)], [np.pi*ct * (cp + 1j * sp), -np.pi*st * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+        J2 = np.matrix([[0, 0], [st * 2*np.pi*(-sp + 1j * cp), ct * 2*np.pi*(cl * -sp - sl * cp + 1j * cl * cp + 1j * sl * -sp)]], dtype='complex128')
+        J3 = np.matrix([[0, -st * 2*np.pi*(-sl + 1j * cl)], [0, ct * 2*np.pi*(-sl * cp - cl * sp + 1j * -sl * sp + 1j * cl * cp)]], dtype='complex128')
+        return (U, [J1, J2, J3])
 
     def assemble(self, v, i=0):
         return [("gate", "U3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
@@ -450,33 +458,25 @@ class KroneckerStep(QuantumStep):
             U = np.kron(U, matrix)
         return U
 
-    def jac(self, v):
+    def mat_jac(self, v):
         if len(self._substeps) < 2:
-            return self._substeps[0].jac(v)
-        matrices = []
-        jacs = []
+            return self._substeps[0].mat_jac(v)
+        matjacs = []
         index = 0
         for step in self._substeps:
-            U = step.matrix(v[index:index+step.num_inputs])
-            matrices.append(U)
+            MJ = step.mat_jac(v[index:index+step.num_inputs])
+            matjacs.append(MJ)
             index += step.num_inputs
 
-        index = 0
-        B = None
-        for i, jacstep in enumerate(self._substeps):
-            if jacstep.num_inputs > 0:
-                A = None if i == len(self._substeps)-1 else matrices[i+1]
-                if i < len(self._substeps)-2:
-                    for matrix in matrices[i+2:]:
-                        A = np.kron(A, matrix)
-                for J in jacstep.jac(v[index:index+jacstep.num_inputs]):
-                    tmp = J if B is None else np.kron(B,J)
-                    tmp = tmp if A is None else np.kron(tmp, A)
-                    jacs.append(tmp)
-            B = matrices[0] if B is None else np.kron(B, matrices[i])
-            index += jacstep.num_inputs
+        U = None # deal with this how you like @ethan
+        jacs = []
+        for M, Js in matjacs:
+            jacs = [np.kron(J, M) for J in jacs]
+            for J in Js:
+                jacs.append(J if U is None else np.kron(U,J))
+            U = M if U is None else np.kron(U, M)
 
-        return jacs
+        return (U, jacs)
 
     def assemble(self, v, i=0):
         out = []
@@ -531,43 +531,38 @@ class ProductStep(QuantumStep):
             buffer1 = buffer2
         return U
 
-    def jac(self, v):
+    def mat_jac(self, v):
         if len(self._substeps) < 2:
-            return self._substeps[0].jac(v)
-        matrices = []
-        jacs = []
+            return self._substeps[0].mat_jac(v)
+        submats = []
+        subjacs = []
         index = 0
         for step in self._substeps:
-            U = step.matrix(v[index:index+step.num_inputs])
-            matrices.append(U)
+            U, Js = step.mat_jac(v[index:index+step.num_inputs])
+            submats.append(U)
+            subjacs.append(Js)
             index += step.num_inputs
         
-        index = 0
-        B = np.eye(matrices[0].shape[0], dtype='complex128')
-        A = matrices[0]
-        buffer1 = A.copy()
-        buffer2 = A.copy()
-        for matrix in matrices[1:]:
-            A = np.matmul(matrix, A, out=buffer1)
-            buffertmp = buffer2
-            buffer2 = buffer1
-            buffer1 = buffer2
+        B = np.eye(submats[0].shape[0], dtype='complex128')
+        A = submats[0]
+        jacs = []
+        ba1 = A.copy()
+        ba2 = A
+        bb1 = B.copy()
+        bb2 = B
+        bj = B.copy()
+        for matrix in submats[1:]:
+            A = np.matmul(matrix, A, out=ba1)
+            buffertmp = ba2
+            ba2 = ba1
+            ba1 = ba2
 
-        index = 0
-        ba1 = buffer1.copy()
-        ba2 = ba1.copy()
-        bb1 = ba1.copy()
-        bb2 = bb1.copy()
-        for i, jacstep in enumerate(self._substeps):
-            A = np.matmul(A, matrices[i].H, out=ba1) # remove the current matrix from the "after" array
-            for J in jacstep.jac(v[index:index+jacstep.num_inputs]):
-                tmp = np.matmul(J, B, out=buffer1)
-                buffertmp = buffer2
-                buffer2 = buffer1
-                buffer1 = buffer2
-                jacs.append(np.matmul(A, tmp))
-            B = np.matmul(matrices[i], B, out=bb1) # add the current matrix to the "before" array before progressing
-            index += jacstep.num_inputs
+        for i, Js in enumerate(subjacs):
+            A = np.matmul(A, submats[i].H, out=ba1) # remove the current matrix from the "after" array
+            for J in Js:
+                tmp = np.matmul(J, B, out=bj)
+                jacs.append(np.matmul(A, tmp, out=J))
+            B = np.matmul(submats[i], B, out=bb1) # add the current matrix to the "before" array before progressing
             buffertmp = ba1
             ba1 = ba2
             ba2 = buffertmp
@@ -575,7 +570,7 @@ class ProductStep(QuantumStep):
             bb1 = bb2
             bb2 = buffertmp
             
-        return jacs
+        return (B, jacs)
 
     def assemble(self, v, i=0):
         out = []

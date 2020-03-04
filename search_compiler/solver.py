@@ -40,13 +40,6 @@ class CMA_Solver(Solver):
         xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
-class BFGS_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
-        eval_func = lambda v: error_func(U, circuit.matrix(v))
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', bounds=[(0, 1) for _ in range(0, circuit.num_inputs)])
-        xopt = result.x
-        return (circuit.matrix(xopt), xopt)
-
 class COBYLA_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
@@ -74,11 +67,14 @@ class NM_Solver(Solver):
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class Jac_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
+class BFGS_Jac_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func = None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
-        jac_func  = lambda v: util.matrix_distance_squared_jac(U, circuit.matrix(v), circuit.jac(v))
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=jac_func)
+        error_func_jac = util.matrix_distance_squared_jac
+        def eval_func(v):
+            M, jacs = circuit.mat_jac(v)
+            return error_func_jac(U, M, jacs)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
@@ -97,6 +93,6 @@ class CMA_Jac_Solver(Solver):
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
 
-class Jac_SolverNative(Jac_Solver):
+class Jac_SolverNative(BFGS_Jac_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
