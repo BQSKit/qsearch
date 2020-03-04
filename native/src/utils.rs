@@ -50,14 +50,18 @@ pub fn rot_z_jac(theta: f64, multiplier: Option<f64>) -> ComplexUnitary {
     let negi = Complex64::new(0.0, -1.0);
     let posi = Complex64::new(0.0, 1.0);
     let zero = Complex64::new(0.0, 0.0);
-    let mult = if let Some(mult) = multiplier {mult} else {1.0};
+    let mult = if let Some(mult) = multiplier {
+        mult
+    } else {
+        1.0
+    };
     ComplexUnitary::from_vec(
         vec![
-            mult * 0.5 *(-half_theta.sin() + negi * half_theta.cos()),
+            mult * 0.5 * (-half_theta.sin() + negi * half_theta.cos()),
             zero,
             zero,
-            mult * 0.5 *(-half_theta.sin() + posi * half_theta.cos()),
+            mult * 0.5 * (-half_theta.sin() + posi * half_theta.cos()),
         ],
-        2
+        2,
     )
 }

@@ -3,10 +3,10 @@ use num_complex::Complex64;
 
 use numpy::{PyArray1, PyArray2};
 use pyo3::class::basic::PyObjectProtocol;
+use pyo3::exceptions;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyTuple};
 use pyo3::wrap_pyfunction;
-use pyo3::exceptions;
 
 use bincode::{deserialize, serialize};
 
@@ -41,8 +41,8 @@ macro_rules! i {
 pub type PyComplexUnitary = PyArray2<Complex64>;
 
 use circuits::{
-    Gate, GateCNOT, GateIdentity, GateKronecker, GateConstantUnitary, GateProduct, GateU3, GateXZXZ,
-    QuantumGate,
+    Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct, GateU3,
+    GateXZXZ, QuantumGate,
 };
 use gatesets::{GateSet, GateSetLinearCNOT};
 
@@ -84,7 +84,7 @@ fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyOb
                 .collect();
             let substeps = PyTuple::new(py, steps);
             gate.call1(py, substeps)?
-        },
+        }
         _ => unreachable!(),
     })
 }
@@ -123,7 +123,11 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
                 let args: Vec<u8> = vec![];
                 let pymat = obj.call_method(py, "matrix", (args,), None)?;
                 let mat = pymat.extract::<&PyArray2<Complex64>>(py)?;
-                Ok(GateConstantUnitary::new(ComplexUnitary::from_ndarray(mat.to_owned_array()), dits).into())
+                Ok(GateConstantUnitary::new(
+                    ComplexUnitary::from_ndarray(mat.to_owned_array()),
+                    dits,
+                )
+                .into())
             } else {
                 Err(exceptions::ValueError::py_err(format!(
                     "Unknown gate {}",
@@ -153,7 +157,11 @@ impl PyGateWrapper {
     }
 
     pub fn jac(&self, py: Python, v: &PyArray1<f64>) -> Vec<Py<PyComplexUnitary>> {
-        self.gate.jac(v.as_slice().unwrap()).iter().map(|m| PyComplexUnitary::from_array(py, &m.clone().into_ndarray()).to_owned()).collect()
+        self.gate
+            .jac(v.as_slice().unwrap())
+            .iter()
+            .map(|m| PyComplexUnitary::from_array(py, &m.clone().into_ndarray()).to_owned())
+            .collect()
     }
 
     pub fn matrix(&self, py: Python, v: &PyArray1<f64>) -> Py<PyComplexUnitary> {
@@ -174,7 +182,7 @@ impl PyGateWrapper {
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
             Gate::Product(..) => String::from("Product"),
-            Gate::ConstantUnitary(..) => String::from("ConstantUnitary")
+            Gate::ConstantUnitary(..) => String::from("ConstantUnitary"),
         })
     }
 
