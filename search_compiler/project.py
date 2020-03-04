@@ -19,6 +19,7 @@ class Project_Status(Enum):
 class Project:
     def __init__(self, path, debug=False):
         self.folder = path
+        self.name = os.path.basename(os.path.normpath(path))
         self.projfile = os.path.join(path, "qcproject")
         try:
             if not os.path.exists(path):
@@ -106,6 +107,7 @@ class Project:
         self._save()
 
     def run(self, target=None):
+        print("Started running project {}".format(self.name))
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.matrix_distance_squared)
@@ -153,6 +155,7 @@ class Project:
             checkpoint.delete(statefile)
             logging.logprint("Deleted checkpoint file.")
             self.status()
+        print("Finished running project {}".format(self.name))
 
     def complete(self):
         return self._overall_status() == Project_Status.COMPLETE
