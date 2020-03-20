@@ -1,10 +1,6 @@
 use ndarray::Array2;
-use rblas::attribute::Transpose;
-use rblas::matrix::ops::Gemm;
-use rblas::vector::ops::{Dotc, Scal};
-use rblas::{Matrix, Vector};
+use cblas::*;
 
-use libc::c_int;
 use num_complex::Complex64;
 
 use serde::{Deserialize, Serialize};
@@ -86,9 +82,9 @@ impl SquareMatrix {
 
     pub fn matmul(&self, other: &SquareMatrix) -> SquareMatrix {
         assert_eq!(self.size, other.size);
-        let t = Transpose::NoTrans;
+        let t = Transpose::None;
         let mut out = SquareMatrix::zeros(self.size);
-        Gemm::gemm(&r!(1.0), t, self, t, other, &r!(0.0), &mut out);
+        unsafe { zgemm(Layout::RowMajor, t, t, self.size as i32, self.size as i32, self.size as i32, r!(1.0), &self.data, self.size as i32, &other.data, other.size as i32, r!(0.0), &mut out.data, out.size as i32) };
         out
     }
 
@@ -124,7 +120,9 @@ impl SquareMatrix {
 
     pub fn dot(&self, other: &SquareMatrix) -> Complex64 {
         assert_eq!(self.size, other.size);
-        Dotc::dotc(other, self)
+        let mut res = [r!(0.0)];
+        unsafe { zdotc_sub(self.size as i32, &self.data, 1, &other.data, 1, &mut res) };
+        res[0]
     }
 
     pub fn sum(&self) -> Complex64 {
@@ -176,7 +174,7 @@ impl SquareMatrix {
 impl Mul<Complex64> for SquareMatrix {
     type Output = Self;
     fn mul(mut self, rhs: Complex64) -> Self {
-        Scal::scal_mat(&rhs, &mut self);
+        unsafe { zscal(self.size as i32, rhs, &mut self.data, 1) };
         self
     }
 }
@@ -184,7 +182,7 @@ impl Mul<Complex64> for SquareMatrix {
 impl Mul<f64> for SquareMatrix {
     type Output = Self;
     fn mul(mut self, rhs: f64) -> Self {
-        Scal::scal_mat(&r!(rhs), &mut self);
+        unsafe { zscal(self.size as i32, r!(rhs), &mut self.data, 1) };
         self
     }
 }
@@ -192,7 +190,7 @@ impl Mul<f64> for SquareMatrix {
 impl Div<Complex64> for SquareMatrix {
     type Output = Self;
     fn div(mut self, rhs: Complex64) -> Self {
-        Scal::scal_mat(&(1.0 / rhs), &mut self);
+        unsafe { zscal(self.size as i32, 1f64 / rhs, &mut self.data, 1) };
         self
     }
 }
@@ -200,42 +198,11 @@ impl Div<Complex64> for SquareMatrix {
 impl Div<f64> for SquareMatrix {
     type Output = Self;
     fn div(mut self, rhs: f64) -> Self {
-        Scal::scal_mat(&Complex64::new(1.0 / rhs, 0.0), &mut self);
+        unsafe { zscal(self.size as i32, Complex64::new(1.0 / rhs, 0.0), &mut self.data, 1) };
         self
     }
 }
 
-impl Matrix<Complex64> for SquareMatrix {
-    fn rows(&self) -> c_int {
-        self.size as c_int
-    }
-
-    fn cols(&self) -> c_int {
-        self.size as c_int
-    }
-
-    fn as_ptr(&self) -> *const Complex64 {
-        self.data.as_ptr()
-    }
-
-    fn as_mut_ptr(&mut self) -> *mut Complex64 {
-        self.data.as_mut_ptr()
-    }
-}
-
-impl Vector<Complex64> for SquareMatrix {
-    fn len(&self) -> c_int {
-        self.data.len() as c_int
-    }
-
-    fn as_ptr(&self) -> *const Complex64 {
-        self.data.as_ptr()
-    }
-
-    fn as_mut_ptr(&mut self) -> *mut Complex64 {
-        self.data.as_mut_ptr()
-    }
-}
 
 impl PartialEq for SquareMatrix {
     fn eq(&self, other: &Self) -> bool {

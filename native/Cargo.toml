@@ -7,16 +7,17 @@ edition = "2018"
 [dependencies]
 num-complex = { version = "0.2", features = ["serde"] }
 ndarray = {version = "0.13", features = ["blas"] }
+blas-src = { version = "0.4.0", default-features = false, features = ["openblas"] }
+openblas-src = { version = "0.7.0", default-features = false, features = ["cblas", "static"] }
 enum_dispatch = "0.2.1"
 numpy = "0.7"
-rblas = { version = "*", git = "https://github.com/ethanhs/rust-blas" }
 libc = "0.2"
 num-traits = "0.2"
 reduce = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 bincode = "1.2"
 better-panic = "0.2"
-squaremat = { path = "./squaremat" }
+squaremat = { path = "./squaremat", version = "0.1" }
 md5 = "0.7"
 
 [dependencies.pyo3]

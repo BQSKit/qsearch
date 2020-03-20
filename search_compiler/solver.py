@@ -10,7 +10,8 @@ from . import utils as util
 try:
     from search_compiler_rs import native_from_object
 except ImportError:
-    native_from_object = None
+    def native_from_object(o):
+        raise Exception("Native code not installed")
 
 def default_solver():
     return COBYLA_Solver()
