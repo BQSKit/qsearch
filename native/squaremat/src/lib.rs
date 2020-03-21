@@ -12,6 +12,9 @@ use float_cmp::*;
 
 use smallvec::{smallvec, SmallVec};
 
+extern crate cblas;
+extern crate openblas_src;
+
 #[macro_export]
 macro_rules! c {
     ($re:expr, $im:expr) => {
