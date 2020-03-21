@@ -17,6 +17,7 @@ setup(
         'Topic :: Software Development :: Compilers',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     keywords='quantum compilers synthesis computing',
     packages=['search_compiler'],
