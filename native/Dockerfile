@@ -1,5 +1,5 @@
 FROM quay.io/pypa/manylinux2010_x86_64
-
+# This docker file is based on the official maturin docker file https://github.com/PyO3/maturin/blob/master/Dockerfile
 ENV PATH /root/.cargo/bin:$PATH
 # Add all supported python versions
 ENV PATH /opt/python/cp35-cp35m/bin/:/opt/python/cp36-cp36m/bin/:/opt/python/cp37-cp37m/bin/:$PATH
