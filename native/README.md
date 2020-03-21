@@ -22,7 +22,7 @@ This list will likely grow as needed.
 
 ## Building and Installing
 
-Using system provided `openblas`:
+On Linux or MacOS, you can build and install scrs using a system installation of s`openblas`.
 
 1. Install openblas. On Debian based Linux distros this is `libopenblas-dev`.
    On macOS, you can install it via Homebrew as `brew install openblas`.
@@ -31,7 +31,8 @@ Using system provided `openblas`:
 4. In the `native/` directory run `pip install .`
 5. Done! You should now be able to use the `COBYLA_SolverNative` solver from `search_compiler.solver`.
 
-Build wheels with Docker, staticly linking a custom built `openblas`:
+On Linux, you can also build wheels with Docker, staticly linking a custom built `openblas`.
+Incidently, this is how the packages on PyPi are built.
 
 1. Install docker https://docs.docker.com/install/
 2. In the `native/` directory, build the container for building wheels: `docker build -t pkgscrs .`
