@@ -14,10 +14,10 @@ jobs:
           uses: actions/setup-python@v1
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Install latest nightly
+        - name: Install nightly-2020-01-23
           uses: actions-rs/toolchain@v1
           with:
-              toolchain: nightly
+              toolchain: nightly-2020-01-23
               override: true
     
         - name: Test building & installing Rust extension
