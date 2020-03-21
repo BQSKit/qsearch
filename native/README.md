@@ -22,7 +22,7 @@ This list will likely grow as needed.
 
 ## Building and Installing
 
-On Linux or MacOS, you can build and install scrs using a system installation of s`openblas`.
+On Linux or MacOS, you can build and install scrs using a system installation of `openblas`.
 
 1. Install openblas. On Debian based Linux distros this is `libopenblas-dev`.
    On macOS, you can install it via Homebrew as `brew install openblas`.
