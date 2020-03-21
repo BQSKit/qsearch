@@ -17,6 +17,8 @@ pub mod circuits;
 pub mod gatesets;
 pub mod utils;
 
+extern crate openblas_src;
+
 #[macro_export]
 macro_rules! c {
     ($re:expr, $im:expr) => {
