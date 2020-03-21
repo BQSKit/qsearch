@@ -6,12 +6,16 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+static = ["openblas-src/static"]
+system = ["openblas-src/system"]
+
 [dependencies]
 num-complex = { version = "0.2.3", features = ["serde"] }
 cblas = "0.2"
 ndarray = {version = "0.13", features = ["blas"] }
 blas-src = { version = "0.4.0", default-features = false, features = ["openblas"] }
-openblas-src = { version = "0.7.0", default-features = false, features = ["cblas", "static"] }
+openblas-src = { version = "0.7.0", default-features = false, features = ["cblas"] }
 libc = "0.2.66"
 serde = { version = "1.0.103", features = ["derive"] }
 float-cmp = "0.6.0"
