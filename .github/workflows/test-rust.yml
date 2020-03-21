@@ -1,0 +1,28 @@
+name: run tests
+on: [push,pull_request] 
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6,3.7,3.8]
+        os: [macOS-latest, ubuntu-latest]
+    steps:
+        - name: checkout
+          uses: actions/checkout@v2
+        - name: setup python
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install latest nightly
+          uses: actions-rs/toolchain@v1
+          with:
+              toolchain: nightly
+              override: true
+    
+        - name: Test building & installing Rust extension
+          run: cd native && pip install . && cd ..
+        
+        - name: Test installed package is importable
+          run: python -c 'import search_compiler_rs'
+          
