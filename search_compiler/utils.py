@@ -5,7 +5,7 @@ from . import unitaries
 
 def matrix_product(*LU):
     # performs matrix multiplication of a list of matrices
-    result = np.matrix(np.eye(LU[0].shape[0]), dtype='complex128')
+    result = np.array(np.eye(LU[0].shape[0]), dtype='complex128')
     for U in LU:
         result = np.matmul(U, result, out=result)
     return result
@@ -26,7 +26,7 @@ def matrix_distance_squared(A,B):
     # optimized implementation
     return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
     #original implementation
-    #return 1 - np.abs(np.trace(np.dot(A,B.H))) / A.shape[0]
+    #return 1 - np.abs(np.trace(np.dot(A,B.T.conjugate()))) / A.shape[0]
 
 def matrix_distance_squared_jac(U, M, J):
     S = np.sum(np.multiply(U, np.conj(M)))
@@ -91,17 +91,17 @@ def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
     u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
     u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
 
-    evaluated_unitary = np.matrix([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+    evaluated_unitary = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
 
     return evaluated_unitary
 
 # based on old solovay kitaev code
 def random_near_identity(n, alpha):
     # generate a random hermitian matrix
-    H = np.matrix((np.random.rand(n,n) - 0.5) +1j * (np.random.rand(n,n) - 0.5))
-    H = H + H.H
+    H = np.array((np.random.rand(n,n) - 0.5) +1j * (np.random.rand(n,n) - 0.5))
+    H = H + H.T.conjugate()
     # generate a unitary matrix from the hermitian matrix that is not far from the identity
-    return np.matrix(sp.linalg.expm(1j * H * alpha))
+    return np.array(sp.linalg.expm(1j * H * alpha))
     
 def random_vector_evaluation(A, B, count=1000):
     total = 0.0
@@ -132,14 +132,14 @@ def random_vector_evaluation(A, B, count=1000):
     return (maxs, total/count, mins)
 
 def remap(U, order, d=2):
-    U = np.matrix(U, dtype='complex128')
+    U = np.array(U, dtype='complex128')
     if d != 2:
         raise NotImplementedError("This function is not yet implemented for dits other than qubits because I have not implemented the swap for those qudits yet.")
 
     dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
-    beforemat = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
-    aftermat  = np.matrix(np.eye(np.shape(U)[0]), dtype='complex128')
-    I = np.matrix(np.eye(d), dtype = 'complex128')
+    beforemat = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
+    aftermat  = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
+    I = np.array(np.eye(d), dtype = 'complex128')
     if dits == 1:
         return U
     current_order = [i for i in range(0, dits)]

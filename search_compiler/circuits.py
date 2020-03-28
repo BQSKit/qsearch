@@ -56,7 +56,7 @@ class QuantumStep:
 class IdentityStep(QuantumStep):
     def __init__(self, n=2, dits=1):
         self.num_inputs=0
-        self._I = np.matrix(np.eye(n), dtype='complex128')
+        self._I = np.array(np.eye(n), dtype='complex128')
         self.dits = dits
         self._n = n
 
@@ -76,8 +76,8 @@ class ZXZXZQubitStep(QuantumStep):
 
         self._x90 = unitaries.rot_x(np.pi/2)
         self._rot_z = unitaries.rot_z(0)
-        self._out = np.matrix(np.eye(2), dtype='complex128')
-        self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
+        self._out = np.array(np.eye(2), dtype='complex128')
+        self._buffer = np.array(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
        
     def matrix(self, v):
@@ -141,8 +141,8 @@ class XZXZPartialQubitStep(QuantumStep):
 
         self._x90 = unitaries.rot_x(np.pi/2)
         self._rot_z = unitaries.rot_z(0)
-        self._out = np.matrix(np.eye(2), dtype='complex128')
-        self._buffer = np.matrix(np.eye(2), dtype = 'complex128')
+        self._out = np.array(np.eye(2), dtype='complex128')
+        self._buffer = np.array(np.eye(2), dtype = 'complex128')
         # need two buffers due to a bug in some implementations of numpy
         
     def matrix(self, v):
@@ -196,7 +196,7 @@ class QiskitU3QubitStep(QuantumStep):
         sp = np.sin(v[1] * np.pi * 2)
         cl = np.cos(v[2] * np.pi * 2)
         sl = np.sin(v[2] * np.pi * 2)
-        return np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+        return np.array([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
 
     def mat_jac(self, v):
         ct = np.cos(v[0] * np.pi)
@@ -206,10 +206,10 @@ class QiskitU3QubitStep(QuantumStep):
         cl = np.cos(v[2] * np.pi * 2)
         sl = np.sin(v[2] * np.pi * 2)
 
-        U = np.matrix([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
-        J1 = np.matrix([[-np.pi*st, -np.pi*ct * (cl + 1j * sl)], [np.pi*ct * (cp + 1j * sp), -np.pi*st * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
-        J2 = np.matrix([[0, 0], [st * 2*np.pi*(-sp + 1j * cp), ct * 2*np.pi*(cl * -sp - sl * cp + 1j * cl * cp + 1j * sl * -sp)]], dtype='complex128')
-        J3 = np.matrix([[0, -st * 2*np.pi*(-sl + 1j * cl)], [0, ct * 2*np.pi*(-sl * cp - cl * sp + 1j * -sl * sp + 1j * cl * cp)]], dtype='complex128')
+        U = np.array([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+        J1 = np.array([[-np.pi*st, -np.pi*ct * (cl + 1j * sl)], [np.pi*ct * (cp + 1j * sp), -np.pi*st * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+        J2 = np.array([[0, 0], [st * 2*np.pi*(-sp + 1j * cp), ct * 2*np.pi*(cl * -sp - sl * cp + 1j * cl * cp + 1j * sl * -sp)]], dtype='complex128')
+        J3 = np.array([[0, -st * 2*np.pi*(-sl + 1j * cl)], [0, ct * 2*np.pi*(-sl * cp - cl * sp + 1j * -sl * sp + 1j * cl * cp)]], dtype='complex128')
         return (U, [J1, J2, J3])
 
     def assemble(self, v, i=0):
@@ -236,7 +236,7 @@ class SingleQutritStep(QuantumStep):
         return "SingleQutritStep()"
 
 class CSUMStep(QuantumStep):
-    _csum =  np.matrix([[1,0,0, 0,0,0, 0,0,0],
+    _csum =  np.array([[1,0,0, 0,0,0, 0,0,0],
                         [0,1,0, 0,0,0, 0,0,0],
                         [0,0,1, 0,0,0, 0,0,0],
                         [0,0,0, 0,0,1, 0,0,0],
@@ -261,7 +261,7 @@ class CSUMStep(QuantumStep):
         return "CSUMStep()"
 
 class CPIStep(QuantumStep):
-    _cpi = np.matrix([[1,0,0, 0,0,0, 0,0,0],
+    _cpi = np.array([[1,0,0, 0,0,0, 0,0,0],
                       [0,1,0, 0,0,0, 0,0,0],
                       [0,0,1, 0,0,0, 0,0,0],
                       [0,0,0, 0,1,0,0,0,0],
@@ -288,7 +288,7 @@ class CPIStep(QuantumStep):
 class CPIPhaseStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 0
-        self._cpi = np.matrix([[1,0,0, 0,0,0, 0,0,0],
+        self._cpi = np.array([[1,0,0, 0,0,0, 0,0,0],
                                [0,1,0, 0,0,0, 0,0,0],
                                [0,0,1, 0,0,0, 0,0,0],
                                [0,0,0, 0,-1,0,0,0,0],
@@ -298,7 +298,7 @@ class CPIPhaseStep(QuantumStep):
                                [0,0,0, 0,0,0, 0,1,0],
                                [0,0,0, 0,0,0, 0,0,1]
                               ], dtype='complex128')
-        diag_mod = np.matrix(np.diag([1]*4 + [np.exp(2j * np.random.random()*np.pi) for _ in range(0,5)]))
+        diag_mod = np.array(np.diag([1]*4 + [np.exp(2j * np.random.random()*np.pi) for _ in range(0,5)]))
         self._cpi = np.matmul(self._cpi, diag_mod)
         self.dits = 2
 
@@ -312,7 +312,7 @@ class CPIPhaseStep(QuantumStep):
         return "CPIPhaseStep()"
 
 class CNOTStep(QuantumStep):
-    _cnot = np.matrix([[1,0,0,0],
+    _cnot = np.array([[1,0,0,0],
                        [0,1,0,0],
                        [0,0,0,1],
                        [0,0,1,0]], dtype='complex128')
@@ -381,10 +381,10 @@ class CUStep(QuantumStep):
         self.num_inputs = 0
         self._U = U
         n = np.shape(U)[0]
-        I = np.matrix(np.eye(n))
+        I = np.array(np.eye(n))
         top = np.pad(self._U if flipped else I, [(0,n),(0,n)], 'constant')
         bot = np.pad(I if flipped else self._U, [(n,0),(n,0)], 'constant')
-        self._CU = np.matrix(top + bot)
+        self._CU = np.array(top + bot)
         self.dits = 2
         self.num_inputs = 0
 
@@ -402,7 +402,7 @@ class CUStep(QuantumStep):
 
 class CRZStep(QuantumStep):
     _cnr = unitaries.sqrt_cnot
-    _I = np.matrix(np.eye(2), dtype='complex128')
+    _I = np.array(np.eye(2), dtype='complex128')
     def __init__(self):
         self.num_inputs = 1
         self.dits = 2
@@ -421,7 +421,7 @@ class CRZStep(QuantumStep):
         return "CQubitStep()"
 
 class CNOTRootStep(QuantumStep):
-    _cnr = np.matrix([[1,0,0,0],
+    _cnr = np.array([[1,0,0,0],
                        [0,1,0,0],
                        [0,0,0.5+0.5j,0.5-0.5j],
                        [0,0,0.5-0.5j,0.5+0.5j]])
@@ -558,7 +558,7 @@ class ProductStep(QuantumStep):
             ba1 = ba2
 
         for i, Js in enumerate(subjacs):
-            A = np.matmul(A, submats[i].H, out=ba1) # remove the current matrix from the "after" array
+            A = np.matmul(A, submats[i].T.conjugate(), out=ba1) # remove the current matrix from the "after" array
             for J in Js:
                 tmp = np.matmul(J, B, out=bj)
                 jacs.append(np.matmul(A, tmp, out=J))

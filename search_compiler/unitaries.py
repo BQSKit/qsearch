@@ -1,24 +1,24 @@
 import numpy as np
 
-cnot = np.matrix([[1,0,0,0],
+cnot = np.array([[1,0,0,0],
                   [0,1,0,0],
                   [0,0,0,1],
                   [0,0,1,0]],
                   dtype='complex128')
 
-sqrt_cnot = np.matrix([[1,0,0,0],
+sqrt_cnot = np.array([[1,0,0,0],
                        [0,1,0,0],
                        [0,0,0.5+0.5j,0.5-0.5j],
                        [0,0,0.5-0.5j,0.5+0.5j]],
                        dtype='complex128')
 
-swap = np.matrix([[1,0,0,0],
+swap = np.array([[1,0,0,0],
                   [0,0,1,0],
                   [0,1,0,0],
                   [0,0,0,1]],
                   dtype='complex128')
 
-toffoli = np.matrix([[1,0,0,0,0,0,0,0],
+toffoli = np.array([[1,0,0,0,0,0,0,0],
                      [0,1,0,0,0,0,0,0],
                      [0,0,1,0,0,0,0,0],
                      [0,0,0,1,0,0,0,0],
@@ -29,7 +29,7 @@ toffoli = np.matrix([[1,0,0,0,0,0,0,0],
                      dtype='complex128')
 
 
-fredkin = np.matrix([[1,0,0,0,0,0,0,0],
+fredkin = np.array([[1,0,0,0,0,0,0,0],
                      [0,1,0,0,0,0,0,0],
                      [0,0,1,0,0,0,0,0],
                      [0,0,0,1,0,0,0,0],
@@ -39,7 +39,7 @@ fredkin = np.matrix([[1,0,0,0,0,0,0,0],
                      [0,0,0,0,0,0,0,1]],
                      dtype='complex128')
 
-peres = np.matrix([[1,0,0,0,0,0,0,0],
+peres = np.array([[1,0,0,0,0,0,0,0],
                    [0,1,0,0,0,0,0,0],
                    [0,0,1,0,0,0,0,0],
                    [0,0,0,1,0,0,0,0],
@@ -49,7 +49,7 @@ peres = np.matrix([[1,0,0,0,0,0,0,0],
                    [0,0,0,0,1,0,0,0]], 
                    dtype='complex128')
 
-logical_or = np.matrix([[1,0,0,0,0,0,0,0],
+logical_or = np.array([[1,0,0,0,0,0,0,0],
                         [0,1,0,0,0,0,0,0],
                         [0,0,0,1,0,0,0,0],
                         [0,0,1,0,0,0,0,0],
@@ -59,7 +59,7 @@ logical_or = np.matrix([[1,0,0,0,0,0,0,0],
                         [0,0,0,0,0,0,1,0]], 
                         dtype='complex128')
 
-full_adder = np.matrix([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+full_adder = np.array([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -79,21 +79,21 @@ full_adder = np.matrix([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 # Full adder that converts ABC0 to ABCS.  Behavior is not well defined when the last input bit is a 1.
 
 def rot_z(theta):
-    return np.matrix([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
+    return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_x(theta):
-    return np.matrix([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
+    return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
 def rot_y(theta):
-    return np.matrix([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
+    return np.array([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
 def qft(n):
     root = np.e ** (2j * np.pi / n)
-    Q = np.matrix(np.fromfunction(lambda x,y: root**(x*y), (n,n))) / np.sqrt(n)
+    Q = np.array(np.fromfunction(lambda x,y: root**(x*y), (n,n))) / np.sqrt(n)
     return Q
 
 def identity(n): # not super necessary but saves a little code length
-    return np.matrix(np.eye(n), dtype='complex128')
+    return np.array(np.eye(n), dtype='complex128')
 
 
 # generates an arbitrary cnot gate by classical logic and brute force
@@ -116,5 +116,5 @@ def arbitrary_cnot(dits, control, target):
         else:
             # if the control is true and matched and the target is matched, return 0
             return 0
-    return np.matrix(np.fromfunction(np.vectorize(f), (2**dits,2**dits)),dtype='complex128')
+    return np.array(np.fromfunction(np.vectorize(f), (2**dits,2**dits)),dtype='complex128')
 

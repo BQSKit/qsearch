@@ -6,7 +6,7 @@ def generate_miro():
     theta = np.pi/3
     c = np.cos(theta/2)
     s = -1j*np.sin(theta/2)
-    return np.matrix([
+    return np.array([
         [c,0,0,0,0,0,0,s],
         [0,c,0,0,0,0,s,0],
         [0,0,c,0,0,s,0,0],
@@ -20,29 +20,29 @@ mirogate = generate_miro()
 
 def generate_HHL():
     def hadamard(theta=0):
-        return np.matrix([[np.cos(2*theta), np.sin(2*theta)],[np.sin(2*theta), -np.cos(2*theta)]])
+        return np.array([[np.cos(2*theta), np.sin(2*theta)],[np.sin(2*theta), -np.cos(2*theta)]])
     H = UStep(hadamard(), "H")
     RCH8 = CUStep(hadamard(np.pi/8), "H8", flipped=True)
     RCH16 = CUStep(hadamard(np.pi/16), "H16", flipped=True)
-    RCY = CUStep(np.matrix([[0,-1j],[1j,0]]), "CY", flipped=True)
-    RCNOT = UStep(np.matrix([[0,1,0,0],
+    RCY = CUStep(np.array([[0,-1j],[1j,0]]), "CY", flipped=True)
+    RCNOT = UStep(np.array([[0,1,0,0],
                             [1,0,0,0],
                             [0,0,1,0],
                             [0,0,0,1]]), "RCNOT")
-    SWAP = UStep(np.matrix([[1,0,0,0],
+    SWAP = UStep(np.array([[1,0,0,0],
                             [0,0,1,0],
                             [0,1,0,0],
                             [0,0,0,1]]))
 
     # input parameters
     t0 = 2*np.pi
-    A = np.matrix([[1.5, 0.5],[0.5, 1.5]])
+    A = np.array([[1.5, 0.5],[0.5, 1.5]])
     AU = sp.linalg.expm(1j * t0 * A / 2)
 
     CAU = CUStep(AU, "CA")
-    CSH = CUStep(np.matrix([[1,0],[0,-1j]]), "CSH")
+    CSH = CUStep(np.array([[1,0],[0,-1j]]), "CSH")
 
-    X = UStep(np.matrix([[0,1],[1,0]]), "X")
+    X = UStep(np.array([[0,1],[1,0]]), "X")
     I = IdentityStep(2)
 
     circuit = ProductStep()
@@ -57,7 +57,7 @@ def generate_HHL():
     return circuit.matrix([])
 HHL = generate_HHL()
 
-ethylene = np.matrix([[-3.72110828e-26+0.00000000e+00j,
+ethylene = np.array([[-3.72110828e-26+0.00000000e+00j,
           0.00000000e+00+3.64959242e-16j,
           0.00000000e+00-1.10343461e-15j,
          -9.56077279e-04+0.00000000e+00j,

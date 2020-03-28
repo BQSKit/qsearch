@@ -2,8 +2,8 @@ import numpy as np
 from . import circuits as circuits
 from . import utils as util
 
-gate_X = np.matrix([[0,1],[1,0]], dtype='complex128')
-gate_H = np.matrix([[1/np.sqrt(2), 1/np.sqrt(2)],[1/np.sqrt(2), -1/np.sqrt(2)]], dtype='complex128')
+gate_X = np.array([[0,1],[1,0]], dtype='complex128')
+gate_H = np.array([[1/np.sqrt(2), 1/np.sqrt(2)],[1/np.sqrt(2), -1/np.sqrt(2)]], dtype='complex128')
 gate_CX = util.cnot
 
 step_X = circuits.UStep(gate_X, name="X")
@@ -19,7 +19,7 @@ class RZStep(circuits.QuantumStep):
 
     def matrix(self, v):
         x = v[0] * np.pi * 2
-        return np.matrix([[np.exp(-1j*x/2), 0],[0, np.exp(1j*x/2)]], dtype='complex128')
+        return np.array([[np.exp(-1j*x/2), 0],[0, np.exp(1j*x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RZ", list(v)]
@@ -37,7 +37,7 @@ class RXStep(circuits.QuantumStep):
 
     def matrix(self, v):
         x = v[0] * np.pi * 2
-        return np.matrix([[np.cos(x/2), -1j*np.sin(x/2)],[-1j*np.sin(x/2), np.cos(x/2)]], dtype='complex128')
+        return np.array([[np.cos(x/2), -1j*np.sin(x/2)],[-1j*np.sin(x/2), np.cos(x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RX", list(v)]
@@ -55,7 +55,7 @@ class RYStep(circuits.QuantumStep):
 
     def matrix(self, v):
         x = v[0] * np.pi*2
-        return np.matrix([[np.cos(x/2), -np.sin(x/2)],[np.sin(x/2), np.cos(x/2)]], dtype='complex128')
+        return np.array([[np.cos(x/2), -np.sin(x/2)],[np.sin(x/2), np.cos(x/2)]], dtype='complex128')
 
     def path(self, v):
         return ["RY", list(v)]
