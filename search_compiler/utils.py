@@ -38,6 +38,23 @@ def matrix_distance_squared_jac(U, M, J):
     jacs = -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))*U.shape[0] / np.abs(S)
     return (dsq, jacs)
 
+def matrix_residuals(A, B, I, p):
+    M = np.dot(B,np.conj(A.T))
+    #M *= np.abs(M[0][0])/M[0][0]
+    Re, Im = np.real(M), np.imag(M)
+    Re -= I
+    Re = np.reshape(Re, (1,-1))
+    Im = np.reshape(Im, (1,-1))
+    return np.append(Re, Im)
+
+def matrix_residuals_jac(U, M, J, p):
+    Ut = np.conj(U.T)
+    #M2 = np.dot(M, Ut)
+    #Ut *= np.abs(M2[0][0])/M2[0][0]
+    JU = [np.matmul(K, Ut) for K in J]
+    JU = np.array([np.append(np.reshape(np.real(K), (1,-1)), np.reshape(np.imag(K), (1,-1))) for K in JU])
+    return JU.T
+
 
 def matrix_distance(A,B):
     return np.sqrt(np.abs(matrix_distance_squared(A,B)))

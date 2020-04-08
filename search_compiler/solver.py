@@ -97,3 +97,14 @@ class CMA_Jac_Solver(Solver):
 class Jac_SolverNative(BFGS_Jac_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
+
+class LeastSquares_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_residuals):
+        I = np.eye(U.shape[0])
+        error_func = util.matrix_residuals
+        eval_func = lambda v: error_func(U, circuit.matrix(v), I)
+        jac_func = lambda v: util.matrix_residuals_jac(U, circuit.matrix(v), circuit.mat_jac(v)[1])
+        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
+        xopt = result.x
+        return (circuit.matrix(xopt), xopt)
+
