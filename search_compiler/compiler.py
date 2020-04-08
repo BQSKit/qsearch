@@ -18,8 +18,7 @@ class Compiler():
 
 def evaluate_step(tup, U, error_func, solver, I):
     step, depth = tup
-    ostep = step._optimize(I)
-    return (step, solver.solve_for_unitary(ostep, U, error_func), depth)
+    return (step, solver.solve_for_unitary(step, U, error_func), depth)
 
 class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=default_solver(), beams=-1):
@@ -73,7 +72,7 @@ class SearchCompiler(Compiler):
             root = ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
-            best_pair = (result[0], root._optimize(I), result[1])
+            best_pair = (result[0], root, result[1])
             logprint("New best! {} at depth 0".format(best_value/10))
             if depth == 0:
                 return best_pair
@@ -107,7 +106,7 @@ class SearchCompiler(Compiler):
                 current_value = self.error_func(U, result[0])
                 if (current_value < best_value and (best_value >= self.threshold or current_depth + 1 <= best_depth)) or (current_value < self.threshold and current_depth + 1 < best_depth):
                     best_value = current_value
-                    best_pair = (result[0], step._optimize(I), result[1])
+                    best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
                     logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
                 if depth is None or current_depth + 1 < depth:
