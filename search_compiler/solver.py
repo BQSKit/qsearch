@@ -98,7 +98,7 @@ class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
 
-class LeastSquares_Solver(Solver):
+class LeastSquares_Jac_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=None):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
@@ -111,6 +111,6 @@ class LeastSquares_Solver(Solver):
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class LeastSquares_SolverNative(LeastSquares_Solver):
+class LeastSquares_Jac_SolverNative(LeastSquares_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_residuals):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
