@@ -94,7 +94,7 @@ class CMA_Jac_Solver(Solver):
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
 
-class Jac_SolverNative(BFGS_Jac_Solver):
+class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
     def solve_for_unitary(self, circuit, U, error_func=util.matrix_distance_squared):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
 

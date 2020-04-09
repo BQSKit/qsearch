@@ -2,7 +2,7 @@ import search_compiler as sc
 from search_compiler_rs import native_from_object
 p = sc.Project("test")
 p.clear()
-p["solver"] = sc.solver.Jac_SolverNative()
+p["solver"] = sc.solver.BFGS_Jac_SolverNative()
 p.add_compilation("qft3", sc.unitaries.qft(8))
 p.run()
 U = sc.unitaries.qft(8)
