@@ -70,6 +70,11 @@ class Project:
         self._compiler_config[keyword] = value
         self._save()
 
+    def configure_compiler_override(self, keyword, value):
+        warn("Using this method could result in crashes, infinite loops, or other undefined behavior.  It is safer to reset the project and configure using __setitem__.  Only use this method if the risk of error is worse than losing intermediate progress.")
+        self._compiler_config[keyword] = value
+        self._save()
+
     def __getitem__(self, keyword):
         return self._compiler_config[keyword]
 
