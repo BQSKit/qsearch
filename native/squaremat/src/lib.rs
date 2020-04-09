@@ -102,7 +102,6 @@ impl SquareMatrix {
                 let col_start = j * row_b;
                 for k in 0..row_b {
                     for l in 0..row_b {
-                        //println!("{} * {}; {} * {}; {},{}", i, j, k, l, row_a, row_b);
                         out.data[((row_start + k) * out.size + (col_start + l)) as usize] = self
                             .data[(i * self.size + j) as usize]
                             * other.data[(k * other.size + l) as usize];

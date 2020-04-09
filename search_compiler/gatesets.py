@@ -169,7 +169,7 @@ class QutritCPIPhaseLinear(Gateset):
         return fill_row(self.single_step, n)
     
     def search_layers(self, n):
-        return linear_topology(CPIPhaseStep(), self.single_Step, n, self.d)
+        return linear_topology(CPIPhaseStep(), self.single_step, n, self.d)
 
 
 # commonly used defaults

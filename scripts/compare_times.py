@@ -28,7 +28,7 @@ def get_time(file):
         start, end = [line.split('>')[0].strip() for line in f.readlines() if 'Starting' in line or 'Finished compilation of' in line]
     start_t = datetime.fromisoformat(start)
     end_t = datetime.fromisoformat(end)
-    return end_t - start_t
+    return (end_t - start_t).total_seconds()
 
 for bench, files in logs.items():
     print(f"{bench}:")
@@ -36,4 +36,4 @@ for bench, files in logs.items():
         for run in files:
             print(run, get_time(files[run]))
     else:
-        print(sum([get_time(run) for run in files.values()], timedelta())/len(args))
+        print(sum([get_time(run) for run in files.values()], 0.0)/len(args))
