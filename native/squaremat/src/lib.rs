@@ -10,8 +10,6 @@ use std::ops::{Div, Mul};
 
 use float_cmp::*;
 
-use smallvec::{smallvec, SmallVec};
-
 extern crate cblas;
 extern crate openblas_src;
 
@@ -38,7 +36,7 @@ macro_rules! i {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SquareMatrix {
-    data: SmallVec<[Complex64; 32]>,
+    data: Vec<Complex64>,
     pub size: usize,
 }
 
@@ -63,14 +61,14 @@ impl SquareMatrix {
 
     pub fn from_vec(v: Vec<Complex64>, size: usize) -> Self {
         SquareMatrix {
-            data: SmallVec::from_vec(v),
+            data: v,
             size,
         }
     }
 
     pub fn zeros(size: usize) -> Self {
         SquareMatrix {
-            data: smallvec![r!(0.0); (size * size) as usize],
+            data: vec![r!(0.0); (size * size) as usize],
             size,
         }
     }
@@ -115,7 +113,7 @@ impl SquareMatrix {
     pub fn into_ndarray(self) -> Array2<Complex64> {
         Array2::from_shape_vec(
             (self.size as usize, self.size as usize),
-            self.data.into_vec(),
+            self.data,
         )
         .unwrap()
     }

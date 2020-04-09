@@ -1,6 +1,6 @@
 [package]
 name = "squaremat"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 edition = "2018"
 
@@ -19,10 +19,6 @@ openblas-src = { version = "0.7.0", default-features = false, features = ["cblas
 libc = "0.2.66"
 serde = { version = "1.0.103", features = ["derive"] }
 float-cmp = "0.6.0"
-
-[dependencies.smallvec]
-version = "1.0.0"
-features = ["union", "serde"]
 
 [lib]
 name = "squaremat"
