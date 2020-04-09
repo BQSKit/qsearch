@@ -26,6 +26,7 @@ class Project:
                 os.mkdir(path)
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
+                self.status()
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
@@ -113,6 +114,7 @@ class Project:
         error_func = self._config("error_func", utils.matrix_distance_squared)
         heuristic = heuristics.astar
         d = self._config("d", 2)
+        max_dits = int(np.log(max([self._compilations[name][0].shape[0] for name in self._compilations]))/np.log(2))
         if "search_type" in self._compiler_config:
             st = self._compiler_config["search_type"]
             if st == "breadth":
@@ -121,7 +123,7 @@ class Project:
                 heuristic = heuristics.greedy
 
         heuristic = self._config("heuristic", heuristic)
-        solver = self._config("solver", default_solver())
+        solver = self._config("solver", default_solver(gateset, max_dits, error_func))
         beams = self._config("beams", -1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
@@ -174,6 +176,9 @@ class Project:
             elif s == Project_Status.DEBUGING:
                 msg = "Debug."
             print("{}\t{}".format(n,msg))
+
+    def compilations(self):
+        return list(self._compilations.keys())
 
     def _compilation_status(self, name):
         _, cdict = self._compilations[name]
