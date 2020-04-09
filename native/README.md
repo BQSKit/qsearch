@@ -25,7 +25,7 @@ This list will likely grow as needed.
 On Linux or MacOS, you can build and install scrs using a system installation of `openblas`.
 
 1. Install openblas and gfortran. On Debian based Linux distros this is `libopenblas-dev`. You will also need
-   the `gfortran` package. On macOS, you can install these via Homebrew as `brew install openblas gcc`.
+   the `libgfortran-<version>-dev`  package (for whatever version your distro supplies). On macOS, you can install these via Homebrew as `brew install openblas gcc`.
 2. Install rustup via https://rustup.rs. The defaults for platform should be fine.
 3. Switch to the nightly toolchain using `rustup default nightly`. You may need to do `source ~/.cargo/env` first.
 4. In the `native/` directory run `pip install .` Make sure the version of pip you have is at least 20.0.2. You can check via `pip -V`. 
