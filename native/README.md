@@ -28,7 +28,7 @@ On Linux or MacOS, you can build and install scrs using a system installation of
    the `gfortran` package. On macOS, you can install these via Homebrew as `brew install openblas gcc`.
 2. Install rustup via https://rustup.rs. The defaults for platform should be fine.
 3. Switch to the nightly toolchain using `rustup default nightly`. You may need to do `source ~/.cargo/env` first.
-4. Make sure the version of pip you have is at least 20.0.2. You can check via `pip -V`. In the `native/` directory run `pip install .`
+4. In the `native/` directory run `pip install .` Make sure the version of pip you have is at least 20.0.2. You can check via `pip -V`. 
 5. Done! You should now be able to use the `COBYLA_SolverNative` solver from `search_compiler.solver`.
 
 On Linux, you can also build wheels with Docker, staticly linking a custom built `openblas`.
