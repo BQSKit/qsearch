@@ -480,7 +480,7 @@ impl QuantumGate for GateProduct {
                 let tmp = J.matmul(&B);
                 jacs.push(A.matmul(&tmp));
             }
-            B = B.matmul(&submats[i].clone());
+            B = submats[i].clone().matmul(&B);
         }
         (B, jacs)
     }
