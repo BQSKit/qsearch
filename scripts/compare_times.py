@@ -36,4 +36,4 @@ for bench, files in logs.items():
         for run in files:
             print(run, get_time(files[run]))
     else:
-        print(sum([get_time(run) for run in files.values()], start=timedelta())/len(args))
+        print(sum([get_time(run) for run in files.values()], timedelta())/len(args))

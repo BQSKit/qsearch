@@ -264,24 +264,28 @@ impl GateXZXZ {
 impl QuantumGate for GateXZXZ {
     fn mat(&self, v: &[f64]) -> SquareMatrix {
         let rotz = rot_z(v[0] * PI * 2.0 + PI);
-        let buffer = self.x90.matmul(&rotz);
-        let out = buffer.matmul(&self.x90);
-        out.matmul(&rot_z(v[1] * PI * 2.0 - PI))
+        let buffer = rotz.matmul(&self.x90);
+        let out = self.x90.matmul(&buffer);
+        let rotz2 = rot_z(v[1] * PI * 2.0 - PI);
+        rotz2.matmul(&out)
     }
 
     #[allow(non_snake_case)]
     fn mat_jac(&self, v: &[f64]) -> (SquareMatrix, Vec<SquareMatrix>) {
-        let rotz = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
-        let buffer = self.x90.matmul(&rotz);
-        let out = buffer.matmul(&self.x90);
-        let J1 = out.matmul(&rot_z(v[1] * PI * 2.0 - PI));
+        let rotz_jac = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
+        let buffer = rotz_jac.matmul(&self.x90);
+        let out = self.x90.matmul(&buffer);
+        let rotz = rot_z(v[1] * PI * 2.0 - PI);
+        let J1 = rotz.matmul(&out);
 
         let rotz2 = rot_z(v[0] * PI * 2.0 + PI);
-        let buffer2 = self.x90.matmul(&rotz2);
-        let out2 = buffer2.matmul(&self.x90);
-        let J2 = out2.matmul(&rot_z_jac(v[1] * PI * 2.0 - PI, Some(PI * 2.0)));
+        let buffer2 = rotz2.matmul(&self.x90);
+        let out2 = self.x90.matmul(&buffer2);
+        let rotz_jac2 = rot_z_jac(v[1] * PI * 2.0 - PI, Some(PI * 2.0));
+        let J2 = rotz_jac2.matmul(&out2);
 
-        let U = out2.matmul(&rot_z(v[1] * PI * 2.0 - PI));
+        let rotz3 = rot_z(v[1] * PI * 2.0 - PI);
+        let U = rotz3.matmul(&out2);
 
         (U, vec![J1, J2])
     }
@@ -439,7 +443,7 @@ impl QuantumGate for GateProduct {
                 index += gate.inputs();
                 g
             })
-            .reduce(|a: SquareMatrix, b: SquareMatrix| a.matmul(&b))
+            .reduce(|a: SquareMatrix, b: SquareMatrix| b.matmul(&a))
             .unwrap()
     }
 
@@ -467,14 +471,14 @@ impl QuantumGate for GateProduct {
                 index += gate.inputs();
                 g
             })
-            .reduce(|a: SquareMatrix, b: SquareMatrix| a.matmul(&b))
+            .reduce(|a: SquareMatrix, b: SquareMatrix| b.matmul(&a))
             .unwrap();
         let mut jacs = Vec::with_capacity(self.substeps.len());
         for (i, Js) in subjacs.iter().enumerate() {
-            A = submats[i].clone().H().matmul(&A);
+            A = A.matmul(&submats[i].clone().H());
             for J in Js {
-                let tmp = B.matmul(&J);
-                jacs.push(tmp.matmul(&A));
+                let tmp = J.matmul(&B);
+                jacs.push(A.matmul(&tmp));
             }
             B = B.matmul(&submats[i].clone());
         }
