@@ -103,8 +103,11 @@ class LeastSquares_Solver(Solver):
         I = np.eye(U.shape[0])
         error_func = util.matrix_residuals
         eval_func = lambda v: error_func(U, circuit.matrix(v), I)
-        jac_func = lambda v: util.matrix_residuals_jac(U, circuit.matrix(v), circuit.mat_jac(v)[1])
+        jac_func = lambda v: util.matrix_residuals_jac(U, *circuit.mat_jac(v))
         result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
+class LeastSquares_SolverNative(LeastSquares_Solver):
+    def solve_for_unitary(self, circuit, U, error_func=util.matrix_residuals):
+        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
