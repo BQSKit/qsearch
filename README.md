@@ -24,7 +24,7 @@ Once installed, you can import the library like any other python package:
 import search_compiler as sc
 ```
 ### Experimental Native Gateset
-There is a gateset that is implemented in native code to be faster.  [See the wiki for installation instructions.](https://github.com/WolfLink/search_compiler/wiki/Native-Gateset).
+There is a gateset that is implemented in native code to be faster.  [See the wiki for installation instructions](https://github.com/WolfLink/search_compiler/wiki/Native-Gateset).
 # Getting Started: search_compiler Projects
 The simplest way to use the search_compiler library is by using a Project. When you create a project, you provide a path where a directory will be created to contain the project's files.
 ```
