@@ -17,7 +17,12 @@ pub mod circuits;
 pub mod gatesets;
 pub mod utils;
 
+#[cfg(all(feature = "static", feature = "default"))]
 extern crate openblas_src;
+#[cfg(feature = "accelerate")]
+extern crate accelerate_src;
+#[cfg(feature = "mkl")]
+extern crate intel_mkl_src;
 
 #[macro_export]
 macro_rules! c {

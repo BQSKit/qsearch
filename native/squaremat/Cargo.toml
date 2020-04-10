@@ -9,6 +9,7 @@ build = "build.rs"
 openblas-static = ["blas-src/openblas", "openblas-src/static", "openblas-src/cblas"]
 openblas-system = ["blas-src/openblas", "openblas-src/system", "openblas-src/cblas"]
 accelerate = ["blas-src/accelerate"]
+mkl = ["blas-src/intel-mkl"]
 
 [dependencies]
 num-complex = { version = "0.2.3", features = ["serde"] }
@@ -17,6 +18,7 @@ ndarray = {version = "0.13", features = ["blas"] }
 blas-src = { version = "0.4.0", default-features = false }
 openblas-src = { version = "0.7.0", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
+intel-mkl-src = { version = "0.5.0", optional = true }
 libc = "0.2.66"
 serde = { version = "1.0.103", features = ["derive"] }
 float-cmp = "0.6.0"

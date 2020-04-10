@@ -10,6 +10,7 @@ build = "build.rs"
 static = ["blas-src/openblas", "openblas-src/static", "openblas-src/cblas", "squaremat/openblas-static"]
 default = ["blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system"]
 accelerate = ["blas-src/accelerate", "squaremat/accelerate"]
+mkl = ["blas-src/intel-mkl", "squaremat/mkl"]
 
 [dependencies]
 num-complex = { version = "0.2", features = ["serde"] }
@@ -17,6 +18,7 @@ ndarray = {version = "0.13", features = ["blas"] }
 blas-src = { version = "0.4.0", default-features = false }
 openblas-src = { version = "0.7.0", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
+intel-mkl-src = { version = "0.5.0", optional = true }
 enum_dispatch = "0.2.1"
 numpy = "0.7"
 libc = "0.2"

@@ -11,7 +11,12 @@ use std::ops::{Div, Mul};
 use float_cmp::*;
 
 extern crate cblas;
+#[cfg(all(feature = "openblas-static", feature = "openblas-system"))]
 extern crate openblas_src;
+#[cfg(feature = "accelerate")]
+extern crate accelerate_src;
+#[cfg(feature = "mkl")]
+extern crate intel_mkl_src;
 
 #[macro_export]
 macro_rules! c {

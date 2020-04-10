@@ -4,3 +4,7 @@ build-backend = "maturin"
 
 [tool.maturin]
 manylinux = "off"
+# To use Apple's Accelerate framework, uncomment the following line
+#cargo-extra-args = "--no-default-features --features=accelerate"
+# To use Intel's MKL, uncomment the following line
+#cargo-extra-args = "--no-default-features --features=mkl"
