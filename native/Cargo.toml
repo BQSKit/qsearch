@@ -27,7 +27,7 @@ reduce = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 bincode = "1.2"
 better-panic = "0.2"
-squaremat = { path = "./squaremat", version = "0.4" }
+squaremat = { path = "./squaremat", version = "0.5" }
 md5 = "0.7"
 
 [dependencies.pyo3]
