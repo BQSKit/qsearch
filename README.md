@@ -45,6 +45,7 @@ Once your project is finished, you can get openqasm output:
 myproject.assemble("gate_name") # This will write the qasm to stdout
 myproject.assemble("gate_name", write_location="path/to/output/file") # This will write the qasm to the specified path.
 ```
+[See the wiki for details on compiler properties and other Project features](https://github.com/WolfLink/search_compiler/wiki/Advanced-Project-Features).
 
 # Compiling Without Projects
 If you would like to avoid working with Projects, you can use the `SearchCompiler` class directly.
@@ -60,6 +61,8 @@ To export openqasm code, use the `assemble` function from `assembler.py`.
 myqasm = sc.assembler.assemble(circuit, vector, sc.assembler.ASSEMBLY_IBMOPENQASM) # to get output as a string
 sc.assembler.assemble(circuit, vector, sc.assembler.ASSEMBLY_IBMOPENQASM, write_location="myqasm.txt") # to write the output to a file
 ```
+
+[See the wiki for details on compiler properties](https://github.com/WolfLink/search_compiler/wiki/Advanced-Compiler-Features).
 
 # A Note On Endianness
 We use the physics convention of using big endian when naming our qubits.  Some quantum programs, including IBM's Qiskit, use little endian.  This means you will need to reverse the endianness of a unitary designed for Qiskit in order to work with our code, or visa versa.  We provide a function that performs endian reversal on numpy matrices:
