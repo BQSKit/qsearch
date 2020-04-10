@@ -26,5 +26,6 @@ setup(
     extras_require={
         'cma': ['cma'],
         'graphics': ['matplotlib'],
+        'native' : ['scrs >= 0.6'],
     },
 )
