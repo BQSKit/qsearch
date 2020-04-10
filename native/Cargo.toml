@@ -7,14 +7,16 @@ edition = "2018"
 build = "build.rs"
 
 [features]
-static = ["openblas-src/static", "squaremat/static"]
-default = ["openblas-src/system", "squaremat/system"]
+static = ["blas-src/openblas", "openblas-src/static", "openblas-src/cblas", "squaremat/openblas-static"]
+default = ["blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system"]
+accelerate = ["blas-src/accelerate", "squaremat/accelerate"]
 
 [dependencies]
 num-complex = { version = "0.2", features = ["serde"] }
 ndarray = {version = "0.13", features = ["blas"] }
-blas-src = { version = "0.4.0", default-features = false, features = ["openblas"] }
-openblas-src = { version = "0.7.0", default-features = false, features = ["cblas"] }
+blas-src = { version = "0.4.0", default-features = false }
+openblas-src = { version = "0.7.0", default-features = false, optional = true }
+accelerate-src = { version = "0.3.2", optional = true }
 enum_dispatch = "0.2.1"
 numpy = "0.7"
 libc = "0.2"
