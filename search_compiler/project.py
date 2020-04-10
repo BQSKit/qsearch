@@ -14,10 +14,9 @@ class Project_Status(Enum):
     PROGRESS = 1
     COMPLETE = 2
     NOTBEGUN = 3
-    DEUGGING = 4
 
 class Project:
-    def __init__(self, path, debug=False):
+    def __init__(self, path):
         self.folder = path
         self.name = os.path.basename(os.path.normpath(path))
         self.projfile = os.path.join(path, "qcproject")
@@ -45,7 +44,7 @@ class Project:
         return os.path.join(self.folder, "{}.checkpoint".format(name))
         return os.path.splitext(self.projfile)[0] + "-{}.checkpoint".format(name)
 
-    def add_compilation(self, name, U, debug=False, handle_existing=None):
+    def add_compilation(self, name, U, handle_existing=None):
         if name in self._compilations:
             s = self._compilation_status(name)
             if handle_existing == "ignore" or np.array_equal(U, self._compilations[name][0]): # ignore if the ignore flag is specified or if the matrix is the same as the already existing one
@@ -56,7 +55,7 @@ class Project:
                 warn("A compilation with name {} already exists.  To change it, remove it and then add it again.".format(name), RuntimeWarning, stacklevel=2)
                 return
         
-        self._compilations[name] = (U, {"debug" : debug})
+        self._compilations[name] = (U, dict())
         self._save()
 
     def __setitem__(self, keyword, value):
@@ -137,8 +136,6 @@ class Project:
         for name in self._compilations:
             U, cdict = self._compilations[name]
             statefile = self._checkpoint_path(name)
-            if "debug" in cdict and cdict["debug"]:
-                statefile = None
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
 
@@ -187,8 +184,6 @@ class Project:
 
     def _compilation_status(self, name):
         _, cdict = self._compilations[name]
-        if "debug" in cdict and cdict["debug"]:
-            return Project_Status.DEBUGING
         elif os.path.exists(self._checkpoint_path(name)):
             return Project_Status.PROGRESS
         elif "structure" in cdict and "vector" in cdict:
