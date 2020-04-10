@@ -6,10 +6,10 @@ edition = "2018"
 build = "build.rs"
 
 [features]
-openblas-static = ["blas-src/openblas", "openblas-src/static", "openblas-src/cblas"]
-openblas-system = ["blas-src/openblas", "openblas-src/system", "openblas-src/cblas"]
-accelerate = ["blas-src/accelerate"]
-mkl = ["blas-src/intel-mkl"]
+openblas-static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-src/cblas"]
+openblas-system = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas"]
+accelerate = ["accelerate-src", "blas-src/accelerate"]
+mkl = ["intel-mkl-src", "blas-src/intel-mkl"]
 
 [dependencies]
 num-complex = { version = "0.2.3", features = ["serde"] }
