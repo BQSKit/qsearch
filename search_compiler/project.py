@@ -71,7 +71,7 @@ class Project:
         self._save()
 
     def configure_compiler_override(self, keyword, value):
-        warn("Using this method could result in crashes, infinite loops, or other undefined behavior.  It is safer to reset the project and configure using __setitem__.  Only use this method if the risk of error is worse than losing intermediate progress.")
+        warn("Using this method could result in crashes, infinite loops, or other undefined behavior.  It is safer to reset the project and configure using project[\"keyword\"]=value.  Only use this method if the risk of error is worse than losing intermediate progress.")
         self._compiler_config[keyword] = value
         self._save()
 
@@ -221,6 +221,10 @@ class Project:
             return None, None
 
         return cdict["structure"], cdict["vector"]
+
+    def get_target(self, name):
+        U, _ = self._compilations[name]
+        return U
 
     def verify_result(self, name, count=1000):
         original, cdict = self._compilations[name]
