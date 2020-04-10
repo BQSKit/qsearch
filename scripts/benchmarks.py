@@ -7,7 +7,7 @@ project.add_compilation("qft3", unitaries.qft(8))
 project.add_compilation("fredkin", unitaries.fredkin)
 project.add_compilation("toffoli", unitaries.toffoli)
 project.add_compilation("peres", unitaries.peres)
-project.add_compilation("logical or", unitaries.logical_or)
+project.add_compilation("or", unitaries.logical_or)
 
 project.add_compilation("miro", advanced_unitaries.mirogate)
 project.add_compilation("hhl", advanced_unitaries.HHL)
