@@ -20,6 +20,7 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 
 # compiler configuration example
 #project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
+#project["solver"]  = sc.solver.COBYLA_Solver()   # use this solver if you are using a gateset that does not implement the jacobian
 
 project.run()
 
