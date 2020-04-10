@@ -9,6 +9,7 @@ import pickle
 from .compiler import SearchCompiler
 from .solver import default_solver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
+from time import time
 
 class Project_Status(Enum):
     PROGRESS = 1
@@ -135,6 +136,7 @@ class Project:
         self.status()
         for name in self._compilations:
             U, cdict = self._compilations[name]
+
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
@@ -144,14 +146,18 @@ class Project:
             try:
                 from threadpoolctl import threadpool_limits
             except ImportError:
+                starttime = time()
                 result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
+                    starttime = time()
                     result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
+            endtime = time()
             logging.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure
             cdict["vector"] = vector
+            cdict["time"] = endtime - starttime
             self._compilations[name] = (U, cdict)
             self._save()
             logging.logprint("Recorded results from compilation.")
@@ -184,7 +190,7 @@ class Project:
 
     def _compilation_status(self, name):
         _, cdict = self._compilations[name]
-        elif os.path.exists(self._checkpoint_path(name)):
+        if os.path.exists(self._checkpoint_path(name)):
             return Project_Status.PROGRESS
         elif "structure" in cdict and "vector" in cdict:
             return Project_Status.COMPLETE
@@ -220,6 +226,13 @@ class Project:
     def get_target(self, name):
         U, _ = self._compilations[name]
         return U
+
+    def get_time(self, name):
+        _, cdict = self._compilations[name]
+        if "time" in cdict:
+            return cdict["time"]
+        else:
+            return None
 
     def verify_result(self, name, count=1000):
         original, cdict = self._compilations[name]
