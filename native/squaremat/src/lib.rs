@@ -1,5 +1,5 @@
-use ndarray::Array2;
 use cblas::*;
+use ndarray::Array2;
 
 use num_complex::Complex64;
 
@@ -60,10 +60,7 @@ impl SquareMatrix {
     }
 
     pub fn from_vec(v: Vec<Complex64>, size: usize) -> Self {
-        SquareMatrix {
-            data: v,
-            size,
-        }
+        SquareMatrix { data: v, size }
     }
 
     pub fn zeros(size: usize) -> Self {
@@ -85,7 +82,24 @@ impl SquareMatrix {
         assert_eq!(self.size, other.size);
         let t = Transpose::None;
         let mut out = SquareMatrix::zeros(self.size);
-        unsafe { zgemm(Layout::RowMajor, t, t, self.size as i32, self.size as i32, self.size as i32, r!(1.0), &self.data, self.size as i32, &other.data, other.size as i32, r!(0.0), &mut out.data, out.size as i32) };
+        unsafe {
+            zgemm(
+                Layout::RowMajor,
+                t,
+                t,
+                self.size as i32,
+                self.size as i32,
+                self.size as i32,
+                r!(1.0),
+                &self.data,
+                self.size as i32,
+                &other.data,
+                other.size as i32,
+                r!(0.0),
+                &mut out.data,
+                out.size as i32,
+            )
+        };
         out
     }
 
@@ -111,11 +125,7 @@ impl SquareMatrix {
     }
 
     pub fn into_ndarray(self) -> Array2<Complex64> {
-        Array2::from_shape_vec(
-            (self.size as usize, self.size as usize),
-            self.data,
-        )
-        .unwrap()
+        Array2::from_shape_vec((self.size as usize, self.size as usize), self.data).unwrap()
     }
 
     pub fn dot(&self, other: &SquareMatrix) -> Complex64 {
@@ -168,7 +178,6 @@ impl SquareMatrix {
         }
         out
     }
-
 }
 
 impl Mul<Complex64> for SquareMatrix {
@@ -198,11 +207,17 @@ impl Div<Complex64> for SquareMatrix {
 impl Div<f64> for SquareMatrix {
     type Output = Self;
     fn div(mut self, rhs: f64) -> Self {
-        unsafe { zscal(self.size as i32, Complex64::new(1.0 / rhs, 0.0), &mut self.data, 1) };
+        unsafe {
+            zscal(
+                self.size as i32,
+                Complex64::new(1.0 / rhs, 0.0),
+                &mut self.data,
+                1,
+            )
+        };
         self
     }
 }
-
 
 impl PartialEq for SquareMatrix {
     fn eq(&self, other: &Self) -> bool {

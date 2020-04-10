@@ -1,9 +1,10 @@
 [package]
 name = "scrs"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "BSD-3-Clause"
 edition = "2018"
+build = "build.rs"
 
 [features]
 static = ["openblas-src/static", "squaremat/static"]
