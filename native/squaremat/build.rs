@@ -7,30 +7,25 @@ fn main() -> Result<(), std::io::Error> {
     // so we manually go prodding around for it here
     if cfg!(target_os = "macos") {
         // First, we get brew prefix, if installed. Fall back to system gcc.
-        let (prefix, brew) = match Command::new("brew").arg("--prefix").output() {
-            Ok(o) => {
-                let s = String::from_utf8(o.stdout).expect("Bad brew --prefix output");
-                (s, true)
-            }
-            Err(_) => (String::from("/usr/local/lib/gcc/"), false),
-        };
+        let prefix = String::from_utf8(Command::new("brew").arg("--prefix").output().expect("Failed to run brew --prefix").stdout).unwrap().replace("\n", "");
         let mut gcc_dir = PathBuf::new();
-        gcc_dir.push(prefix);
-        if brew {
-            gcc_dir = fs::read_dir(gcc_dir.join("Cellar/gcc"))?
-                .map(|res| res.map(|e| e.path()))
-                .filter_map(Result::ok)
-                .last()
-                .expect("No gcc installed?");
-            gcc_dir = gcc_dir.join("lib/gcc");
-        }
-        if gcc_dir.is_dir() {
-            let version_dir = fs::read_dir(gcc_dir)?
-                .map(|res| res.map(|e| e.path()))
-                .filter_map(Result::ok)
-                .last().expect("No directories in prefix?");
-            println!("cargo:rustc-link-search={:?}", version_dir);
-        }
+        gcc_dir.push(prefix.clone());
+        
+        gcc_dir = fs::read_dir(gcc_dir.join("Cellar/gcc"))?
+            .map(|res| res.map(|e| e.path()))
+            .filter_map(Result::ok)
+            .last()
+            .expect("No gcc installed?");
+        gcc_dir = gcc_dir.join("lib/gcc");
+        let version_dir = fs::read_dir(gcc_dir)?
+            .map(|res| res.map(|e| e.path()))
+            .filter_map(Result::ok)
+            .last().expect("No directories in prefix?");
+        let mut openblas_dir = PathBuf::new();
+        openblas_dir.push(prefix);
+        openblas_dir.push("opt/openblas/lib");
+        println!("cargo:rustc-link-search={}", version_dir.to_str().unwrap());
+        println!("cargo:rustc-link-search={}", openblas_dir.to_str().unwrap());
     }
     Ok(())
 }
