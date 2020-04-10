@@ -17,7 +17,7 @@ pub mod circuits;
 pub mod gatesets;
 pub mod utils;
 
-#[cfg(all(feature = "static", feature = "default"))]
+#[cfg(any(feature = "static", feature = "default"))]
 extern crate openblas_src;
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;

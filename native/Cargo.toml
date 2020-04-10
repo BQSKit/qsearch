@@ -1,6 +1,6 @@
 [package]
 name = "scrs"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "BSD-3-Clause"
 edition = "2018"
@@ -27,7 +27,7 @@ reduce = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 bincode = "1.2"
 better-panic = "0.2"
-squaremat = { path = "./squaremat", version = "0.5" }
+squaremat = { path = "./squaremat", version = "0.6" }
 md5 = "0.7"
 
 [dependencies.pyo3]
