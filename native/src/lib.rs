@@ -53,6 +53,8 @@ use circuits::{
 };
 use gatesets::{GateSet, GateSetLinearCNOT};
 
+use utils::matrix_distance_squared;
+
 fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyObject> {
     Ok(match gate {
         Gate::CNOT(..) => {
@@ -324,6 +326,10 @@ fn add_module(module: &PyModule, py: Python) -> PyResult<()> {
 #[pymodule]
 fn search_compiler_rs(py: Python, m: &PyModule) -> PyResult<()> {
     install();
+    #[pyfn(m, "matrix_distance_squared")]
+    fn matrix_distance_squared_py(a: &PySquareMatrix, b: &PySquareMatrix) -> f64 {
+        matrix_distance_squared(SquareMatrix::from_ndarray(a.to_owned_array()), SquareMatrix::from_ndarray(b.to_owned_array()))
+    }
     m.add_wrapped(wrap_pyfunction!(native_from_object))?;
     m.add_class::<PyGateSetLinearCNOT>()?;
     m.add_class::<PyGateWrapper>()?;

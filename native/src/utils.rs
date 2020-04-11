@@ -65,3 +65,21 @@ pub fn rot_z_jac(theta: f64, multiplier: Option<f64>) -> SquareMatrix {
         2,
     )
 }
+
+pub fn matrix_distance_squared(a: SquareMatrix, b: SquareMatrix) -> f64 {
+    // 1 - np.abs(np.trace(np.dot(A,B.H))) / A.shape[0]
+    // converted to
+    // 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
+    let bc = b.conj();
+    let mul = a.multiply(&bc);
+    let sum = mul.sum();
+    let norm = sum.norm();
+    let res = 1f64 - norm / a.size as f64;
+    res
+}
+
+pub fn matrix_distance(a: SquareMatrix, b: SquareMatrix) -> f64 {
+    let dist_sq = matrix_distance_squared(a, b);
+    let res = dist_sq.abs().sqrt();
+    res
+}

@@ -1,5 +1,5 @@
 import numpy as np
-from search_compiler_rs import native_from_object as native
+from search_compiler_rs import native_from_object as native, matrix_distance_squared
 import search_compiler as sc
 
 def test_circuit(c):
@@ -8,6 +8,7 @@ def test_circuit(c):
     nmat = nc.matrix(v)
     mat = c.matrix(v)
     assert np.allclose(mat, nmat), print(mat) or print(nmat)
+    assert 1e-20 > matrix_distance_squared(mat, nmat) - sc.utils.matrix_distance_squared(mat, nmat)
     nmat, njs = nc.mat_jac(v)
     mat, js = c.mat_jac(v)
     assert np.allclose(mat, nmat), print(mat) or print(nmat)

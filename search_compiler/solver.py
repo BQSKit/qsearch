@@ -9,7 +9,7 @@ from . import utils
 from .gatesets import *
 
 try:
-    from search_compiler_rs import native_from_object
+    from search_compiler_rs import native_from_object, matrix_distance_squared
     RUST_ENABLED = True
 except ImportError:
     RUST_ENABLED = False
@@ -145,7 +145,7 @@ class CMA_Jac_Solver(Solver):
 
 class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
-        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
+        return super().solve_for_unitary(native_from_object(circuit), U, error_func=matrix_distance_squared)
 
 class LeastSquares_Jac_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=None):
