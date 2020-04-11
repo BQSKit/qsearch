@@ -13,9 +13,7 @@ use bincode::{deserialize, serialize};
 use better_panic::install;
 use squaremat::SquareMatrix;
 
-use solvers::Lbfgsb;
-
-use rand::{thread_rng, Rng};
+use solvers::BfgsJacSolver;
 
 pub mod circuits;
 pub mod gatesets;
@@ -58,7 +56,7 @@ use circuits::{
 };
 use gatesets::{GateSet, GateSetLinearCNOT};
 
-use utils::{matrix_distance_squared, matrix_distance_squared_jac};
+use utils::matrix_distance_squared;
 
 fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyObject> {
     Ok(match gate {
@@ -268,22 +266,9 @@ impl PyBfgsJacSolver {
     fn solve_for_unitary(&self, py: Python, circuit: PyObject, u: &PySquareMatrix, _error_func: PyObject) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
         let circ = object_to_gate(&circuit, py)?;
         let unitary = SquareMatrix::from_ndarray(u.to_owned_array());
-        let i = circ.inputs();
-        let f = |x:&Vec<f64>| { matrix_distance_squared(&unitary, &circ.mat(&x))};
-        let g = |x:&Vec<f64>| {
-            let (m, jac) = circ.mat_jac(&x);
-            matrix_distance_squared_jac(&unitary, &m, jac).1
-        };
-        let mut rng = thread_rng();
-        let mut x0: Vec<f64> = (0..i).map(|_| rng.gen_range(0.0, 1.0)).collect();
-        let mut fmin = Lbfgsb::new(&mut x0,&f,&g);
-        for index in 0..i {
-            fmin.set_upper_bound(index, 1.0);
-            fmin.set_lower_bound(index, 0.0);
-        }
-        fmin.set_verbosity(-1);
-        fmin.minimize();
-        Ok((PySquareMatrix::from_array(py, &circ.mat(&x0).into_ndarray())
+        let solv = BfgsJacSolver::new();
+        let (mat, x0) = solv.solve_for_unitary(&circ, &unitary);
+        Ok((PySquareMatrix::from_array(py, &mat.into_ndarray())
         .to_owned(), PyArray1::from_vec(py, x0).to_owned()))
     }
 }

@@ -1,3 +1,4 @@
+
 use lbfgsb_sys::{lbfgsb, string};
 use libc::{c_char, c_double, c_int};
 use std::ffi::CStr;
@@ -71,6 +72,8 @@ pub struct Lbfgsb<'a> {
     dsave: Vec<c_double>,
     max_iter: u32,
 }
+
+#[allow(dead_code)]
 impl<'a> Lbfgsb<'a> {
     // constructor requres three mendatory parameter which is the initial solution, function and the gradient function
     pub fn new(xvec: &'a mut Vec<c_double>,
