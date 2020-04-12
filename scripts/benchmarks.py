@@ -1,7 +1,7 @@
 import search_compiler as sc
 from search_compiler import unitaries, advanced_unitaries
 import time
-project = sc.Project("benchmarks-rs")
+project = sc.Project("benchmarks")
 project.add_compilation("qft2", unitaries.qft(4))
 project.add_compilation("qft3", unitaries.qft(8))
 project.add_compilation("fredkin", unitaries.fredkin)
