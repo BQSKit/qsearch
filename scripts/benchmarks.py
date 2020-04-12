@@ -1,7 +1,7 @@
 import search_compiler as sc
 from search_compiler import unitaries, advanced_unitaries
-
-project = sc.Project("benchmarks")
+import time
+project = sc.Project("benchmarks-rs")
 project.add_compilation("qft2", unitaries.qft(4))
 project.add_compilation("qft3", unitaries.qft(8))
 project.add_compilation("fredkin", unitaries.fredkin)
@@ -22,5 +22,9 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 #project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
 #project["solver"]  = sc.solver.COBYLA_Solver()   # use this solver if you are using a gateset that does not implement the jacobian
 
-project.run()
+start = time.time()
+for _ in range(10):
+    project.reset()
+    project.run()
+print(f'{time.time() - start}')
 

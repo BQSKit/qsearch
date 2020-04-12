@@ -271,6 +271,14 @@ impl PyBfgsJacSolver {
         Ok((PySquareMatrix::from_array(py, &mat.into_ndarray())
         .to_owned(), PyArray1::from_vec(py, x0).to_owned()))
     }
+
+    pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let slf_ob: PyObject = slf.into_py(py);
+        let cls = slf_ob.getattr(py, "__class__")?;
+        Ok((cls, PyTuple::empty(py).into_py(py)))
+    }
 }
 
 #[pyclass(name=QubitCNOTLinearNative, dict, module = "search_compiler_rs")]
