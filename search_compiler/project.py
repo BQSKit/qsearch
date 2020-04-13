@@ -234,17 +234,17 @@ class Project:
         else:
             return None
 
-    def verify_result(self, name, count=1000):
+    def verify_result(self, name):
         original, cdict = self._compilations[name]
         if not "structure" in cdict or not "vector" in cdict:
             print("The compilation {} has not been completed.  Please run the project to finish the compilation.")
             return
 
-        final = cdict["result"]
-        maxs, total, mins = sc.utils.random_vector_evaluation(original, final, count)
-
-        print("Max: {}%\nAverage: {}%\nMin: {}%\n".format(maxs*100.0, total*100.0, mins*100.0))
-
+        final = cdict["structure"].matrix["vector"]
+        print("Comparison of target and implemented unitaries:")
+        if "error_func" in self._compiler_config:
+            print("error_func: {}".format(self._compiler_config["error_func"](original, final)))
+        print("matrix_distance_squared: {}".format(utils.matrix_distance_squared(original, final)))
 
     def assemble(self, name, language=assembler.ASSEMBLY_IBMOPENQASM, write_location=None):
         _, cdict = self._compilations[name]

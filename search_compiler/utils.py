@@ -118,34 +118,6 @@ def random_near_identity(n, alpha):
     # generate a unitary matrix from the hermitian matrix that is not far from the identity
     return np.array(sp.linalg.expm(1j * H * alpha))
     
-def random_vector_evaluation(A, B, count=1000):
-    total = 0.0
-    mins = 10.0
-    maxs = -10.0
-    n = np.shape(A)[0]
-
-    for _ in range(0, count):
-        v = np.array([np.random.uniform() * np.e**(1j*np.random.uniform(0,2*np.pi)) for _ in range(0, n)])
-        v = v / np.sqrt(np.sum(np.multiply(v, np.conj(v))))
-
-        fv1 = np.dot(A, v)
-        fv2 = np.dot(B, v)
-
-        p1 = np.real(np.multiply(fv1, np.conj(fv1)))
-        p2 = np.real(np.multiply(fv2, np.conj(fv2)))
-
-        kl = 0
-        for i in range(0, len(p1)):
-            kl += p1[i] * np.log(p1[i]/p2[i]) / np.log(10)
-
-#        diff = 1-np.sum(np.abs(p1-p2))/2
-        total += kl
-        if kl > maxs:
-            maxs = kl
-        if kl < mins:
-            mins = kl
-    return (maxs, total/count, mins)
-
 def remap(U, order, d=2):
     U = np.array(U, dtype='complex128')
     if d != 2:
