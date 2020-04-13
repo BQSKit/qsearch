@@ -30,7 +30,7 @@ bincode = "1.2.1"
 better-panic = "0.2.0"
 squaremat = { path = "./squaremat", version = "0.6" }
 md5 = "0.7.0"
-lbfgsb-sys = { version = "0.1.0", features = ["static"] }
+lbfgsb-sys = { git = "https://github.com/ethanhs/lbfgsb-sys.git", version = "0.1.0", features = ["static"] }
 rand = "0.7.3"
 
 [dependencies.pyo3]
