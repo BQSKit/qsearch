@@ -5,7 +5,7 @@ use numpy::{PyArray1, PyArray2};
 use pyo3::class::basic::PyObjectProtocol;
 use pyo3::exceptions;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyTuple};
+use pyo3::types::{PyBytes, PyTuple};
 use pyo3::wrap_pyfunction;
 
 use bincode::{deserialize, serialize};
@@ -13,9 +13,12 @@ use bincode::{deserialize, serialize};
 use better_panic::install;
 use squaremat::SquareMatrix;
 
+use solvers::BfgsJacSolver;
+
 pub mod circuits;
 pub mod gatesets;
 pub mod utils;
+pub mod solvers;
 
 #[cfg(any(feature = "static", feature = "default"))]
 extern crate openblas_src;
@@ -45,6 +48,7 @@ macro_rules! i {
     };
 }
 
+#[cfg(feature = "python")]
 pub type PySquareMatrix = PyArray2<Complex64>;
 
 use circuits::{
@@ -53,6 +57,9 @@ use circuits::{
 };
 use gatesets::{GateSet, GateSetLinearCNOT};
 
+use utils::matrix_distance_squared;
+
+#[cfg(feature = "python")]
 fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyObject> {
     Ok(match gate {
         Gate::CNOT(..) => {
@@ -96,6 +103,7 @@ fn gate_to_object(gate: &Gate, py: Python, circuits: &PyModule) -> PyResult<PyOb
     })
 }
 
+#[cfg(feature = "python")]
 fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
     let cls = obj.getattr(py, "__class__")?;
     let dunder_name = cls.getattr(py, "__name__")?;
@@ -145,6 +153,7 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass(name=Gate, dict, module = "search_compiler_rs")]
 struct PyGateWrapper {
     #[pyo3(get)]
@@ -152,15 +161,16 @@ struct PyGateWrapper {
     gate: Gate,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyGateWrapper {
     #[new]
-    pub fn new(obj: &PyRawObject, gate: &PyBytes) {
+    pub fn new(gate: &PyBytes) -> Self {
         let gate: Gate = deserialize(gate.as_bytes()).unwrap();
-        obj.init(PyGateWrapper {
+        PyGateWrapper {
             dits: gate.dits(),
             gate: gate,
-        });
+        }
     }
 
     pub fn mat_jac(
@@ -208,16 +218,18 @@ impl PyGateWrapper {
     }
 
     pub fn __getstate__(&self, py: Python) -> PyResult<PyObject> {
-        Ok(PyBytes::new(py, &serialize(&self.gate).unwrap()).to_object(py))
+        Ok(PyBytes::new(py, &serialize(&self.gate).unwrap()).into_py(py))
     }
 
     pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let cls = slf.to_object(py).getattr(py, "__class__")?;
+        let tup: (PyObject,) = (PyBytes::new(py, &serialize(&slf.gate).unwrap()).into_py(py),);
+        let slf_ob: PyObject = slf.into_py(py);
+        let cls = slf_ob.getattr(py, "__class__")?;
         Ok((
             cls,
-            (PyBytes::new(py, &serialize(&slf.gate).unwrap()).to_object(py),).to_object(py),
+            tup.into_py(py),
         ))
     }
 
@@ -227,6 +239,7 @@ impl PyGateWrapper {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyproto]
 impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
     fn __str__(&self) -> PyResult<String> {
@@ -245,6 +258,38 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
     }
 }
 
+#[cfg(feature = "python")]
+#[pyclass(name=BFGS_Jac_SolverNative, dict, module = "search_compiler_rs")]
+struct PyBfgsJacSolver {
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl PyBfgsJacSolver {
+    #[new]
+    fn new() -> Self {
+        PyBfgsJacSolver {}
+    }
+
+    fn solve_for_unitary(&self, py: Python, circuit: PyObject, u: &PySquareMatrix, _error_func: PyObject) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
+        let circ = object_to_gate(&circuit, py)?;
+        let unitary = SquareMatrix::from_ndarray(u.to_owned_array());
+        let solv = BfgsJacSolver::new();
+        let (mat, x0) = solv.solve_for_unitary(&circ, &unitary);
+        Ok((PySquareMatrix::from_array(py, &mat.into_ndarray())
+        .to_owned(), PyArray1::from_vec(py, x0).to_owned()))
+    }
+
+    pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
+        let gil = Python::acquire_gil();
+        let py = gil.python();
+        let slf_ob: PyObject = slf.into_py(py);
+        let cls = slf_ob.getattr(py, "__class__")?;
+        Ok((cls, PyTuple::empty(py).into_py(py)))
+    }
+}
+
+#[cfg(feature = "python")]
 #[pyclass(name=QubitCNOTLinearNative, dict, module = "search_compiler_rs")]
 struct PyGateSetLinearCNOT {
     gateset: GateSetLinearCNOT,
@@ -252,14 +297,15 @@ struct PyGateSetLinearCNOT {
     d: u8,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyGateSetLinearCNOT {
     #[new]
-    pub fn new(obj: &PyRawObject) {
-        obj.init(PyGateSetLinearCNOT {
+    pub fn new() -> Self {
+        PyGateSetLinearCNOT {
             gateset: GateSetLinearCNOT::new(),
             d: 2,
-        });
+        }
     }
 
     pub fn initial_layer(&self, py: Python, n: u8) -> Py<PyGateWrapper> {
@@ -295,11 +341,13 @@ impl PyGateSetLinearCNOT {
     pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
         let gil = Python::acquire_gil();
         let py = gil.python();
-        let cls = slf.to_object(py).getattr(py, "__class__")?;
-        Ok((cls, PyTuple::empty(py).to_object(py)))
+        let slf_ob: PyObject = slf.into_py(py);
+        let cls = slf_ob.getattr(py, "__class__")?;
+        Ok((cls, PyTuple::empty(py).into_py(py)))
     }
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> {
     let gate = object_to_gate(&obj, py)?;
@@ -312,23 +360,21 @@ fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> 
     )
 }
 
-fn add_module(module: &PyModule, py: Python) -> PyResult<()> {
-    py.import("sys")?
-        .dict()
-        .get_item("modules")
-        .unwrap()
-        .downcast_mut::<PyDict>()?
-        .set_item(module.name()?, module)
-}
-
+#[cfg(feature = "python")]
 #[pymodule]
-fn search_compiler_rs(py: Python, m: &PyModule) -> PyResult<()> {
+fn search_compiler_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     install();
+    #[pyfn(m, "matrix_distance_squared")]
+    fn matrix_distance_squared_py(a: &PySquareMatrix, b: &PySquareMatrix) -> f64 {
+        matrix_distance_squared(&SquareMatrix::from_ndarray(a.to_owned_array()), &SquareMatrix::from_ndarray(b.to_owned_array()))
+    }
+    #[pyfn(m, "qft")]
+    fn qft_py(py: Python, n: usize) -> Py<PySquareMatrix> {
+        PySquareMatrix::from_array(py, &crate::utils::qft(n).into_ndarray()).to_owned()
+    }
     m.add_wrapped(wrap_pyfunction!(native_from_object))?;
     m.add_class::<PyGateSetLinearCNOT>()?;
     m.add_class::<PyGateWrapper>()?;
-    add_module(m, py)?;
-    pyo3::type_object::initialize_type::<PyGateSetLinearCNOT>(py, Some(m.name()?))?;
-    pyo3::type_object::initialize_type::<PyGateWrapper>(py, Some(m.name()?))?;
+    m.add_class::<PyBfgsJacSolver>()?;
     Ok(())
 }

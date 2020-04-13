@@ -11,27 +11,30 @@ static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-
 default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system"]
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
+python = []
 
 [dependencies]
-num-complex = { version = "0.2", features = ["serde"] }
-ndarray = {version = "0.13", features = ["blas"] }
-blas-src = { version = "0.4.0", default-features = false }
-openblas-src = { version = "0.7.0", default-features = false, optional = true }
+num-complex = { version = "0.2.4", features = ["serde"] }
+ndarray = { version = "0.13.0", features = ["blas"] }
+blas-src = { version = "0.6.1", default-features = false }
+openblas-src = { version = "0.9.0", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
 intel-mkl-src = { version = "0.5.0", optional = true }
-enum_dispatch = "0.2.1"
-numpy = "0.7"
-libc = "0.2"
-num-traits = "0.2"
-reduce = "0.1"
-serde = { version = "1.0", features = ["derive"] }
-bincode = "1.2"
-better-panic = "0.2"
+enum_dispatch = "0.3.0"
+numpy = "0.8.0"
+libc = "0.2.68"
+num-traits = "0.2.11"
+reduce = "0.1.2"
+serde = { version = "1.0.106", features = ["derive"] }
+bincode = "1.2.1"
+better-panic = "0.2.0"
 squaremat = { path = "./squaremat", version = "0.6" }
-md5 = "0.7"
+md5 = "0.7.0"
+lbfgsb-sys = { git = "https://github.com/ethanhs/lbfgsb-sys.git", version = "0.1.0", features = ["static"] }
+rand = "0.7.3"
 
 [dependencies.pyo3]
-version = "0.8.3"
+version = "0.9.2"
 features = ["extension-module"]
 
 
@@ -39,6 +42,10 @@ features = ["extension-module"]
 name = "search_compiler_rs"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "search_compiler_prof"
+path = "src/main.rs"
 
 [profile.release]
 lto = true
