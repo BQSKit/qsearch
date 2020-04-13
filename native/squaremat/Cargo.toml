@@ -27,3 +27,9 @@ float-cmp = "0.6.0"
 name = "squaremat"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+debug = true
