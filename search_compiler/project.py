@@ -21,6 +21,7 @@ class Project:
         self.folder = path
         self.name = os.path.basename(os.path.normpath(path))
         self.projfile = os.path.join(path, "qcproject")
+        self.logger = logging.Logger(stdout_enabled=True, output_file = os.path.join(path, "{}-project-log".format(name)))
         try:
             if not os.path.exists(path):
                 os.mkdir(path)
@@ -69,6 +70,11 @@ class Project:
                 return
         self._compiler_config[keyword] = value
         self._save()
+        # adjust the logger if relevant
+        if keyword == "verbosity":
+            self.logger.verbosity = value
+        elif keyword == "stdout_enabled":
+            self.logger.std_enabled = value
 
     def configure_compiler_override(self, keyword, value):
         warn("Using this method could result in crashes, infinite loops, or other undefined behavior.  It is safer to reset the project and configure using project[\"keyword\"]=value.  Only use this method if the risk of error is worse than losing intermediate progress.")
@@ -80,6 +86,11 @@ class Project:
 
     def __delitem__(self, keyword):
         del self._compiler_config[keyword]
+        # reset logger properties to default if relevant
+        if keyword == "verbosity":
+            self.logger.verbosity = 1
+        elif keyword == "stdout_enabled":
+            self.logger.std_enabled = True
 
     def configure(self, dictionary):
         for key in dictionary:
@@ -116,7 +127,7 @@ class Project:
         self._save()
 
     def run(self, target=None):
-        print("Started running project {}".format(self.name))
+        self.logger.logprint("Started running project {}".format(self.name))
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         error_func = self._config("error_func", utils.matrix_distance_squared)
@@ -135,6 +146,9 @@ class Project:
         beams = self._config("beams", -1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
+        verbosity = self._config("verbosity", 1)
+        stdout_enabled = self._config("stdout_enabled", True)
+
         compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status()
         for name in self._compilations:
@@ -143,37 +157,36 @@ class Project:
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
-
-            logging.output_file = os.path.splitext(self.projfile)[0] + "-{}".format(name)
-            logging.logprint("Starting compilation of {}".format(name))
+            sublogger = logging.Logger(stdout_enabled, os.path.join(self.path, "{}-log".format(name)), verbosity)
+            self.logger.logprint("Starting compilation of {}".format(name))
             try:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
+                result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
                     result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
             endtime = time()
-            logging.logprint("Finished compilation of {}".format(name))
+            self.logger.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
             cdict["structure"] = structure
             cdict["vector"] = vector
             cdict["time"] = endtime - starttime
             self._compilations[name] = (U, cdict)
             self._save()
-            logging.logprint("Recorded results from compilation.")
+            self.logger.logprint("Recorded results from compilation.", verbosity=2)
 
             checkpoint.delete(statefile)
-            logging.logprint("Deleted checkpoint file.")
+            self.logger.logprint("Deleted checkpoint file.", verbosity=2)
             self.status()
-        print("Finished running project {}".format(self.name))
+        self.logger.logprint("Finished running project {}".format(self.name))
 
     def complete(self):
         return self._overall_status() == Project_Status.COMPLETE
 
-    def status(self, name=None):
+    def status(self, name=None, logger=None):
         namelist = [name] if name else self._compilations
         for n in namelist:
             s = self._compilation_status(n)
@@ -186,7 +199,10 @@ class Project:
                 msg = "Not started."
             elif s == Project_Status.DEBUGING:
                 msg = "Debug."
-            print("{}\t{}".format(n,msg))
+            if logger is None:
+                print("{}\t{}".format(n,msg))
+            else:
+                logger.logprint("{}\t{}".format(n,msg))
 
     @property
     def compilations(self):

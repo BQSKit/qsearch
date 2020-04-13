@@ -1,20 +1,20 @@
 import datetime
 import os.path as path
 import numpy as np
- 
-stdout_enabled = True
-output_file = "pylog.txt"
 
-def logstandard(message, heuristic, value, depth, hashh, length):
-    logprint("{}\tH: {}\tV: {}\tD: {}\tHash: {}\tQueue Length: {}".format(message, np.around(heuristic, 7), np.around(value, 7), depth, hashh, length))
+class Logger:
+    def __init__(self, stdout_enabled=False, output_file=None, verbosity=1):
+        self.stdout_enabled=stdout_enabled
+        self.output_file=output_file
+        self.verbosity=verbosity
 
-def logprint(string, custom=None):
-    if stdout_enabled and custom is None:
-        print(string)
-    if custom is None:
-        custom = "pylog"
-    if output_file:
-        with open(output_file + "-" + custom+".txt", "a") as f:
-            f.write(str(datetime.datetime.now()) + " > \t" + str(string) + "\n")
+    def logprint(string, verbosity=1):
+        if verbosity > self.verbosity:
+            return # ignore print requests for a higher verbosity than our current setting
+        if stdout_enabled:
+            print(string)
+        if output_file:
+            with open(output_file + ".txt", "a") as f:
+                f.write(str(datetime.datetime.now()) + " > \t" + str(string) + "\n")
 
 
