@@ -31,8 +31,6 @@ def matrix_distance_squared(A,B):
 def matrix_distance_squared_jac(U, M, J):
     S = np.sum(np.multiply(U, np.conj(M)))
     dsq = 1 - np.abs(S)/U.shape[0]
-    if S == 0:
-        return np.array([np.inf]*len(J))
     JU = np.array([np.multiply(U,np.conj(K)) for K in J])
     JUS = np.sum(JU, axis=(1,2))
     jacs = -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))*U.shape[0] / np.abs(S)
