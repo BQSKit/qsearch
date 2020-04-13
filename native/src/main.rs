@@ -5,43 +5,29 @@ use search_compiler_rs::utils::{matrix_distance_squared, qft};
 use squaremat::SquareMatrix;
 use search_compiler_rs::r;
 use num_complex::Complex64;
+use rand::{thread_rng, Rng};
+use rand::distributions::Uniform;
 
 fn main() {
-    /*
-    ProductStep(KroneckerStep(QiskitU3QubitStep(), QiskitU3QubitStep(), QiskitU3QubitStep()),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))))
-    */
-    /*
-    ProductStep(KroneckerStep(QiskitU3QubitStep(), QiskitU3QubitStep(), QiskitU3QubitStep()),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(IdentityStep(2), ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep()))),
-    KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())), IdentityStep(2)))
-    */
-    //let qft_res = [1, 0, 1, 0, 0, 1, 0, 1];
-    let fredkin_res = [1, 1, 0, 1, 0, 1, 1, 0];
+    let mut rng = thread_rng();
     let g = GateSetLinearCNOT::new();
     let initial = g.initial_layer(3, 2);
-    let mut layers: Vec<Gate> = vec![initial.into()];
     let search_layers = g.search_layers(3, 2);
-    let rest_layers: Vec<Gate> = fredkin_res.iter().map(|i| search_layers[*i].clone().into()).collect();
-    layers.extend(rest_layers);
-    let circ: Gate = GateProduct::new(layers).into();
-    println!("{:?}", circ);
     let q = SquareMatrix::from_vec(vec![r!(1.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0), r!(0.0),r!(1.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0), r!(0.0),r!(0.0),r!(1.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0), r!(0.0),r!(0.0),r!(0.0),r!(1.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0), r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(1.0),r!(0.0),r!(0.0),r!(0.0), r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(1.0),r!(0.0), r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(1.0),r!(0.0),r!(0.0), r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(0.0),r!(1.0)], 8);
     let solv = BfgsJacSolver::new();
-    let (mat, x0) = solv.solve_for_unitary(&circ, &q);
-    println!("{}", matrix_distance_squared(&mat, &q));
-    println!("{:?}", x0);
+    for i in 1..10 {
+        for _ in 0..10000 {
+            let mut layers: Vec<Gate> = vec![initial.clone().into()];
+            let rest_layers: Vec<Gate> = (1..i).map(|_| rng.gen::<bool>()).map(|i| search_layers[i as usize].clone().into()).collect();
+            layers.extend(rest_layers);
+            let circ: Gate = GateProduct::new(layers).into();
+            let (mat, x0) = solv.solve_for_unitary(&circ, &q);
+            let dsq = matrix_distance_squared(&mat, &q);
+            if dsq < 1e-15 {
+                println!("{:?}", circ);
+                println!("{:?}", x0);
+            }
+        }
+        
+    }
 }
