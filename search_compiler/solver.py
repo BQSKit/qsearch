@@ -16,23 +16,25 @@ except ImportError:
     def native_from_object(o):
         raise Exception("Native code not installed")
 
-def default_solver(gateset, dits=0, error_func=None):
+def default_solver(gateset, dits=0, error_func=None, error_jac=None):
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
     # Check to see if the gateset and error func are explicitly supported by LeastSquares
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, QubitCRZLinear.__name__, QubitCRZRing.__name__, ZXZXZCNOTLinear.__name__]:
+    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
         ls_failed = True
-    elif error_func is None or error_func.__module__ != utils.matrix_distance_squared.__module__ or error_func.__name__ != utils.matrix_distance_squared.__name__:
+    elif error_func is None or error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__):
         ls_failed = True
 
     if not ls_failed:
         # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
         if RUST_ENABLED:
+            print("chose rust LS")
             return LeastSquares_Jac_SolverNative()
         else:
+            print("chose python LS")
             return LeastSquares_Jac_Solver()
 
     if dits < 1:
@@ -52,21 +54,28 @@ def default_solver(gateset, dits=0, error_func=None):
         except:
             rust_failed = True
 
+    if error_jac is None:
+        jac_failed = True
+
     if jac_failed:
         if rust_failed:
+            print("chose python COBYLA")
             return COBYLA_Solver()
         else:
+            print("chose rust COBYLA")
             return COBYLA_SolverNative()
     else:
         if rust_failed:
+            print("chose python BFGS")
             return BFGS_Jac_Solver()
         else:
+            print("chose rust BFGS")
             return BFGS_Jac_SolverNative()
     # the default will have been chosen from LeastSquares, BFGS, or COBYLA, from either the python or "Native" rust variants
 
 
 class Solver():
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -79,7 +88,7 @@ class Solver():
 
 
 class CMA_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         try:
             import cma
         except ImportError:
@@ -91,7 +100,7 @@ class CMA_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class COBYLA_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
         initial_guess = np.array(np.random.rand(circuit.num_inputs))
         x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,1))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
@@ -101,35 +110,24 @@ class DIY_Solver(Solver):
     def __init__(self, f):
         self.f = f # f is a function that takes in eval_func and initial_guess and returns the vector that minimizes eval_func.  The parameters may range between 0 and 1.
 
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
         initial_guess = np.array(np.random.rand(circuit.num_inputs))
         x = f(eval_func, initial_guess)
 
 class COBYLA_SolverNative(COBYLA_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
 
 class NM_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
         result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='Nelder-Mead', options={"ftol":1e-14})
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class BFGS_Jac_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func = None):
-        eval_func = lambda v: error_func(U, circuit.matrix(v))
-        error_func_jac = utils.matrix_distance_squared_jac
-        def eval_func(v):
-            M, jacs = circuit.mat_jac(v)
-            return error_func_jac(U, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
-        xopt = result.x
-        return (circuit.matrix(xopt), xopt)
-
 class CMA_Jac_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
         try:
             import cma
         except ImportError:
@@ -143,23 +141,33 @@ class CMA_Jac_Solver(Solver):
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
 
+class BFGS_Jac_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
+        eval_func = lambda v: error_func(U, circuit.matrix(v))
+        error_func_jac = utils.matrix_distance_squared_jac
+        def eval_func(v):
+            M, jacs = circuit.mat_jac(v)
+            return error_func_jac(U, M, jacs)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
+        xopt = result.x
+        return (circuit.matrix(xopt), xopt)
+
 class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
 
 class LeastSquares_Jac_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func=None):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_residuals, error_jac=utils.matrix_residuals_jac):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
         # 2. This solver (currently) does not correct for an overall phase, and so may not be able to find a solution for some gates with some gatesets.  It has been tested and works fine with QubitCNOTLinear, so any single-qubit and CNOT-based gateset is likely to work fine.
         I = np.eye(U.shape[0])
-        resi_func = utils.matrix_residuals
-        eval_func = lambda v: resi_func(U, circuit.matrix(v), I)
+        eval_func = lambda v: error_func(U, circuit.matrix(v), I)
         jac_func = lambda v: utils.matrix_residuals_jac(U, *circuit.mat_jac(v))
         result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
 class LeastSquares_Jac_SolverNative(LeastSquares_Jac_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=None):
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_residuals, error_jac=utils.matrix_residuals_jac):
         return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)

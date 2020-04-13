@@ -7,7 +7,7 @@ import os
 import shutil
 import pickle
 from .compiler import SearchCompiler
-from .solver import default_solver
+from . import solver as scsolver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 from time import time
 
@@ -132,26 +132,46 @@ class Project:
         self.logger.logprint("Started running project {}".format(self.name))
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
-        error_func = self._config("error_func", utils.matrix_distance_squared)
-        heuristic = heuristics.astar
-        d = self._config("d", 2)
         max_dits = int(np.log(max([self._compilations[name][0].shape[0] for name in self._compilations]))/np.log(2))
+        error_func = self._config("error_func", utils.matrix_distance_squared)
+        error_jac = self._config("error_jac", None)
+        if error_jac is None:
+            if error_func == utils.matrix_distance_squared:
+                error_jac = utils.matrix_distance_squared_jac
+            elif error_func == utils.matrix_residuals:
+                error_jac = utils.matrix_residuals_jac
+        eval_func = self._config("eval_func", None)
+        if eval_func is None:
+            if error_func == utils.matrix_residuals:
+                eval_func = utils.matrix_distance_squared
+            else:
+                eval_func = error_func
+
+        solver = self._config("solver", None)
+        if solver is None:
+            solver = scsolver.default_solver(gateset, max_dits, error_func, error_jac)
+            if type(solver) == scsolver.LeastSquares_Jac_Solver or type(solver) == scsolver.LeastSquares_Jac_SolverNative:
+                # if default_solver made the call to switch to LeastSquares, then these functions should be assigned to these values
+                error_func = utils.matrix_residuals
+                error_jac = utils.matrix_residuals_jac
+                eval_func = utils.matrix_distance_squared
+
+        d = self._config("d", 2)
+        heuristic=heuristics.astar
         if "search_type" in self._compiler_config:
             st = self._compiler_config["search_type"]
             if st == "breadth":
                 heuristic = heuristics.breadth
             elif st == "greedy":
                 heuristic = heuristics.greedy
-
         heuristic = self._config("heuristic", heuristic)
-        solver = self._config("solver", default_solver(gateset, max_dits, error_func))
         beams = self._config("beams", -1)
         depthlimit = self._config("depth", None)
         blas_threads = self._config("blas_threads", None)
         verbosity = self._config("verbosity", 1)
         stdout_enabled = self._config("stdout_enabled", True)
 
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
+        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, error_jac=error_jac, eval_func=eval_func, heuristic=heuristic, solver=solver, beams=beams)
         self.status(logger=self.logger)
         for name in self._compilations:
             U, cdict = self._compilations[name]
@@ -169,7 +189,7 @@ class Project:
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile)
+                    result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
             cdict["result"] = result
