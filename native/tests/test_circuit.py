@@ -1,5 +1,5 @@
 import numpy as np
-from search_compiler_rs import native_from_object as native, matrix_distance_squared
+from search_compiler_rs import native_from_object as native, matrix_distance_squared, qft
 import search_compiler as sc
 
 def test_circuit(c):
@@ -24,4 +24,8 @@ test_circuit(sc.circuits.CNOTStep())
 test_circuit(sc.circuits.QiskitU3QubitStep())
 test_circuit(sc.circuits.ProductStep(g,h,g))
 test_circuit(sc.circuits.KroneckerStep(g,h, g))
+print('Testing qft()')
+nmat = qft(8)
+mat = sc.unitaries.qft(8)
+assert 1e-20 > sc.utils.matrix_distance_squared(mat, nmat)
 print('All passed!')

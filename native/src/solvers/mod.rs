@@ -29,6 +29,7 @@ impl BfgsJacSolver {
             fmin.set_lower_bound(index, 0.0);
         }
         fmin.set_verbosity(-1);
+        fmin.max_iteration(15000);
         fmin.minimize();
         (circ.mat(&x0), x0)
     }

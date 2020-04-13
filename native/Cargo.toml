@@ -11,6 +11,7 @@ static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-
 default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system"]
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
+python = []
 
 [dependencies]
 num-complex = { version = "0.2.4", features = ["serde"] }
@@ -41,6 +42,10 @@ features = ["extension-module"]
 name = "search_compiler_rs"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "search_compiler_prof"
+path = "src/main.rs"
 
 [profile.release]
 lto = true

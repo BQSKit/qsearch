@@ -141,21 +141,21 @@ impl<'a> Lbfgsb<'a> {
             }
             if &tsk[0..5] == "NEW_X" && self.max_iter == 0 &&
                self.dsave[11] <= 1.0e-10 * (1.0e0 + fval.abs()) {
-                println!("THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL");
+                //println!("THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL");
                 break;
             }
             if self.max_iter > 0 && self.isave[29] >= self.max_iter as i32 {
                 break;
             }
             if &tsk[0..4] == "CONV" {
-                println!("convergence!");
+                //println!("convergence!");
                 break;
             }
             if &tsk[0..5] == "ERROR" {
-                println!("error in the input parameters");
+                //println!("error in the input parameters");
             }
             if &tsk[0..8] == "ABNORMAL" {
-                println!("ERROR: ABNORMAL TERMINATION");
+                //println!("ERROR: ABNORMAL TERMINATION");
                 break;
             }
         }

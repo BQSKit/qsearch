@@ -2,7 +2,9 @@ use num_complex::Complex64;
 
 use squaremat::SquareMatrix;
 
-use crate::r;
+use crate::{r, i};
+
+use std::f64::consts::{E, PI};
 
 pub fn rot_x(theta: f64) -> SquareMatrix {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
@@ -95,4 +97,9 @@ pub fn matrix_distance_squared_jac(u: &SquareMatrix, m: &SquareMatrix, j: Vec<Sq
     let jus: Vec<Complex64> = j.iter().map(|ji| u.multiply(&ji.conj()).sum()).collect();
     let jacs = jus.iter().map(|jusi| -(jusi.re * s.re + jusi.im * s.im) * u.size as f64 / s.norm()).collect();
     (dsq, jacs)
+}
+
+pub fn qft(n: usize) -> SquareMatrix {
+    let root = r!(E).powc(i!(2f64) * PI / n as f64);
+    SquareMatrix::from_size_fn(n, |(x, y)| root.powf((x * y) as f64)) / (n as f64).sqrt()
 }
