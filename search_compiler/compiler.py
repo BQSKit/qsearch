@@ -29,9 +29,14 @@ class SearchCompiler(Compiler):
             solver = default_solver(gateset, 0, error_func)
         self.solver = solver
         self.beams = int(beams)
-        sel.logger = logging.Logger(stdout_enabled=True, verbosity=verbosity)
+        self.logger = logger
 
-    def compile(self, U, depth=None, statefile=None):
+    def compile(self, U, depth=None, statefile=None, logger=None):
+        if logger is None:
+            logger = self.logger
+        if logger is None:
+            logger = logging.Logger(stdout_enabled=True, verbosity=verbosity)
+
         startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = self.heuristic
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(self.gateset.d)))
@@ -45,23 +50,23 @@ class SearchCompiler(Compiler):
         search_layers = self.gateset.search_layers(dits)
 
         if len(search_layers) <= 0:
-            self.logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
+            logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             return (result[0], root, result[1])
 
 
-        self.logger.logprint("There are {} processors available to Pool.".format(cpu_count()))
-        self.logger.logprint.logprint("The branching factor is {}.".format(len(search_layers)))
+        logger.logprint("There are {} processors available to Pool.".format(cpu_count()))
+        logger.logprint("The branching factor is {}.".format(len(search_layers)))
         beams = self.beams
         if self.beams < 1 and len(search_layers) > 0:
             beams = int(cpu_count() // len(search_layers))
         if beams < 1:
             beams = 1
         if beams > 1:
-            self.logger.logprint("The beam factor is {}.".format(beams))
+            logger.logprint("The beam factor is {}.".format(beams))
         pool = Pool(min(len(search_layers)*beams,cpu_count()))
-        self.logger.logprint("Creating a pool of {} workers".format(pool._processes))
+        logger.logprint("Creating a pool of {} workers".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
         queue = []
@@ -75,7 +80,7 @@ class SearchCompiler(Compiler):
             result = self.solver.solve_for_unitary(root, U, self.error_func)
             best_value = self.error_func(U, result[0])
             best_pair = (result[0], root, result[1])
-            self.logger.logprint("New best! {} at depth 0".format(best_value))
+            logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
                 return best_pair
 
@@ -85,7 +90,7 @@ class SearchCompiler(Compiler):
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
-            self.logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
+            logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         while len(queue) > 0:
             if best_value < self.threshold:
@@ -99,7 +104,7 @@ class SearchCompiler(Compiler):
                     break
                 tup = heapq.heappop(queue)
                 popped.append(tup)
-                self.logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
+                logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
 
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer), current_tup[1]) for search_layer in search_layers for current_tup in popped]
@@ -110,17 +115,17 @@ class SearchCompiler(Compiler):
                     best_value = current_value
                     best_pair = (result[0], step, result[1])
                     best_depth = current_depth + 1
-                    self.logger.logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
+                    logger.logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
                 if depth is None or current_depth + 1 < depth:
                     heapq.heappush(queue, (h(current_value, current_depth+1), current_depth+1, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
-            self.logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
+            logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
 
 
         pool.close()
         pool.terminate()
         pool.join()
-        self.logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
+        logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
         return best_pair
 

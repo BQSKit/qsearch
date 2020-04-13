@@ -8,13 +8,13 @@ class Logger:
         self.output_file=output_file
         self.verbosity=verbosity
 
-    def logprint(string, verbosity=1):
+    def logprint(self, string, verbosity=1):
         if verbosity > self.verbosity:
             return # ignore print requests for a higher verbosity than our current setting
-        if stdout_enabled:
+        if self.stdout_enabled:
             print(string)
-        if output_file:
-            with open(output_file + ".txt", "a") as f:
+        if self.output_file is not None:
+            with open(self.output_file + ".txt", "a") as f:
                 f.write(str(datetime.datetime.now()) + " > \t" + str(string) + "\n")
 
 

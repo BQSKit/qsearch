@@ -21,16 +21,17 @@ class Project:
         self.folder = path
         self.name = os.path.basename(os.path.normpath(path))
         self.projfile = os.path.join(path, "qcproject")
-        self.logger = logging.Logger(stdout_enabled=True, output_file = os.path.join(path, "{}-project-log".format(name)))
         try:
             if not os.path.exists(path):
                 os.mkdir(path)
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
+                print("Successfully loaded project {}".format(self.name))
                 self.status()
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
+        self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log".format(self.name)), self._config("verbosity", 1))
 
     def _save(self):
         with open(self.projfile, "wb") as projfile:
@@ -63,11 +64,12 @@ class Project:
     def __setitem__(self, keyword, value):
         if keyword in self._compiler_config and self._compiler_config[keyword] == value:
             return # no need to send out a warning if nothing is being changed
-        for name in self._compilations:
-            s = self._compilation_status(name)
-            if s == Project_Status.COMPLETE or s == Project_Status.PROGRESS:
-                warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.", RuntimeWarning, stacklevel=2)
-                return
+        if not keyword in ["verbosity", "stdout_enabled"]: # "safe" keywords here
+            for name in self._compilations:
+                s = self._compilation_status(name)
+                if s == Project_Status.COMPLETE or s == Project_Status.PROGRESS:
+                    warn("This project contains compilations which have been completed or have been started.  Please call reset() to clear this progress before changing configurations.", RuntimeWarning, stacklevel=2)
+                    return
         self._compiler_config[keyword] = value
         self._save()
         # adjust the logger if relevant
@@ -150,14 +152,14 @@ class Project:
         stdout_enabled = self._config("stdout_enabled", True)
 
         compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, heuristic=heuristic, solver=solver, beams=beams)
-        self.status()
+        self.status(logger=self.logger)
         for name in self._compilations:
             U, cdict = self._compilations[name]
 
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
-            sublogger = logging.Logger(stdout_enabled, os.path.join(self.path, "{}-log".format(name)), verbosity)
+            sublogger = logging.Logger(stdout_enabled, os.path.join(self.folder, "{}-log".format(name)), verbosity)
             self.logger.logprint("Starting compilation of {}".format(name))
             try:
                 from threadpoolctl import threadpool_limits
@@ -180,7 +182,7 @@ class Project:
 
             checkpoint.delete(statefile)
             self.logger.logprint("Deleted checkpoint file.", verbosity=2)
-            self.status()
+            self.status(logger=self.logger)
         self.logger.logprint("Finished running project {}".format(self.name))
 
     def complete(self):
