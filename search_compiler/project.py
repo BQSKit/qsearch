@@ -78,6 +78,9 @@ class Project:
     def __getitem__(self, keyword):
         return self._compiler_config[keyword]
 
+    def __delitem__(self, keyword):
+        del self._compiler_config[keyword]
+
     def configure(self, dictionary):
         for key in dictionary:
             self[key] = dictionary[key]
@@ -185,6 +188,7 @@ class Project:
                 msg = "Debug."
             print("{}\t{}".format(n,msg))
 
+    @property
     def compilations(self):
         return list(self._compilations.keys())
 
