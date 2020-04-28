@@ -141,6 +141,17 @@ class CMA_Jac_Solver(Solver):
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
 
+class BFGS_Jac_Solver(Solver):
+    def solve_for_unitary(self, circuit, U, error_func = None):
+        eval_func = lambda v: error_func(U, circuit.matrix(v))
+        error_func_jac = util.matrix_distance_squared_jac
+        def eval_func(v):
+            M, jacs = circuit.mat_jac(v)
+            return error_func_jac(U, M, jacs)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
+        xopt = result.x
+        return (circuit.matrix(xopt), xopt)
+
 class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
     def __init__(self):
         try:

@@ -20,7 +20,7 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 
 # compiler configuration example
 #project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
-project["solver"]  = sc.solver.BFGS_Jac_SolverNative()   # use this solver if you are using a gateset that does not implement the jacobian
+project["solver"]  = sc.solver.BFGS_Jac_SolverNative()
 
 times = {}
 for compilation in project.compilations():
