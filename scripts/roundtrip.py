@@ -47,7 +47,7 @@ project.run()
 # prepare a Qiskit backend to generate unitaries
 backend = qiskit.BasicAer.get_backend('unitary_simulator')
 
-for compilation in project.compilations():
+for compilation in project.compilations:
     # get the original target unitary and final 
     U1 = project.get_target(compilation)
 
