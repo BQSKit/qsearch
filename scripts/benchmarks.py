@@ -20,16 +20,18 @@ project.add_compilation("hhl", advanced_unitaries.HHL)
 
 # compiler configuration example
 #project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
-project["solver"]  = sc.solver.BFGS_Jac_SolverNative()
+#project["solver"]  = sc.solver.BFGS_Jac_SolverNative() # use this to force the compiler to use the Rust version of the BFGS solver instead of using the default setting
 
 times = {}
 for compilation in project.compilations():
     times[compilation] = 0
+
 for _ in range(10):
     project.reset()
     project.run()
     for compilation in project.compilations():
         times[compilation] += project.get_time(compilation)
+
 for compilation in project.compilations():
     print(f'Compilation {compilation} took {times[compilation]/10}s on average.')
 
