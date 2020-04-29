@@ -9,7 +9,7 @@ from . import utils
 from .gatesets import *
 
 try:
-    from search_compiler_rs import native_from_object, matrix_distance_squared
+    from search_compiler_rs import native_from_object
     RUST_ENABLED = True
 except ImportError:
     RUST_ENABLED = False
