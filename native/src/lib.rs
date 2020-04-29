@@ -273,7 +273,8 @@ impl PyBfgsJacSolver {
         PyBfgsJacSolver {}
     }
 
-    fn solve_for_unitary(&self, py: Python, circuit: PyObject, u: &PySquareMatrix, _error_func: PyObject) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
+    #[args(_error_func = "None", _error_jac = "None")]
+    fn solve_for_unitary(&self, py: Python, circuit: PyObject, u: &PySquareMatrix, _error_func: Option<PyObject>, _error_jac: Option<PyObject>) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
         let circ = object_to_gate(&circuit, py)?;
         let unitary = SquareMatrix::from_ndarray(u.to_owned_array());
         let solv = BfgsJacSolver::new();
