@@ -13,11 +13,13 @@ use bincode::{deserialize, serialize};
 use better_panic::install;
 use squaremat::SquareMatrix;
 
+#[cfg(feature = "rustsolv")]
 use solvers::BfgsJacSolver;
 
 pub mod circuits;
 pub mod gatesets;
 pub mod utils;
+#[cfg(feature = "rustsolv")]
 pub mod solvers;
 
 #[cfg(any(feature = "static", feature = "default"))]
@@ -263,7 +265,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 struct PyBfgsJacSolver {
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", feature = "rustsolv"))]
 #[pymethods]
 impl PyBfgsJacSolver {
     #[new]

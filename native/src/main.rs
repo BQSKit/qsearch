@@ -1,3 +1,4 @@
+#[cfg(feature = "rustsolv")]
 use search_compiler_rs::solvers::BfgsJacSolver;
 use search_compiler_rs::gatesets::{GateSetLinearCNOT, GateSet};
 use search_compiler_rs::circuits::{GateProduct, Gate};
@@ -8,6 +9,7 @@ use num_complex::Complex64;
 use rand::{thread_rng, Rng};
 use rand::distributions::Uniform;
 
+#[cfg(feature = "rustsolv")]
 fn main() {
     let mut rng = thread_rng();
     let g = GateSetLinearCNOT::new();
@@ -29,4 +31,9 @@ fn main() {
             }
         }
     }
+}
+
+#[cfg(not(feature = "rustsolv"))]
+fn main() {
+    panic!("No BFGS!");
 }
