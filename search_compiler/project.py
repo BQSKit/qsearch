@@ -27,11 +27,12 @@ class Project:
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
                 print("Successfully loaded project {}".format(self.name))
-                self.status()
+                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log".format(self.name)), self._config("verbosity", 1))
+                self.status(self.logger)
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
-        self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log".format(self.name)), self._config("verbosity", 1))
+            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log".format(self.name)), verbosity=1)
 
     def _save(self):
         with open(self.projfile, "wb") as projfile:
@@ -149,7 +150,7 @@ class Project:
 
         solver = self._config("solver", None)
         if solver is None:
-            solver = scsolver.default_solver(gateset, max_dits, error_func, error_jac)
+            solver = scsolver.default_solver(gateset, max_dits, error_func, error_jac, self.logger)
             if type(solver) == scsolver.LeastSquares_Jac_Solver or type(solver) == scsolver.LeastSquares_Jac_SolverNative:
                 # if default_solver made the call to switch to LeastSquares, then these functions should be assigned to these values
                 error_func = utils.matrix_residuals

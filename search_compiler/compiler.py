@@ -20,6 +20,11 @@ def evaluate_step(tup, U, error_func, error_jac, solver, I):
 
 class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0):
+        self.logger = logger
+        self.verbosity = verbosity
+        if logger is not None:
+            self.logger.verbosity = verbosity
+        
         self.threshold = threshold
         self.error_func = error_func
         self.error_jac = error_jac
@@ -40,7 +45,7 @@ class SearchCompiler(Compiler):
         self.heuristic = heuristic
         self.gateset = gateset
         if solver is None:
-            solver = scsolver.default_solver(gateset, 0, self.error_func, self.error_jac)
+            solver = scsolver.default_solver(gateset, 0, self.error_func, self.error_jac, self.logger)
             if type(solver) == scsolver.LeastSquares_Jac_Solver or type(solver) == scsolver.LeastSquares_Jac_SolverNative:
                 # the default selector said we should switch to LeastSquares, so lets set the relevant values
                 self.error_func = utils.matrix_residuals
@@ -49,10 +54,6 @@ class SearchCompiler(Compiler):
 
         self.solver = solver
         self.beams = int(beams)
-        self.logger = logger
-        self.verbosity = verbosity
-        if logger is not None:
-            self.logger.verbosity = verbosity
 
     def compile(self, U, depth=None, statefile=None, logger=None):
         if logger is None:

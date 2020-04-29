@@ -7,6 +7,7 @@ import scipy.optimize
 from . import circuits
 from . import utils
 from .gatesets import *
+from .logging import Logger
 
 try:
     from search_compiler_rs import native_from_object
@@ -16,7 +17,10 @@ except ImportError:
     def native_from_object(o):
         raise Exception("Native code not installed")
 
-def default_solver(gateset, dits=0, error_func=None, error_jac=None):
+def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None):
+    if logger is None:
+        logger = Logger()
+
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
@@ -31,13 +35,14 @@ def default_solver(gateset, dits=0, error_func=None, error_jac=None):
     if not ls_failed:
         # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
         if RUST_ENABLED:
-            print("chose rust LS")
+            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=2)
             return LeastSquares_Jac_SolverNative()
         else:
-            print("chose python LS")
+            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
             return LeastSquares_Jac_Solver()
 
     if dits < 1:
+        logger.logprint("Smart default fell back to COBYLA_Solver.  Pass a different Solver to SearchCompiler for better results.", verbosity=1)
         return COBYLA_Solver() # handling this case for manually created SearchCompiler instances.  Better support for manual usage is unlikely to be implemented because Projects are generally recommended.
 
     # least squares won't work, so check for jacobian and rust success
@@ -59,17 +64,17 @@ def default_solver(gateset, dits=0, error_func=None, error_jac=None):
 
     if jac_failed:
         if rust_failed:
-            print("chose python COBYLA")
+            logger.logprint("Smart default chose COBYLA_Solver", verbosity=2)
             return COBYLA_Solver()
         else:
-            print("chose rust COBYLA")
+            logger.logprint("Smart default chose COBYLA_SolverNative", verbosity=2)
             return COBYLA_SolverNative()
     else:
         if rust_failed:
-            print("chose python BFGS")
+            logger.logprint("Smart default chose BFGS_Jac_Solver", verbosity=2)
             return BFGS_Jac_Solver()
         else:
-            print("chose rust BFGS")
+            logger.logprint("Smart default chose BFGS_Jac_SolverNative", verbosity=2)
             return BFGS_Jac_SolverNative()
     # the default will have been chosen from LeastSquares, BFGS, or COBYLA, from either the python or "Native" rust variants
 
@@ -142,12 +147,10 @@ class CMA_Jac_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class BFGS_Jac_Solver(Solver):
-    def solve_for_unitary(self, circuit, U, error_func = None):
-        eval_func = lambda v: error_func(U, circuit.matrix(v))
-        error_func_jac = util.matrix_distance_squared_jac
+    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
-            return error_func_jac(U, M, jacs)
+            return error_jac(U, M, jacs)
         result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
