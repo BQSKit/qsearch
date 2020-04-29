@@ -98,7 +98,7 @@ class CMA_Solver(Solver):
         initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)
         xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
-
+
 class COBYLA_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
