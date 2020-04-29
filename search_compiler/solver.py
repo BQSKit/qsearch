@@ -98,7 +98,7 @@ class CMA_Solver(Solver):
         initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)
         xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
-
+
 class COBYLA_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
@@ -153,18 +153,8 @@ class BFGS_Jac_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
-    def __init__(self):
-        try:
-            from search_compiler_rs import BFGS_Jac_SolverNative_Default
-            self.default = BFGS_Jac_SolverNative_Default()
-        except:
-            self.default = None
-
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
-        if error_func == utils.matrix_distance_squared and error_jac == utils.matrix_distance_squared_jac:
-            return self.default.solve_for_unitary(native_from_object(circuit), U, error_func)
-        else:
-            return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func, error_jac=error_jac)
+        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func, error_jac=error_jac)
 
 class LeastSquares_Jac_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_residuals, error_jac=utils.matrix_residuals_jac):
