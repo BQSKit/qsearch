@@ -1,6 +1,6 @@
 [package]
 name = "scrs"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "BSD-3-Clause"
 edition = "2018"
