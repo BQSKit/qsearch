@@ -186,14 +186,13 @@ class Project:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
+                structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    result, structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
+                    structure, vector = compiler.compile(U, depth=depthlimit, statefile=statefile, logger=sublogger)
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
-            cdict["result"] = result
             cdict["structure"] = structure
             cdict["vector"] = vector
             cdict["time"] = endtime - starttime

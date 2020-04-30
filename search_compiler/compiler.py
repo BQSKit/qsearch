@@ -104,7 +104,7 @@ class SearchCompiler(Compiler):
             root = ProductStep(initial_layer)
             result = self.solver.solve_for_unitary(root, U, self.error_func, self.error_jac)
             best_value = self.eval_func(U, result[0])
-            best_pair = (result[0], root, result[1])
+            best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
                 return best_pair
@@ -138,7 +138,7 @@ class SearchCompiler(Compiler):
                 current_value = self.eval_func(U, result[0])
                 if (current_value < best_value and (best_value >= self.threshold or current_depth + 1 <= best_depth)) or (current_value < self.threshold and current_depth + 1 < best_depth):
                     best_value = current_value
-                    best_pair = (result[0], step, result[1])
+                    best_pair = (step, result[1])
                     best_depth = current_depth + 1
                     logger.logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
                 if depth is None or current_depth + 1 < depth:
