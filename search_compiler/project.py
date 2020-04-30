@@ -26,9 +26,9 @@ class Project:
                 os.mkdir(path)
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
-                print("Successfully loaded project {}".format(self.name))
                 self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log.txt".format(self.name)), self._config("verbosity", 1))
-                self.status(self.logger)
+                self.logger.logprint("Successfully loaded project {}".format(self.name))
+                self.status(logger=self.logger)
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()

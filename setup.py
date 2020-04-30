@@ -5,7 +5,7 @@ README = Path('README.md').read_text()
 
 setup(
     name="search_compiler",
-    version="1.2.0",
+    version="1.2.1",
     description="Search-Based Quantum Synthesis/Compilation",
     long_description=README,
     long_description_content_type="text/markdown",
