@@ -27,12 +27,12 @@ class Project:
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
                 print("Successfully loaded project {}".format(self.name))
-                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log".format(self.name)), self._config("verbosity", 1))
+                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log.txt".format(self.name)), self._config("verbosity", 1))
                 self.status(self.logger)
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
-            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log".format(self.name)), verbosity=1)
+            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log.txt".format(self.name)), verbosity=1)
 
     def _save(self):
         with open(self.projfile, "wb") as projfile:
@@ -180,7 +180,7 @@ class Project:
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
-            sublogger = logging.Logger(stdout_enabled, os.path.join(self.folder, "{}-log".format(name)), verbosity)
+            sublogger = logging.Logger(stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), verbosity)
             self.logger.logprint("Starting compilation of {}".format(name))
             try:
                 from threadpoolctl import threadpool_limits

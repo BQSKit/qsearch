@@ -14,7 +14,7 @@ class Logger:
         if self.stdout_enabled:
             print(string)
         if self.output_file is not None:
-            with open(self.output_file + ".txt", "a") as f:
+            with open(self.output_file, "a") as f:
                 f.write(str(datetime.datetime.now()) + " > \t" + str(string) + "\n")
 
 
