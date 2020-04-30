@@ -378,6 +378,7 @@ fn search_compiler_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(native_from_object))?;
     m.add_class::<PyGateSetLinearCNOT>()?;
     m.add_class::<PyGateWrapper>()?;
+    #[cfg(feature = "rustsolv")]
     m.add_class::<PyBfgsJacSolver>()?;
     Ok(())
 }
