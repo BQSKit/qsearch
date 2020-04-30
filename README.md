@@ -23,7 +23,7 @@ Once installed, you can import the library like any other python package:
 ```
 import search_compiler as sc
 ```
-### Experimental Native Gateset
+### Native Gateset
 There is a gateset that is implemented in native code to be faster.  [See the wiki for installation instructions](https://github.com/WolfLink/search_compiler/wiki/Native-Gateset).
 # Getting Started: search_compiler Projects
 The simplest way to use the search_compiler library is by using a Project. When you create a project, you provide a path where a directory will be created to contain the project's files.
@@ -52,7 +52,7 @@ If you would like to avoid working with Projects, you can use the `SearchCompile
 ```
 import search_compiler as sc
 compiler = sc.SearchCompiler()
-U_implemented, circuit, vector = compiler.compile(target_unitary)
+circuit, vector = compiler.compile(target_unitary)
 ```
 The `SearchCompiler` class and the `compile` function can take extra arguments to further configure the compiler.  The return values are, in order, the unitary that represents the implemented circuit, the `sc.QuantumStep` representation of the circuit structure, and the vector of parameters for the circuit structure.
 
