@@ -5,7 +5,7 @@ README = Path('README.md').read_text()
 
 setup(
     name="search_compiler",
-    version="1.1.0",
+    version="1.2.0",
     description="Search-Based Quantum Synthesis/Compilation",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -22,7 +22,7 @@ setup(
     keywords='quantum compilers synthesis computing',
     packages=['search_compiler'],
     python_requires='>=3.6, <4',
-    install_requires=['numpy', 'scipy', 'scrs >= 0.6'],
+    install_requires=['numpy', 'scipy', 'scrs >= 0.7'],
     extras_require={
         'cma': ['cma'],
         'graphics': ['matplotlib'],
