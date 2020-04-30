@@ -22,7 +22,7 @@ setup(
     keywords='quantum compilers synthesis computing',
     packages=['search_compiler'],
     python_requires='>=3.6, <4',
-    install_requires=['numpy', 'scipy', 'scrs >= 0.7'],
+    install_requires=['numpy', 'scipy', 'scrs >= 0.6'],
     extras_require={
         'cma': ['cma'],
         'graphics': ['matplotlib'],
