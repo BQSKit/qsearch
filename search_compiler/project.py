@@ -6,6 +6,7 @@ from enum import Enum
 import os
 import shutil
 import pickle
+from multiprocessing import freeze_support
 from .compiler import SearchCompiler
 from . import solver as scsolver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
@@ -130,6 +131,7 @@ class Project:
         self._save()
 
     def run(self, target=None):
+        freeze_support()
         self.logger.logprint("Started running project {}".format(self.name))
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
