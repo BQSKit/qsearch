@@ -1,16 +1,25 @@
 #![feature(arbitrary_self_types)]
+#[cfg(feature = "python")]
 use num_complex::Complex64;
-
+#[cfg(feature = "python")]
 use numpy::{PyArray1, PyArray2};
+#[cfg(feature = "python")]
 use pyo3::class::basic::PyObjectProtocol;
+#[cfg(feature = "python")]
 use pyo3::exceptions;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::{PyBytes, PyTuple};
+#[cfg(feature = "python")]
 use pyo3::wrap_pyfunction;
 
+#[cfg(feature = "python")]
 use bincode::{deserialize, serialize};
 
+#[cfg(feature = "python")]
 use better_panic::install;
+#[cfg(feature = "python")]
 use squaremat::SquareMatrix;
 
 #[cfg(feature = "rustsolv")]
@@ -18,16 +27,16 @@ use solvers::BfgsJacSolver;
 
 pub mod circuits;
 pub mod gatesets;
-pub mod utils;
 #[cfg(feature = "rustsolv")]
 pub mod solvers;
+pub mod utils;
 
-#[cfg(any(feature = "static", feature = "default"))]
-extern crate openblas_src;
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;
 #[cfg(feature = "mkl")]
 extern crate intel_mkl_src;
+#[cfg(any(feature = "static", feature = "default"))]
+extern crate openblas_src;
 
 #[macro_export]
 macro_rules! c {
@@ -53,12 +62,15 @@ macro_rules! i {
 #[cfg(feature = "python")]
 pub type PySquareMatrix = PyArray2<Complex64>;
 
+#[cfg(feature = "python")]
 use circuits::{
     Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct, GateU3,
     GateXZXZ, QuantumGate,
 };
+#[cfg(feature = "python")]
 use gatesets::{GateSet, GateSetLinearCNOT};
 
+#[cfg(feature = "python")]
 use utils::matrix_distance_squared;
 
 #[cfg(feature = "python")]
@@ -140,11 +152,13 @@ fn object_to_gate(obj: &PyObject, py: Python) -> PyResult<Gate> {
                 let args: Vec<u8> = vec![];
                 let pymat = obj.call_method(py, "matrix", (args,), None)?;
                 let mat = pymat.extract::<&PyArray2<Complex64>>(py)?;
-                Ok(GateConstantUnitary::new(
-                    SquareMatrix::from_ndarray(mat.to_owned_array()),
-                    dits,
+                Ok(
+                    GateConstantUnitary::new(
+                        SquareMatrix::from_ndarray(mat.to_owned_array()),
+                        dits,
+                    )
+                    .into(),
                 )
-                .into())
             } else {
                 Err(exceptions::ValueError::py_err(format!(
                     "Unknown gate {}",
@@ -229,10 +243,7 @@ impl PyGateWrapper {
         let tup: (PyObject,) = (PyBytes::new(py, &serialize(&slf.gate).unwrap()).into_py(py),);
         let slf_ob: PyObject = slf.into_py(py);
         let cls = slf_ob.getattr(py, "__class__")?;
-        Ok((
-            cls,
-            tup.into_py(py),
-        ))
+        Ok((cls, tup.into_py(py)))
     }
 
     pub fn as_python(&self, py: Python) -> PyResult<PyObject> {
@@ -262,8 +273,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 
 #[cfg(feature = "python")]
 #[pyclass(name=BFGS_Jac_SolverNative, dict, module = "search_compiler_rs")]
-struct PyBfgsJacSolver {
-}
+struct PyBfgsJacSolver {}
 
 #[cfg(all(feature = "python", feature = "rustsolv"))]
 #[pymethods]
@@ -274,13 +284,22 @@ impl PyBfgsJacSolver {
     }
 
     #[args(_error_func = "None", _error_jac = "None")]
-    fn solve_for_unitary(&self, py: Python, circuit: PyObject, u: &PySquareMatrix, _error_func: Option<PyObject>, _error_jac: Option<PyObject>) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
+    fn solve_for_unitary(
+        &self,
+        py: Python,
+        circuit: PyObject,
+        u: &PySquareMatrix,
+        _error_func: Option<PyObject>,
+        _error_jac: Option<PyObject>,
+    ) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
         let circ = object_to_gate(&circuit, py)?;
         let unitary = SquareMatrix::from_ndarray(u.to_owned_array());
         let solv = BfgsJacSolver::new();
         let (mat, x0) = solv.solve_for_unitary(&circ, &unitary);
-        Ok((PySquareMatrix::from_array(py, &mat.into_ndarray())
-        .to_owned(), PyArray1::from_vec(py, x0).to_owned()))
+        Ok((
+            PySquareMatrix::from_array(py, &mat.into_ndarray()).to_owned(),
+            PyArray1::from_vec(py, x0).to_owned(),
+        ))
     }
 
     pub fn __reduce__(slf: PyRef<Self>) -> PyResult<(PyObject, PyObject)> {
@@ -369,7 +388,10 @@ fn search_compiler_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     install();
     #[pyfn(m, "matrix_distance_squared")]
     fn matrix_distance_squared_py(a: &PySquareMatrix, b: &PySquareMatrix) -> f64 {
-        matrix_distance_squared(&SquareMatrix::from_ndarray(a.to_owned_array()), &SquareMatrix::from_ndarray(b.to_owned_array()))
+        matrix_distance_squared(
+            &SquareMatrix::from_ndarray(a.to_owned_array()),
+            &SquareMatrix::from_ndarray(b.to_owned_array()),
+        )
     }
     #[pyfn(m, "qft")]
     fn qft_py(py: Python, n: usize) -> Py<PySquareMatrix> {
