@@ -22,8 +22,6 @@ class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0):
         self.logger = logger
         self.verbosity = verbosity
-        if logger is not None:
-            self.logger.verbosity = verbosity
         
         self.threshold = threshold
         self.error_func = error_func
@@ -59,7 +57,6 @@ class SearchCompiler(Compiler):
         if logger is None:
             logger = self.logger
         if logger is None:
-            print("made a logger cause not provideD")
             logger = logging.Logger(stdout_enabled=True, verbosity=self.verbosity)
 
         startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions

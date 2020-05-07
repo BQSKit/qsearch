@@ -6,6 +6,7 @@ from enum import Enum
 import os
 import shutil
 import pickle
+from multiprocessing import freeze_support
 from .compiler import SearchCompiler
 from . import solver as scsolver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
@@ -26,13 +27,13 @@ class Project:
                 os.mkdir(path)
             with open(self.projfile, "rb") as projfile:
                 self._compilations, self._compiler_config = pickle.load(projfile)
-                print("Successfully loaded project {}".format(self.name))
-                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log".format(self.name)), self._config("verbosity", 1))
-                self.status(self.logger)
+                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log.txt".format(self.name)), self._config("verbosity", 1))
+                self.logger.logprint("Successfully loaded project {}".format(self.name))
+                self.status(logger=self.logger)
         except IOError:
             self._compilations = dict()
             self._compiler_config = dict()
-            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log".format(self.name)), verbosity=1)
+            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log.txt".format(self.name)), verbosity=1)
 
     def _save(self):
         with open(self.projfile, "wb") as projfile:
@@ -130,6 +131,7 @@ class Project:
         self._save()
 
     def run(self, target=None):
+        freeze_support()
         self.logger.logprint("Started running project {}".format(self.name))
         threshold = self._config("threshold", 1e-10)
         gateset = self._config("gateset", gatesets.QubitCNOTLinear())
@@ -180,7 +182,7 @@ class Project:
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
-            sublogger = logging.Logger(stdout_enabled, os.path.join(self.folder, "{}-log".format(name)), verbosity)
+            sublogger = logging.Logger(stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), verbosity)
             self.logger.logprint("Starting compilation of {}".format(name))
             try:
                 from threadpoolctl import threadpool_limits

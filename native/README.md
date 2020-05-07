@@ -42,7 +42,7 @@ On Linux, you can also build wheels with Docker, staticly linking a custom built
 Incidently, this is how the packages on PyPi are built.
 
 1. Install docker https://docs.docker.com/install/
-3. Run the container to build wheels: `docker run --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.1 build --cargo-extra-args="--no-default-features --features static" --release --manylinux 2010`
+3. Run the container to build wheels: `docker run --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.3 build --cargo-extra-args="--no-default-features --features python,static" --release --manylinux 2010 --no-sdist`
 4. Install the correct wheel for your Python version in `native/target/wheels` (e.g. `scrs-0.6.0-cp37-cp37m-manylinux2010_x86_64.whl` for Python 3.7)
 
 
