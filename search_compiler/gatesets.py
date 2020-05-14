@@ -8,13 +8,14 @@ except ImportError:
 #TODO: rename all the n's in here to "dits" as appropriate
 
 # Commonly used functions for generating gatesets
-def linear_topology(double_step, single_step, n, d, identity_step=None, single_alt=None):
+def linear_topology(double_step, single_step, n, d, identity_step=None, single_alt=None, double_weight=1, single_weight=0):
+    weight = double_weight + 2*single_weight
     if not identity_step:
         identity_step = IdentityStep(d)
     if single_alt is None:
-        return [KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_step, single_step)), *[identity_step]*(n-i-2)) for i in range(0, n-1)]
+        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_step, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1)]
     else:
-        return [KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_alt, single_step)), *[identity_step]*(n-i-2)) for i in range(0, n-1)]
+        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_alt, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1)]
 
 def fill_row(step, n):
     return KroneckerStep(*[step]*n)
@@ -35,7 +36,7 @@ class Gateset():
 
     # the set of possible multi-qubit gates for searching.  Generally a two-qubit gate with single qubit gates after it.
     def search_layers(self, dits):
-        return [] # NOTES: Returns a LIST of gates
+        return [] # NOTES: Returns a LIST of tuples of (gate, weight)
 
     def __eq__(self, other):
         if self is other:
@@ -113,7 +114,7 @@ class QubitCNOTRing(Gateset):
         steps = linear_topology(self.cnot, self.single_step, n, self.d, identity_step=I, single_alt=self.single_alt)
         if n == 2:
             return steps
-        finisher = ProductStep(NonadjacentCNOTStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt))
+        finisher = (ProductStep(NonadjacentCNOTStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt)), 1)
         return steps + [finisher]
 
 
@@ -138,7 +139,7 @@ class QubitCNOTAdjacencyList(Gateset):
                 continue
             cnot = NonadjacentCNOTStep(n, pair[0], pair[1])
             single_steps = [self.single_step if i == pair[0] else self.single_alt if i == pair[1] else self.I for i in range(0, n)]
-            steps.append(ProductStep(cnot, KroneckerStep(*single_steps))) 
+            steps.append((ProductStep(cnot, KroneckerStep(*single_steps)), 1)) 
         return steps
 
 class QubitCRZRing(Gateset):
@@ -156,7 +157,7 @@ class QubitCRZRing(Gateset):
         steps = linear_topology(self.crz, self.single_step, n, self.d, identity_step=I, single_alt=self.single_alt)
         if n == 2:
             return steps
-        finisher = ProductStep(NonadjacentCRZStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt))
+        finisher = (ProductStep(NonadjacentCRZStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt)), 1)
         return steps + [finisher]
 
 class QutritCPIPhaseLinear(Gateset):
