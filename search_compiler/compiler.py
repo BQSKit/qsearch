@@ -138,7 +138,7 @@ class SearchCompiler(Compiler):
                     best_value = current_value
                     best_pair = (step, result[1])
                     best_depth = new_depth
-                    logger.logprint("New best! score: {} at depth: {}".format(best_value, current_depth + 1))
+                    logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
                 if depth is None or new_depth < depth:
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
