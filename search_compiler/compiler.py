@@ -10,16 +10,18 @@ from . import solver as scsolver
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
-    def compile(self, U, depth):
+    def __init__(self, *kwargs):
+        raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
+    def compile(self, U, depth, statefile, logger):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
-        return (U, None, None)
+        return (U, None)
 
 def evaluate_step(tup, U, error_func, error_jac, solver, I):
     step, depth, weight = tup
     return (step, solver.solve_for_unitary(step, U, error_func), depth, weight)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0):
+    def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0, **extraargs):
         self.logger = logger
         self.verbosity = verbosity
         

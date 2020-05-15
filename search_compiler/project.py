@@ -39,9 +39,13 @@ class Project:
         with open(self.projfile, "wb") as projfile:
             pickle.dump((self._compilations, self._compiler_config), projfile)
 
-    def _config(self, keyword, default):
-        if keyword in self._compiler_config:
-            return self._compiler_config[keyword]
+    def _config(self, keyword, default, dic=None):
+        if dic is None:
+            return self._compiler_config[keyword] if keyword in self._compiler_config else default
+        elif keyword in dic:
+            val = dic[keyword]
+            del dic[keyword]
+            return val
         else:
             return default
 
@@ -131,26 +135,26 @@ class Project:
         self._save()
 
     def run(self, target=None):
+        rundict = self._compiler_config.copy()
         freeze_support()
         self.logger.logprint("Started running project {}".format(self.name))
-        threshold = self._config("threshold", 1e-10)
-        gateset = self._config("gateset", gatesets.QubitCNOTLinear())
         max_dits = int(np.log(max([self._compilations[name][0].shape[0] for name in self._compilations]))/np.log(2))
-        error_func = self._config("error_func", utils.matrix_distance_squared)
-        error_jac = self._config("error_jac", None)
+        error_func = self._config("error_func", utils.matrix_distance_squared, rundict)
+        error_jac = self._config("error_jac", None, rundict)
         if error_jac is None:
             if error_func == utils.matrix_distance_squared:
                 error_jac = utils.matrix_distance_squared_jac
             elif error_func == utils.matrix_residuals:
                 error_jac = utils.matrix_residuals_jac
-        eval_func = self._config("eval_func", None)
+        eval_func = self._config("eval_func", None, rundict)
         if eval_func is None:
             if error_func == utils.matrix_residuals:
                 eval_func = utils.matrix_distance_squared
             else:
                 eval_func = error_func
 
-        solver = self._config("solver", None)
+        gateset = self._config("gateset", gatesets.QubitCNOTLinear(), rundict)
+        solver = self._config("solver", None, rundict)
         if solver is None:
             solver = scsolver.default_solver(gateset, max_dits, error_func, error_jac, self.logger)
             if type(solver) == scsolver.LeastSquares_Jac_Solver or type(solver) == scsolver.LeastSquares_Jac_SolverNative:
@@ -159,7 +163,7 @@ class Project:
                 error_jac = utils.matrix_residuals_jac
                 eval_func = utils.matrix_distance_squared
 
-        d = self._config("d", 2)
+        d = self._config("d", 2, rundict)
         heuristic=heuristics.astar
         if "search_type" in self._compiler_config:
             st = self._compiler_config["search_type"]
@@ -167,14 +171,14 @@ class Project:
                 heuristic = heuristics.breadth
             elif st == "greedy":
                 heuristic = heuristics.greedy
-        heuristic = self._config("heuristic", heuristic)
-        beams = self._config("beams", -1)
-        depthlimit = self._config("depth", None)
-        blas_threads = self._config("blas_threads", None)
-        verbosity = self._config("verbosity", 1)
-        stdout_enabled = self._config("stdout_enabled", True)
+        heuristic = self._config("heuristic", heuristic, rundict)
+        depthlimit = self._config("depth", None, rundict)
+        blas_threads = self._config("blas_threads", None, rundict)
+        verbosity = self._config("verbosity", 1, rundict)
+        stdout_enabled = self._config("stdout_enabled", True, rundict)
 
-        compiler = SearchCompiler(threshold=threshold, gateset=gateset, error_func=error_func, error_jac=error_jac, eval_func=eval_func, heuristic=heuristic, solver=solver, beams=beams)
+        CompilerClass = self._config("compiler", SearchCompiler, rundict)
+        compiler = CompilerClass(error_func=error_func, error_jac=error_jac, eval_func=eval_func, heuristic=heuristic, solver=solver, **rundict)
         self.status(logger=self.logger)
         for name in self._compilations:
             U, cdict = self._compilations[name]
