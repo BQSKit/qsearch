@@ -29,7 +29,7 @@ jobs:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'ubuntu')
         - name: Build macOS wheels
-          run: cd native && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate" --release --no-sdist && pip install native/target/wheels/scrs*.whl
+          run: cd native && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate" --release --no-sdist && pip install --no-index --find-links=target/wheels scrs
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'macOS')
