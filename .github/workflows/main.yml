@@ -1,0 +1,47 @@
+name: run tests
+
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.6,3.7,3.8]
+        os: [macOS-latest, ubuntu-latest]
+      fail-fast: false
+    steps:
+        - name: checkout
+          uses: actions/checkout@v2
+        - name: setup python
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install nightly-2020-04-06
+          uses: actions-rs/toolchain@v1
+          with:
+              toolchain: nightly-2020-04-06
+              default: true
+        - if: startsWith(matrix.os, 'ubuntu')
+          run: sudo apt install libopenblas-dev libgfortran-7-dev
+        - name: Test building & installing Rust extension
+          run: cd native && pip install .
+          env:
+            RUST_BACKTRACE: 1
+          if: startsWith(matrix.os, 'ubuntu')
+        - name: Build macOS wheels
+          run: cd native && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate" --release --no-sdist && pip install --no-index --find-links=target/wheels scrs
+          env:
+            RUST_BACKTRACE: 1
+          if: startsWith(matrix.os, 'macOS')
+        - name: upload wheel artifacts
+          uses: actions/upload-artifact@v1
+          with:
+            name: scrs-wheels-${{matrix.os}}-${{matrix.python-version}}
+            path: native/target/wheels 
+          if: startsWith(matrix.os, 'macOS')
+        - name: install search_compiler
+          run: pip install .
+        - name: install test dependencies
+          run: pip install -r test-requirements.txt
+        - name: run pytest
+          run: pytest
