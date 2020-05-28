@@ -4,5 +4,5 @@ from pathlib import Path
 README = Path('README.md').read_text()
 
 setup(
-    long_description_content_type="text/markdown",
+    long_description=README,
 )
