@@ -1,4 +1,4 @@
-from multiprocessing import Pool, cpu_count
+from multiprocessing import get_context, cpu_count
 from functools import partial
 from itertools import chain
 from timeit import default_timer as timer
@@ -89,7 +89,8 @@ class SearchCompiler(Compiler):
             beams = 1
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
-        pool = Pool(min(len(search_layers)*beams,cpu_count()))
+        ctx = get_context('fork')
+        pool = ctx.Pool(min(len(search_layers)*beams,cpu_count()))
         logger.logprint("Creating a pool of {} workers".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
