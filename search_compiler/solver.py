@@ -1,4 +1,6 @@
 import sys
+from multiprocessing import get_context
+from itertools import partial
 
 import numpy as np
 import scipy as sp
@@ -78,8 +80,18 @@ def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None
             return BFGS_Jac_SolverNative()
     # the default will have been chosen from LeastSquares, BFGS, or COBYLA, from either the python or "Native" rust variants
 
-
 class Solver():
+    def __init__(self):
+        # default solver behavior is to create a multiprocessing pool for parallelism
+        ctx = get_context("fork")
+        self.pool = ctx.Pool()
+
+    def solve_circuits_parallel(self, tuples, U, error_func, error_jac):
+        # the tuples are assumed to start with the circuit, and then contain extra data that needs to be passed through
+        # create a func
+        process_func = lambda tup: (self.solve_for_unitary(tup[0], U, error_func, error_jac), *tup[1:])
+        return self.pool.imap_unordered(process_func, tuples)
+
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         raise NotImplementedError
 
