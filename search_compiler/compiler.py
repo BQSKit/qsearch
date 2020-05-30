@@ -1,4 +1,4 @@
-from multiprocessing import get_context, cpu_count
+from multiprocessing import cpu_count
 from functools import partial
 from itertools import chain
 from timeit import default_timer as timer
@@ -89,9 +89,6 @@ class SearchCompiler(Compiler):
             beams = 1
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
-        ctx = get_context('fork')
-        pool = ctx.Pool(min(len(search_layers)*beams,cpu_count()))
-        logger.logprint("Creating a pool of {} workers".format(pool._processes))
 
         recovered_state = checkpoint.recover(statefile)
         queue = []
@@ -102,7 +99,7 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = self.solver.solve_for_unitary(root, U, self.error_func, self.error_jac)
+            result = self.solver.solve_for_unitary(self.solver.args, root, U, self.error_func, self.error_jac)
             best_value = self.eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
@@ -119,8 +116,6 @@ class SearchCompiler(Compiler):
 
         while len(queue) > 0:
             if best_value < self.threshold:
-                pool.close()
-                pool.terminate()
                 queue = []
                 break
             popped = []
@@ -133,8 +128,8 @@ class SearchCompiler(Compiler):
 
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
-
-            for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
+            for step, result, current_depth, weight in self.solver.solve_circuits_parallel(new_steps, U, self.error_func, self.error_jac):
+            #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
                 current_value = self.eval_func(U, result[0])
                 new_depth = current_depth + weight
                 if (current_value < best_value and (best_value >= self.threshold or new_depth <= best_depth)) or (current_value < self.threshold and new_depth < best_depth):
@@ -149,9 +144,6 @@ class SearchCompiler(Compiler):
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
 
 
-        pool.close()
-        pool.terminate()
-        pool.join()
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
         return best_pair
 
