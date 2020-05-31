@@ -6,7 +6,7 @@ import heapq
 from .circuits import *
 
 from . import solver as scsolver
-from . import parallelizer
+from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
@@ -88,6 +88,7 @@ class SearchCompiler(Compiler):
 
         #TODO: this is a placeholder
         parallel = parallelizer.MultiprocessingParallelizer()
+        parallel.backend = backend.SmartDefaultBackend()
         recovered_state = checkpoint.recover(statefile)
         queue = []
         best_depth = 0

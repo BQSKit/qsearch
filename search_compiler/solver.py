@@ -9,13 +9,6 @@ from . import utils
 from .gatesets import *
 from .logging import Logger
 
-try:
-    from search_compiler_rs import native_from_object
-    RUST_ENABLED = True
-except ImportError:
-    RUST_ENABLED = False
-    def native_from_object(o):
-        raise Exception("Native code not installed")
 
 def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None):
     if logger is None:
@@ -34,12 +27,8 @@ def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None
 
     if not ls_failed:
         # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
-        if RUST_ENABLED:
-            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=2)
-            return LeastSquares_Jac_SolverNative()
-        else:
-            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
-            return LeastSquares_Jac_Solver()
+        logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
+        return LeastSquares_Jac_Solver()
 
     if dits < 1:
         logger.logprint("Smart default fell back to COBYLA_Solver.  Pass a different Solver to SearchCompiler for better results.", verbosity=1)
@@ -47,36 +36,23 @@ def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None
 
     # least squares won't work, so check for jacobian and rust success
     jac_failed = False
-    rust_failed = False
     layers = [gateset.initial_layer(dits)] + gateset.search_layers(dits)
     for layer in layers:
         try:
             layer.mat_jac(np.random.rand(layer.num_inputs))
         except:
             jac_failed = True
-        try:
-            native_from_object(layer)
-        except:
-            rust_failed = True
 
     if error_jac is None:
         jac_failed = True
 
     if jac_failed:
-        if rust_failed:
-            logger.logprint("Smart default chose COBYLA_Solver", verbosity=2)
-            return COBYLA_Solver()
-        else:
-            logger.logprint("Smart default chose COBYLA_SolverNative", verbosity=2)
-            return COBYLA_SolverNative()
+        logger.logprint("Smart default chose COBYLA_Solver", verbosity=2)
+        return COBYLA_Solver()
     else:
-        if rust_failed:
-            logger.logprint("Smart default chose BFGS_Jac_Solver", verbosity=2)
-            return BFGS_Jac_Solver()
-        else:
-            logger.logprint("Smart default chose BFGS_Jac_SolverNative", verbosity=2)
-            return BFGS_Jac_SolverNative()
-    # the default will have been chosen from LeastSquares, BFGS, or COBYLA, from either the python or "Native" rust variants
+        logger.logprint("Smart default chose BFGS_Jac_Solver", verbosity=2)
+        return BFGS_Jac_Solver()
+    # the default will have been chosen from LeastSquares, BFGS, or COBYLA
 
 
 class Solver():
@@ -120,10 +96,6 @@ class DIY_Solver(Solver):
         initial_guess = np.array(np.random.rand(circuit.num_inputs))
         x = f(eval_func, initial_guess)
 
-class COBYLA_SolverNative(COBYLA_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
-        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func, error_jac=error_jac)
-
 class NM_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=None):
         eval_func = lambda v: error_func(U, circuit.matrix(v))
@@ -155,10 +127,6 @@ class BFGS_Jac_Solver(Solver):
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class BFGS_Jac_SolverNative(BFGS_Jac_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
-        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func, error_jac=error_jac)
-
 class LeastSquares_Jac_Solver(Solver):
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_residuals, error_jac=utils.matrix_residuals_jac):
         # This solver is usually faster than BFGS, but has some caveats
@@ -171,6 +139,3 @@ class LeastSquares_Jac_Solver(Solver):
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class LeastSquares_Jac_SolverNative(LeastSquares_Jac_Solver):
-    def solve_for_unitary(self, circuit, U, error_func=utils.matrix_residuals, error_jac=utils.matrix_residuals_jac):
-        return super().solve_for_unitary(native_from_object(circuit), U, error_func=error_func)
