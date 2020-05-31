@@ -1,12 +1,12 @@
 from multiprocessing import cpu_count
 from functools import partial
-from itertools import chain
 from timeit import default_timer as timer
 import heapq
 
 from .circuits import *
 
 from . import solver as scsolver
+from . import parallelizer
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
@@ -15,10 +15,6 @@ class Compiler():
     def compile(self, U, depth, statefile, logger):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None)
-
-def evaluate_step(tup, U, error_func, error_jac, solver, I):
-    step, depth, weight = tup
-    return (step, solver.solve_for_unitary(step, U, error_func), depth, weight)
 
 class SearchCompiler(Compiler):
     def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0, **extraargs):
@@ -90,6 +86,8 @@ class SearchCompiler(Compiler):
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
 
+        #TODO: this is a placeholder
+        parallel = parallelizer.MultiprocessingParallelizer()
         recovered_state = checkpoint.recover(statefile)
         queue = []
         best_depth = 0
@@ -99,7 +97,7 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = self.solver.solve_for_unitary(self.solver.args, root, U, self.error_func, self.error_jac)
+            result = self.solver.solve_for_unitary(root, U, self.error_func, self.error_jac)
             best_value = self.eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
@@ -128,7 +126,7 @@ class SearchCompiler(Compiler):
 
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
-            for step, result, current_depth, weight in self.solver.solve_circuits_parallel(new_steps, U, self.error_func, self.error_jac):
+            for step, result, current_depth, weight in parallel.solve_circuits_parallel(self.solver, new_steps, U, self.error_func, self.error_jac):
             #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
                 current_value = self.eval_func(U, result[0])
                 new_depth = current_depth + weight
