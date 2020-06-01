@@ -3,6 +3,25 @@ An implementation of a quantum gate synthesis algorithm based on A* and numerica
 
 This is an implementation of the algorithm described in the paper *[Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727)*.
 
+| Circuit       | # of Qubits | Ref # | CNOT Linear | CNOT Ring | UQ (CNOT Ring) | Linear Unitary Distance | Ring Unitary Distance   |
+|---------------|--------|-----|-------------|-----------|----------------|-------------------------|-------------------------|
+| QFT           | 3      | 6   | 7*          | 6*        | 15             | 1.33 * 10<sup>-14</sup> | 2.22 * 10<sup>-16</sup> |
+| Fredkin       | 3      | 8   | 8           | 7         | 9              | 1.76 * 10<sup>-14</sup> | 0.0                     |
+| Toffoli       | 3      | 6   | 8           | 6         | 9              | 1.14 * 10<sup>-14</sup> | 0.0                     |
+| Peres         | 3      | 5   | 7           | 6         | 19             | 1.13 * 10<sup>-14</sup> | 0.0                     |
+| HHL           | 3      | N/A | 3*          | 3*        | 16             | 1.25 * 10<sup>-14</sup> | 0.0                     |
+| Or            | 3      | 6   | 8           | 6         | 10             | 1.72 * 10<sup>-14</sup> | 0.0                     |
+| EntangledX    | 3      | 4   | 2,3,4       | 2,3,4     | 9              | 1.26 * 10<sup>-14</sup> | 0.0                     |
+| TFIM_3_3      | 3      | 4   | 4           | 4         | 17             | 0.0                     | 0.0                     |
+| TFIM_6_3      | 3      | 8   | 6           | 6         | 17             | 4.44 * 10<sup>-16</sup> | 0.0                     |
+| TFIM_42_3     | 3      | 56  | 6           | 6         | 17             | 8.88 * 10<sup>-16</sup> | 0.0                     |
+| TFIM_60_3     | 3      | 80  | 6           | 6         | 17             | 6.66 * 10<sup>-16</sup> | 0.0                     |
+| QFT           | 4      | N/A | 14          |           | 89             | 6.66 * 10<sup>-16</sup> |                         |
+| TFIM_30_4     | 4      | 60  | 11          |           | 87             | 9.08 * 10<sup>-11</sup> |                         |
+| IBM Challenge | 4      | N/A | 4           |           | DNR            | 0.0                     |                         |
+
+\* Some gates occasionally resulted in circuits with different CNOT counts due to the optimizers getting stuck in local minima. The best run out of 10 is listed in these cases. The CNOT count for these circuits was occasionally 1 more than listed. The gate "EntangledX" is a parameterized gate, and for certain combinations of parameters we were able to produce solutions with fewer CNOTs than the hand-optimized general solution.
+
 # Installation
 This is a python package which can be installed using pip.  You will need a Python version of at least 3.6. The search compiler currently only runs on macOS, Linux, and [the Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10). You can install it from [PyPi](https://pypi.org) using:
 ```
