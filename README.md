@@ -3,6 +3,8 @@ An implementation of a quantum gate synthesis algorithm based on A* and numerica
 
 This is an implementation of the algorithm described in the paper *[Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727)*.
 
+These are some results showing how search_compiler can provide optimal or near optimal results. We compare results to the [UniversalQ Compiler](https://github.com/Q-Compiler/UniversalQCompiler).
+
 | Circuit       | # of Qubits | Ref # | CNOT Linear | CNOT Ring | UQ (CNOT Ring) | Linear Unitary Distance | Ring Unitary Distance   |
 |---------------|--------|-----|-------------|-----------|----------------|-------------------------|-------------------------|
 | QFT           | 3      | 6   | 7*          | 6*        | 15             | 1.33 * 10<sup>-14</sup> | 2.22 * 10<sup>-16</sup> |
