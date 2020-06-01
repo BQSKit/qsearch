@@ -87,8 +87,7 @@ class SearchCompiler(Compiler):
             logger.logprint("The beam factor is {}.".format(beams))
 
         #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer()
-        parallel.backend = backend.SmartDefaultBackend()
+        parallel = parallelizer.MultiprocessingParallelizer(self.solver, U, self.error_func, self.error_jac, backend.SmartDefaultBackend())
         recovered_state = checkpoint.recover(statefile)
         queue = []
         best_depth = 0
@@ -127,7 +126,7 @@ class SearchCompiler(Compiler):
 
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
-            for step, result, current_depth, weight in parallel.solve_circuits_parallel(self.solver, new_steps, U, self.error_func, self.error_jac):
+            for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
             #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
                 current_value = self.eval_func(U, result[0])
                 new_depth = current_depth + weight
@@ -144,5 +143,6 @@ class SearchCompiler(Compiler):
 
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
+        parallel.done()
         return best_pair
 

@@ -5,12 +5,20 @@ from warnings import warn
 from enum import Enum
 import os
 import shutil
+import sys
 import pickle
 from multiprocessing import freeze_support
 from .compiler import SearchCompiler
 from . import solver as scsolver
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 from time import time
+
+
+try:
+    from mpi4py import MPI
+    from .utils import mpi_worker
+except ImportError:
+    MPI = None
 
 class Project_Status(Enum):
     PROGRESS = 1
@@ -19,21 +27,29 @@ class Project_Status(Enum):
 
 class Project:
     def __init__(self, path):
-        self.folder = path
-        self.name = os.path.basename(os.path.normpath(path))
-        self.projfile = os.path.join(path, "qcproject")
-        try:
-            if not os.path.exists(path):
-                os.mkdir(path)
-            with open(self.projfile, "rb") as projfile:
-                self._compilations, self._compiler_config = pickle.load(projfile)
-                self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log.txt".format(self.name)), self._config("verbosity", 1))
-                self.logger.logprint("Successfully loaded project {}".format(self.name))
-                self.status(logger=self.logger)
-        except IOError:
-            self._compilations = dict()
-            self._compiler_config = dict()
-            self.logger = logging.Logger(True, os.path.join(path, "{}-project-log.txt".format(self.name)), verbosity=1)
+        if MPI is not None:
+            self.comm = MPI.COMM_WORLD
+            self.rank = self.comm.rank
+        else:
+            self.comm = None
+            self.rank = 0
+
+        if self.rank == 0:
+            self.folder = path
+            self.name = os.path.basename(os.path.normpath(path))
+            self.projfile = os.path.join(path, "qcproject")
+            try:
+                if not os.path.exists(path):
+                    os.mkdir(path)
+                with open(self.projfile, "rb") as projfile:
+                    self._compilations, self._compiler_config = pickle.load(projfile)
+                    self.logger = logging.Logger(self._config("stdout_enabled", True), os.path.join(path, "{}-project-log.txt".format(self.name)), self._config("verbosity", 1))
+                    self.logger.logprint("Successfully loaded project {}".format(self.name))
+                    self.status(logger=self.logger)
+            except IOError:
+                self._compilations = dict()
+                self._compiler_config = dict()
+                self.logger = logging.Logger(True, os.path.join(path, "{}-project-log.txt".format(self.name)), verbosity=1)
 
     def _save(self):
         with open(self.projfile, "wb") as projfile:
@@ -134,6 +150,20 @@ class Project:
         self._compiler_config = dict()
         self._save()
 
+    def __enter__(self):
+        if self.rank == 0:
+            return self
+        else:
+            mpi_worker()
+            return self.__exit__(None, None, None)
+
+    def __exit__(self, exc_typ, exc_val, exc_tb):
+        if self.rank == 0:
+            self.finish()
+            return False
+        else:
+            sys.exit(0)
+
     def run(self, target=None):
         rundict = self._compiler_config.copy()
         freeze_support()
@@ -213,6 +243,9 @@ class Project:
 
     def complete(self):
         return self._overall_status() == Project_Status.COMPLETE
+
+    def finish(self):
+        self.comm.bcast(True, root=0)
 
     def status(self, name=None, logger=None):
         namelist = [name] if name else self._compilations

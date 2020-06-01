@@ -1,6 +1,12 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
+
+try:
+    from mpi4py import MPI
+except ImportError:
+    MPI = None
+
 from . import unitaries
 
 def matrix_product(*LU):
@@ -159,3 +165,38 @@ def endian_reverse(U, d=2):
     n = int(np.log(U.shape[0])/np.log(d))
     return remap(U, list(reversed(range(0, n))))
 
+def mpi_rank():
+    if MPI is None:
+        return 0 # allow fallback to multiprocessing
+    comm = MPI.COMM_WORLD
+    return comm.rank
+
+def mpi_do_work(comm):
+    """Do the work of a single compilation"""
+    done = False
+    eval = None
+    eval = comm.bcast(eval, root=0)
+    while not done:
+        done = comm.bcast(done, root=0)
+        if done:
+            break
+        step = comm.recv(source=0, tag=comm.rank)
+        if step is None:
+            res = step # return None if we aren't doing work
+        else:
+            res = eval(step)
+        data = comm.send(res, dest=0, tag=comm.rank)
+        assert data is None
+
+def mpi_worker():
+    """Create a worker that will keep running compilation requests until told to stop"""
+    # NOTE WELL: this should be kept in sync with the MPIParallelizer code in parallelizer.py
+    if MPI is None:
+        raise RuntimeError("MPI not installed")
+    comm = MPI.COMM_WORLD
+    done = False
+    while not done:
+        done = comm.bcast(done, root=0)
+        if done:
+            break
+        mpi_do_work(comm)
