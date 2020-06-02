@@ -82,7 +82,7 @@ fn main() {
         ],
         8,
     );
-    let solv = BfgsJacSolver::new();
+    let solv = BfgsJacSolver::new(10);
     for i in 1..10 {
         let mut layers: Vec<Gate> = vec![initial.clone().into()];
         let rest_layers: Vec<Gate> = (1..i)
