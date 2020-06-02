@@ -22,12 +22,11 @@ use better_panic::install;
 #[cfg(feature = "python")]
 use squaremat::SquareMatrix;
 
-#[cfg(feature = "rustsolv")]
 use solvers::BfgsJacSolver;
 
 pub mod circuits;
 pub mod gatesets;
-#[cfg(feature = "rustsolv")]
+
 pub mod solvers;
 pub mod utils;
 
@@ -275,7 +274,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 #[pyclass(name=BFGS_Jac_SolverNative, dict, module = "search_compiler_rs")]
 struct PyBfgsJacSolver {}
 
-#[cfg(all(feature = "python", feature = "rustsolv"))]
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyBfgsJacSolver {
     #[new]
@@ -400,7 +399,6 @@ fn search_compiler_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(native_from_object))?;
     m.add_class::<PyGateSetLinearCNOT>()?;
     m.add_class::<PyGateWrapper>()?;
-    #[cfg(feature = "rustsolv")]
     m.add_class::<PyBfgsJacSolver>()?;
     Ok(())
 }

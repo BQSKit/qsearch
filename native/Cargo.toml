@@ -12,7 +12,6 @@ default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
 python = []
-rustsolv = ["lbfgsb-sys"]
 
 [dependencies]
 num-complex = { version = "0.2.4", features = ["serde"] }
@@ -31,8 +30,8 @@ bincode = "1.2.1"
 better-panic = "0.2.0"
 squaremat = { path = "./squaremat" }
 md5 = "0.7.0"
-lbfgsb-sys = { git = "https://github.com/ethanhs/lbfgsb-sys.git", features = ["static"], optional = true }
 rand = "0.7.3"
+nlopt = "0.5"
 
 [dependencies.pyo3]
 version = "0.9.2"
