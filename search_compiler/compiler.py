@@ -75,7 +75,7 @@ class SearchCompiler(Compiler):
             return (result[0], root, result[1])
 
         #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer(self.solver, U, self.error_func, self.error_jac, backend.PythonBackend())
+        parallel = parallelizer.MultiprocessingParallelizer(self.solver, U, self.error_func, self.error_jac, backend.SmartDefaultBackend())
         logger.logprint("There are {} processors available to Pool.".format(parallel.num_tasks()))
         logger.logprint("The branching factor is {}.".format(len(search_layers)))
         beams = self.beams
