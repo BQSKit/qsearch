@@ -272,14 +272,20 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 
 #[cfg(feature = "python")]
 #[pyclass(name=BFGS_Jac_SolverNative, dict, module = "search_compiler_rs")]
-struct PyBfgsJacSolver {}
+struct PyBfgsJacSolver {
+    size: usize,
+}
 
 #[cfg(feature = "python")]
 #[pymethods]
 impl PyBfgsJacSolver {
     #[new]
-    fn new() -> Self {
-        PyBfgsJacSolver {}
+    fn new(memory_size: Option<usize>) -> Self {
+        if let Some(size) = memory_size {
+            PyBfgsJacSolver { size }
+        } else {
+            PyBfgsJacSolver { size: 10 }
+        }
     }
 
     #[args(_error_func = "None", _error_jac = "None")]
@@ -293,7 +299,7 @@ impl PyBfgsJacSolver {
     ) -> PyResult<(Py<PySquareMatrix>, Py<PyArray1<f64>>)> {
         let circ = object_to_gate(&circuit, py)?;
         let unitary = SquareMatrix::from_ndarray(u.to_owned_array());
-        let solv = BfgsJacSolver::new();
+        let solv = BfgsJacSolver::new(self.size);
         let (mat, x0) = solv.solve_for_unitary(&circ, &unitary);
         Ok((
             PySquareMatrix::from_array(py, &mat.into_ndarray()).to_owned(),

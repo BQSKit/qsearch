@@ -4,11 +4,13 @@ use nlopt::*;
 use rand::{thread_rng, Rng};
 use squaremat::SquareMatrix;
 
-pub struct BfgsJacSolver {}
+pub struct BfgsJacSolver {
+    size: usize,
+}
 
 impl BfgsJacSolver {
-    pub fn new() -> Self {
-        BfgsJacSolver {}
+    pub fn new(size: usize) -> Self {
+        BfgsJacSolver { size }
     }
 
     pub fn solve_for_unitary(
@@ -36,7 +38,8 @@ impl BfgsJacSolver {
         fmin.set_upper_bound(1.0).unwrap();
         fmin.set_lower_bound(0.0).unwrap();
         fmin.set_stopval(1e-16).unwrap();
-        fmin.set_maxeval(15000);
+        fmin.set_maxeval(15000).unwrap();
+        fmin.set_vector_storage(Some(self.size)).unwrap();
         match fmin.optimize(&mut x0) {
             Err((nlopt::FailState::Failure, _)) | Err((nlopt::FailState::RoundoffLimited, _)) => (),
             Ok(_) => (),
