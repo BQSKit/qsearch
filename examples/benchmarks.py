@@ -1,5 +1,5 @@
 import search_compiler as sc
-from search_compiler import unitaries, advanced_unitaries
+from search_compiler import unitaries, advanced_unitaries, multistart_solver
 import time
 
 # create the project
@@ -27,7 +27,6 @@ with sc.Project("benchmarks") as project:
     #project["verbosity"] = 2 # use this to have more information reported to stdout and the log files, or set it to 0 to disable logging altogether
 
     # once everything is set up, let the project run!
-
     project.run()
 
 

@@ -245,7 +245,8 @@ class Project:
         return self._overall_status() == Project_Status.COMPLETE
 
     def finish(self):
-        self.comm.bcast(True, root=0)
+        if MPI is not None:
+            self.comm.bcast(True, root=0)
 
     def status(self, name=None, logger=None):
         namelist = [name] if name else self._compilations

@@ -1,4 +1,3 @@
-from multiprocessing import cpu_count
 from functools import partial
 from timeit import default_timer as timer
 import heapq
@@ -75,19 +74,18 @@ class SearchCompiler(Compiler):
             result = self.solver.solve_for_unitary(root, U, self.eval_func)
             return (result[0], root, result[1])
 
-
-        logger.logprint("There are {} processors available to Pool.".format(cpu_count()))
+        #TODO: this is a placeholder
+        parallel = parallelizer.ProcessPoolParallelizer(self.solver, U, self.error_func, self.error_jac, backend.SmartDefaultBackend())
+        logger.logprint("There are {} processors available to Pool.".format(parallel.num_tasks()))
         logger.logprint("The branching factor is {}.".format(len(search_layers)))
         beams = self.beams
         if self.beams < 1 and len(search_layers) > 0:
-            beams = int(cpu_count() // len(search_layers))
+            beams = int(parallel.num_tasks() // len(search_layers))
         if beams < 1:
             beams = 1
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
 
-        #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer(self.solver, U, self.error_func, self.error_jac, backend.SmartDefaultBackend())
         recovered_state = checkpoint.recover(statefile)
         queue = []
         best_depth = 0

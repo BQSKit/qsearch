@@ -8,7 +8,13 @@ import time
 
 from math import gamma, pi, sqrt
 
-from persistent_aposmm import aposmm
+
+# libEnsemble imports
+from libensemble.libE import libE
+import libensemble.gen_funcs
+libensemble.gen_funcs.rc.aposmm_optimizers = 'scipy'
+from libensemble.gen_funcs.persistent_aposmm import aposmm
+
 
 class MultiStart_Solver(Solver):
 
@@ -22,7 +28,7 @@ class MultiStart_Solver(Solver):
     # this function call needs to keep this format to work with our existiing api
     def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
 
-        circuit = native_from_object(circuit) # this converts a python circuit to a rust-implemented circuit which runs ~10x faster but conforms to the same API
+        #circuit = native_from_object(circuit) # this converts a python circuit to a rust-implemented circuit which runs ~10x faster but conforms to the same API
 
         if self.optimizer_name == "BFGS":
             # feel free to re-format this eval_func as long as it uses circuit, U, and error_jac in the same way

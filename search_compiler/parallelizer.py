@@ -1,4 +1,5 @@
-from multiprocessing import get_context
+from multiprocessing import get_context, cpu_count
+from concurrent.futures import ProcessPoolExecutor as Pool
 from functools import partial
 try:
     from mpi4py import MPI
@@ -14,6 +15,9 @@ class Parallelizer():
     def solve_circuits_parallel(self, tuples, ):
         return None
 
+    def num_tasks(self):
+        return cpu_count()
+
     def done(self):
         pass
 
@@ -28,6 +32,15 @@ class MultiprocessingParallelizer(Parallelizer):
     def solve_circuits_parallel(self, tuples):
         yield from self.pool.imap_unordered(self.process_func, tuples)
 
+class ProcessPoolParallelizer(Parallelizer):
+    def __init__(self, solver, U, error_func, error_jac, backend):
+        self.pool = Pool(self.num_tasks())
+        self.backend = None
+        self.process_func = partial(evaluate_step, U=U, error_func=error_func, error_jac=error_jac, solver=solver, backend=backend)
+
+    def solve_circuits_parallel(self, tuples):
+        return self.pool.map(self.process_func, tuples)
+
 class MPIParallelizer(Parallelizer):
     def __init__(self, solver, U, error_func, error_jac, backend):
         if MPI is not None:
@@ -35,12 +48,20 @@ class MPIParallelizer(Parallelizer):
             self.comm.bcast(False, root=0)
         else:
             raise RuntimeError("mpi4py is not installed")
+        # HACK: We want to play nice with the multistart parallelizer
+        if hasattr(solver, 'num_threads'):
+            self.tasks = self.comm.size - solver.num_threads
+        else:
+            self.tasks = self.comm.size
         eval = partial(evaluate_step, U=U, error_func=error_func, error_jac=error_jac, solver=solver, backend=backend)
         eval = self.comm.bcast(eval, root=0)
 
     def solve_circuits_parallel(self, tuples):
         # NOTE WELL: this should be kept in sync with the mpi_worker code in utils.py
         return self.map_steps(tuples)
+
+    def num_tasks(self):
+        return self.tasks
 
     def map_steps(self, new_steps):
         base = 0
