@@ -1,5 +1,5 @@
 import qsearch
-from qsearch import unitaries, advanced_unitaries, multistart_solver
+from qsearch import unitaries, advanced_unitaries
 import time
 
 # create the project
