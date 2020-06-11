@@ -1,5 +1,5 @@
 try:
-    from search_compiler_rs import native_from_object
+    from qsearch_rs import native_from_object
     RUST_ENABLED = False
 except ImportError:
     RUST_ENABLED = False

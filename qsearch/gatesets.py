@@ -1,7 +1,7 @@
 from .circuits import *
 
 try:
-    from search_compiler_rs import QubitCNOTLinearNative
+    from qsearch_rs import QubitCNOTLinearNative
 except ImportError:
     pass
 

@@ -26,7 +26,7 @@ import sys
 def test_roundtrip():
     # create a new project
     project = qsearch.Project("round-trip")
-
+    project.reset()
     # add some gates to compile
     project.add_compilation("qft2", unitaries.qft(4))
     project.add_compilation("qft3", unitaries.qft(8))
