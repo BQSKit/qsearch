@@ -16,16 +16,16 @@
 # Note that Qiskit is required for this script.  #
 ##################################################
 
-import search_compiler as sc
+import qsearch
 import qiskit
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import numpy as np
-from search_compiler import unitaries, advanced_unitaries, utils, gatesets
+from qsearch import unitaries, advanced_unitaries, utils, gatesets
 import sys
 
 def test_roundtrip():
     # create a new project
-    project = sc.Project("round-trip")
+    project = qsearch.Project("round-trip")
 
     # add some gates to compile
     project.add_compilation("qft2", unitaries.qft(4))
@@ -54,7 +54,7 @@ def test_roundtrip():
         U1 = project.get_target(compilation)
 
         # generate and run Qiskit code to create a Qiskit version of the circuit
-        qiskit_code = project.assemble(compilation, sc.assembler.ASSEMBLY_QISKIT)
+        qiskit_code = project.assemble(compilation, qsearch.assembler.ASSEMBLY_QISKIT)
         locals = {}
         exec(qiskit_code, globals(), locals)
         qc = locals['qc']
@@ -62,8 +62,8 @@ def test_roundtrip():
         # generate a unitary from the Qiskit circuit
         job = qiskit.execute(qc, backend)
         U2 = job.result().get_unitary()
-        U2 = sc.utils.endian_reverse(U2) # switch from Qiskit endianess search_compiler endianess
-        distance = sc.utils.matrix_distance_squared(U1, U2)
+        U2 = qsearch.utils.endian_reverse(U2) # switch from Qiskit endianess search_compiler endianess
+        distance = qsearch.utils.matrix_distance_squared(U1, U2)
         # Compare the two unitaries and print the result.  The values should be close to 0.
         print("Match for {}: {}".format(compilation, distance))
         assert distance < 1e-10

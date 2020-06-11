@@ -1,9 +1,9 @@
-import search_compiler as sc
-from search_compiler import unitaries, advanced_unitaries, multistart_solver
+import qsearch
+from qsearch import unitaries, advanced_unitaries, multistart_solver
 import time
 
 # create the project
-with sc.Project("benchmarks") as project:
+with qsearch.Project("benchmarks") as project:
     # add a unitaries to compile
     project.add_compilation("qft2", unitaries.qft(4))
     project.add_compilation("qft3", unitaries.qft(8))
@@ -22,8 +22,8 @@ with sc.Project("benchmarks") as project:
 
 
     # compiler configuration example
-    #project["gateset"] = sc.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
-    #project["solver"]  = sc.solver.BFGS_Jac_SolverNative() # use this to force the compiler to use the Rust version of the BFGS solver instead of using the default setting
+    #project["gateset"] = qsearch.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
+    #project["solver"]  = qsearch.solver.BFGS_Jac_SolverNative() # use this to force the compiler to use the Rust version of the BFGS solver instead of using the default setting
     #project["verbosity"] = 2 # use this to have more information reported to stdout and the log files, or set it to 0 to disable logging altogether
 
     # once everything is set up, let the project run!

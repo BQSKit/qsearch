@@ -1,4 +1,4 @@
-from search_compiler.circuits import *
+from qsearch.circuits import *
 import scipy as sp
 
 
