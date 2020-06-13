@@ -32,12 +32,10 @@ class Options():
 
     # the options class will fallback to default values if a normal value is not specified
     def set_defaults(self, **args):
-        for key in args:
-            self.defaults[key] = args[key]
+        self.defaults.update(args)
 
     # if a smart_default function is specified, it will be called instead of falling back to normal defaults
     # smart default functions should take an Options class and return a value
     def set_smart_defaults(self, **args):
-        for key in args:
-            self.defaults[key] = args[key]
+        self.smart_defaults.update(args)
 

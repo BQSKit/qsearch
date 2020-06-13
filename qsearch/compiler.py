@@ -5,6 +5,7 @@ import heapq
 from .circuits import *
 
 from . import solver as scsolver
+from .options import Options
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
@@ -16,7 +17,29 @@ class Compiler():
         return (U, None)
 
 class SearchCompiler(Compiler):
-    def __init__(self, threshold=1e-10, error_func=utils.matrix_distance_squared, error_jac=None, eval_func=None, heuristic=heuristics.astar, gateset=gatesets.Default(), solver=None, beams=-1, logger=None, verbosity=0, **extraargs):
+    def __init__(self, options=Options(), **xtraargs):
+        self.options = options
+        self.options.__dict__.update(xtraargs)
+        defaults = {
+                "threshold":1e-10,
+                "error_func":utils.matrix_distance_squared,
+                "heuristic":heuristics.astar,
+                "gateset":gatesets.Default(),
+                "beams":-1,
+                "verbosity":0
+                }
+        smart_defaults = {
+                "eval_func":,
+                "solver":scsolver.default_solver,
+                "logger":,
+
+                }
+
+        self.options.set_defaults(**defaults)
+        self.options.set_smart_defaults(**smart_defaults)
+        # TODO set smart defaults and then delete the "dumb defaults" code from below
+
+
         self.logger = logger
         self.verbosity = verbosity
         

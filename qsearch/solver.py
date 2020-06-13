@@ -10,6 +10,22 @@ from .gatesets import *
 from .logging import Logger
 
 
+def default_solver(options):
+    options.set_defaults(logger=Logger())
+
+    # Choosse the best default solver for the given gateset
+    ls_failed = False
+
+    # Check to see if the gateset and error func are explicitly supported by LeastSquares
+    gateset = options.gateset
+    if type(gateset).__module__ != QubitCNOTLinear.__module__:
+        ls_failed = True
+    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
+        ls_failed = True
+    elif error_func is None or error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__):
+        ls_failed = True
+
+
 def default_solver(gateset, dits=0, error_func=None, error_jac=None, logger=None):
     if logger is None:
         logger = Logger()
