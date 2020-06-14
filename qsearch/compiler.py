@@ -16,10 +16,24 @@ class Compiler():
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None)
 
+def default_eval_func(options):
+    if options.error_func == utils.matrix_residuals:
+        return utils.matrix_distance_squared
+    else:
+        return options.error_func
+
+def default_error_jac(options):
+    if options.error_func == utils.matrix_distance_squared:
+        return utils.matrix_distance_squared_jac
+    elif options.error_func == utils.matrix_residuals:
+        return utils.matrix_residuals_jac
+    else:
+        return None
+
 class SearchCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
-        self.options = options
-        self.options.__dict__.update(xtraargs)
+        self.options = options.copy()
+        self.options.update(xtraargs)
         defaults = {
                 "threshold":1e-10,
                 "error_func":utils.matrix_distance_squared,
@@ -29,80 +43,53 @@ class SearchCompiler(Compiler):
                 "verbosity":0
                 }
         smart_defaults = {
-                "eval_func":,
-                "solver":scsolver.default_solver,
-                "logger":,
-
+                "eval_func":default_eval_func,
+                "error_jac":default_error_jac,
+                "solver":scsolver.default_solver
                 }
 
         self.options.set_defaults(**defaults)
         self.options.set_smart_defaults(**smart_defaults)
-        # TODO set smart defaults and then delete the "dumb defaults" code from below
 
+    def compile(self, options=Options(), **xtraargs):
+        options = self.options.updated(options)
+        options.make_required("U")
+        options.set_defaults(logger=logging.Logger(stdout_enabled=True, verbosity=self.verbosity), depth=None, statefile=None)
+        options.update(xtraargs)
 
-        self.logger = logger
-        self.verbosity = verbosity
-        
-        self.threshold = threshold
-        self.error_func = error_func
-        self.error_jac = error_jac
-
-        if self.error_jac is None and error_func == utils.matrix_distance_squared:
-            self.error_jac = utils.matrix_distance_squared_jac
-        elif self.error_jac is None and error_func == utils.matrix_residuals:
-            self.error_jac = utils.matrix_residuals_jac
-
-        self.eval_func = eval_func
-
-        if self.eval_func is None:
-            if self.error_func == utils.matrix_residuals:
-                self.eval_func = utils.matrix_distance_squared
-            else:
-                self.eval_func = self.error_func
-
-        self.heuristic = heuristic
-        self.gateset = gateset
-        if solver is None:
-            solver = scsolver.default_solver(gateset, 0, self.error_func, self.error_jac, self.logger)
-            if type(solver) == scsolver.LeastSquares_Jac_Solver or type(solver) == scsolver.LeastSquares_Jac_SolverNative:
-                # the default selector said we should switch to LeastSquares, so lets set the relevant values
-                self.error_func = utils.matrix_residuals
-                self.error_jac = utils.matrix_residuals_jac
-                self.eval_func = utils.matrix_distance_squared
-
-        self.solver = solver
-        self.beams = int(beams)
-
-    def compile(self, U, depth=None, statefile=None, logger=None):
-        if logger is None:
-            logger = self.logger
-        if logger is None:
-            logger = logging.Logger(stdout_enabled=True, verbosity=self.verbosity)
+        U = options.U
+        depth = options.depth
+        statefile = options.statefile
+        logger = options.logger
+        solver = options.solver
+        eval_func = options.eval_func
+        error_func = options.error_func
+        error_jac = options.error_jac
 
         startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
-        h = self.heuristic
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(self.gateset.d)))
+        h = options.heuristic
+        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-        if self.gateset.d**dits != np.shape(U)[0]:
+        if options.gateset.d**dits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
 
-        I = circuits.IdentityStep(self.gateset.d)
+        I = circuits.IdentityStep(options.gateset.d)
 
-        initial_layer = self.gateset.initial_layer(dits)
-        search_layers = self.gateset.search_layers(dits)
+        initial_layer = options.gateset.initial_layer(dits)
+        search_layers = options.gateset.search_layers(dits)
 
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
-            result = self.solver.solve_for_unitary(root, U, self.eval_func)
+            result = solver.solve_for_unitary(root, U, self.eval_func)
             return (result[0], root, result[1])
 
         #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer(self.solver, U, self.error_func, self.error_jac, backend.SmartDefaultBackend())
+        parallel = parallelizer.MultiprocessingParallelizer(solver, U, error_func, error_jac, backend.SmartDefaultBackend())
         logger.logprint("There are {} processors available to Pool.".format(parallel.num_tasks()))
         logger.logprint("The branching factor is {}.".format(len(search_layers)))
-        beams = self.beams
-        if self.beams < 1 and len(search_layers) > 0:
+        beams = int(options.beams)
+        if beams < 1 and len(search_layers) > 0:
             beams = int(parallel.num_tasks() // len(search_layers))
         if beams < 1:
             beams = 1
@@ -118,8 +105,8 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = self.solver.solve_for_unitary(root, U, self.error_func, self.error_jac)
-            best_value = self.eval_func(U, result[0])
+            result = solver.solve_for_unitary(root, U, error_func, error_jac)
+            best_value = eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
@@ -134,7 +121,7 @@ class SearchCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         while len(queue) > 0:
-            if best_value < self.threshold:
+            if best_value < options.threshold:
                 queue = []
                 break
             popped = []
@@ -149,9 +136,9 @@ class SearchCompiler(Compiler):
             new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
             for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
             #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
-                current_value = self.eval_func(U, result[0])
+                current_value = eval_func(U, result[0])
                 new_depth = current_depth + weight
-                if (current_value < best_value and (best_value >= self.threshold or new_depth <= best_depth)) or (current_value < self.threshold and new_depth < best_depth):
+                if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < self.threshold and new_depth < best_depth):
                     best_value = current_value
                     best_pair = (step, result[1])
                     best_depth = new_depth
