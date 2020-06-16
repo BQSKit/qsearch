@@ -11,8 +11,10 @@ from .logging import Logger
 
 
 def default_solver(options):
-    options = ooptions.copy()
-    options.set_defaults(logger=Logger(), U=np.array([]))
+    options = options.copy()
+    # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
+    options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None)
+    options.remove_smart_defaults("error_func", "error_jac")
 
     # Choosse the best default solver for the given gateset
     ls_failed = False
@@ -22,13 +24,13 @@ def default_solver(options):
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
-    dits = options.U.shape()[0]
+    dits = options.target.shape[0]
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
     elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
         ls_failed = True
-    elif error_func is None or error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__):
+    elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
@@ -42,14 +44,14 @@ def default_solver(options):
 
     # least squares won't work, so check for jacobian and rust success
     jac_failed = False
-    layers = [gateset.initial_layer(dits)] + gateset.search_layers(dits)
-    for layer in layers:
+    layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
+    for layer, _ in layers:
         try:
             layer.mat_jac(np.random.rand(layer.num_inputs))
         except:
             jac_failed = True
 
-    if error_jac is None:
+    if error_jac is None and error_func not in [None, utils.matrix_distance_squared, utils.matrix_residuals]:
         jac_failed = True
 
     if jac_failed:

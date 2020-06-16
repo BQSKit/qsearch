@@ -16,11 +16,26 @@ class Compiler():
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None)
 
+def default_error_func(options):
+    if type(options.solver) == scsolver.LeastSquares_Jac_Solver or type(options.solver) == scsolver.LeastSquares_Jac_SolverNative:
+        return utils.matrix_residuals
+    else:
+        raise AttributeError("THIS: {}".format(options.solver))
+        return utils.matrix_distance_squared
+
 def default_eval_func(options):
     if options.error_func == utils.matrix_residuals:
         return utils.matrix_distance_squared
     else:
         return options.error_func
+
+def default_heuristic(options):
+    if "search_type" in options:
+        if options.search_type == "breadth":
+            return heuristics.breadth
+        elif options.search_type == "greedy":
+            return heuristics.greedy
+    return heuristics.astar
 
 def default_error_jac(options):
     if options.error_func == utils.matrix_distance_squared:
@@ -33,19 +48,23 @@ def default_error_jac(options):
 class SearchCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
-        self.options.update(xtraargs)
+        self.options.update(**xtraargs)
         defaults = {
                 "threshold":1e-10,
-                "error_func":utils.matrix_distance_squared,
-                "heuristic":heuristics.astar,
                 "gateset":gatesets.Default(),
                 "beams":-1,
-                "verbosity":0
+                "depth":None,
+                "verbosity":1,
+                "stdout_enabled":True,
+                "log_file":None,
+                "statefile":None
                 }
         smart_defaults = {
+                "error_func":default_error_func,
                 "eval_func":default_eval_func,
                 "error_jac":default_error_jac,
-                "solver":scsolver.default_solver
+                "solver":scsolver.default_solver,
+                "heuristic":default_heuristic
                 }
 
         self.options.set_defaults(**defaults)
@@ -53,14 +72,17 @@ class SearchCompiler(Compiler):
 
     def compile(self, options=Options(), **xtraargs):
         options = self.options.updated(options)
-        options.make_required("U")
-        options.set_defaults(logger=logging.Logger(stdout_enabled=True, verbosity=self.verbosity), depth=None, statefile=None)
-        options.update(xtraargs)
+        if "U" in xtraargs:
+            # allowing the old name for legacy code purposes
+            # maybe remove this at some point
+            options.target = U
+        options.make_required("target")
+        options.update(**xtraargs)
 
-        U = options.U
+        U = options.target
         depth = options.depth
         statefile = options.statefile
-        logger = options.logger
+        logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         solver = options.solver
         eval_func = options.eval_func
         error_func = options.error_func
@@ -85,7 +107,7 @@ class SearchCompiler(Compiler):
             return (result[0], root, result[1])
 
         #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer(solver, U, error_func, error_jac, backend.SmartDefaultBackend())
+        parallel = parallelizer.MultiprocessingParallelizer(solver, U, error_func, error_jac, backend.NativeBackend())
         logger.logprint("There are {} processors available to Pool.".format(parallel.num_tasks()))
         logger.logprint("The branching factor is {}.".format(len(search_layers)))
         beams = int(options.beams)
@@ -138,7 +160,7 @@ class SearchCompiler(Compiler):
             #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
                 current_value = eval_func(U, result[0])
                 new_depth = current_depth + weight
-                if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < self.threshold and new_depth < best_depth):
+                if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
                     best_value = current_value
                     best_pair = (step, result[1])
                     best_depth = new_depth
