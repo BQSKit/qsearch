@@ -6,6 +6,7 @@ from .circuits import *
 
 from . import solver as scsolver
 from .options import Options
+from .defaults import defaults, smart_defaults
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
@@ -16,58 +17,11 @@ class Compiler():
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None)
 
-def default_error_func(options):
-    if type(options.solver) == scsolver.LeastSquares_Jac_Solver or type(options.solver) == scsolver.LeastSquares_Jac_SolverNative:
-        return utils.matrix_residuals
-    else:
-        raise AttributeError("THIS: {}".format(options.solver))
-        return utils.matrix_distance_squared
-
-def default_eval_func(options):
-    if options.error_func == utils.matrix_residuals:
-        return utils.matrix_distance_squared
-    else:
-        return options.error_func
-
-def default_heuristic(options):
-    if "search_type" in options:
-        if options.search_type == "breadth":
-            return heuristics.breadth
-        elif options.search_type == "greedy":
-            return heuristics.greedy
-    return heuristics.astar
-
-def default_error_jac(options):
-    if options.error_func == utils.matrix_distance_squared:
-        return utils.matrix_distance_squared_jac
-    elif options.error_func == utils.matrix_residuals:
-        return utils.matrix_residuals_jac
-    else:
-        return None
-
 class SearchCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
-        defaults = {
-                "threshold":1e-10,
-                "gateset":gatesets.Default(),
-                "beams":-1,
-                "depth":None,
-                "verbosity":1,
-                "stdout_enabled":True,
-                "log_file":None,
-                "statefile":None
-                }
-        smart_defaults = {
-                "error_func":default_error_func,
-                "eval_func":default_eval_func,
-                "error_jac":default_error_jac,
-                "solver":scsolver.default_solver,
-                "heuristic":default_heuristic
-                }
-
-        self.options.set_defaults(**defaults)
+        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
 
     def compile(self, options=Options(), **xtraargs):
@@ -103,16 +57,17 @@ class SearchCompiler(Compiler):
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
-            result = solver.solve_for_unitary(root, U, self.eval_func)
+            result = options.solver.solve_for_unitary(root, U, self.eval_func)
             return (result[0], root, result[1])
 
-        #TODO: this is a placeholder
-        parallel = parallelizer.MultiprocessingParallelizer(solver, U, error_func, error_jac, backend.NativeBackend())
-        logger.logprint("There are {} processors available to Pool.".format(parallel.num_tasks()))
+        parallel = options.parallelizer(options)
+        # TODO move these print statements somewhere else
+        # this is good informati
+        logger.logprint("There are {} processors available to Pool.".format(options.num_tasks))
         logger.logprint("The branching factor is {}.".format(len(search_layers)))
         beams = int(options.beams)
         if beams < 1 and len(search_layers) > 0:
-            beams = int(parallel.num_tasks() // len(search_layers))
+            beams = int(options.num_tasks // len(search_layers))
         if beams < 1:
             beams = 1
         if beams > 1:
@@ -127,7 +82,7 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = solver.solve_for_unitary(root, U, error_func, error_jac)
+            result = solver.solve_for_unitary(root, options)
             best_value = eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))

@@ -170,7 +170,7 @@ class Project:
 
     def set_defaults(self):
         defaults = {
-                "verbosity":2,
+                "verbosity":1,
                 "stdout_enabled":True,
                 "blas_threads": None,
                 "compiler_class":SearchCompiler,
