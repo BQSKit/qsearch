@@ -7,61 +7,61 @@ except ImportError:
     MPI = None
 
 
-def evaluate_step(tup, U, error_func, error_jac, solver, backend):
+def default_num_tasks(options):
+    return cpu_count()
+
+def evaluate_step(tup, options):
     step, depth, weight = tup
-    return (step, solver.solve_for_unitary(backend.prepare_circuit(step), U, error_func, error_jac), depth, weight)
+    return (step, options.solver.solve_for_unitary(options.backend.prepare_circuit(step, options), options), depth, weight)
 
 class Parallelizer():
-    def solve_circuits_parallel(self, tuples, ):
+    def solve_circuits_parallel(self, tuples):
         return None
-
-    def num_tasks(self):
-        return cpu_count()
 
     def done(self):
         pass
 
 
 class MultiprocessingParallelizer(Parallelizer):
-    def __init__(self, solver, U, error_func, error_jac, backend):
+    def __init__(self, options):
         ctx = get_context("fork")
-        self.pool = ctx.Pool()
-        self.backend = None
-        self.process_func = partial(evaluate_step, U=U, error_func=error_func, error_jac=error_jac, solver=solver, backend=backend)
+        options.set_smart_defaults(num_tasks=default_num_tasks)
+
+        self.pool = ctx.Pool(options.num_tasks)
+        self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
         yield from self.pool.imap_unordered(self.process_func, tuples)
 
 class ProcessPoolParallelizer(Parallelizer):
-    def __init__(self, solver, U, error_func, error_jac, backend):
-        self.pool = Pool(self.num_tasks())
-        self.backend = None
-        self.process_func = partial(evaluate_step, U=U, error_func=error_func, error_jac=error_jac, solver=solver, backend=backend)
+    def __init__(self, options):
+        options.set_smart_defaults(num_tasks=default_num_tasks)
+
+        self.pool = Pool(options.num_tasks)
+        self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
         return self.pool.map(self.process_func, tuples)
 
 class MPIParallelizer(Parallelizer):
-    def __init__(self, solver, U, error_func, error_jac, backend):
+    def __init__(self, options):
         if MPI is not None:
             self.comm = MPI.COMM_WORLD
             self.comm.bcast(False, root=0)
         else:
             raise RuntimeError("mpi4py is not installed")
         # HACK: We want to play nice with the multistart parallelizer
+        #TODO this should probably be managed via the passed options going forward
         if hasattr(solver, 'num_threads'):
             self.tasks = self.comm.size - solver.num_threads
         else:
             self.tasks = self.comm.size
-        eval = partial(evaluate_step, U=U, error_func=error_func, error_jac=error_jac, solver=solver, backend=backend)
+        eval = partial(evaluate_step, options)
         eval = self.comm.bcast(eval, root=0)
 
     def solve_circuits_parallel(self, tuples):
         # NOTE WELL: this should be kept in sync with the mpi_worker code in utils.py
         return self.map_steps(tuples)
-
-    def num_tasks(self):
-        return self.tasks
 
     def map_steps(self, new_steps):
         base = 0
