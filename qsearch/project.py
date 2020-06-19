@@ -27,8 +27,8 @@ class Project_Status(Enum):
     NOTBEGUN = 3
 
 class Project:
-    def __init__(self, path):
-        if MPI is not None:
+    def __init__(self, path, use_mpi=False):
+        if MPI is not None and use_mpi:
             self.comm = MPI.COMM_WORLD
             self.rank = self.comm.rank
         else:
