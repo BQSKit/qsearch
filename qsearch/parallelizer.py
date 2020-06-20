@@ -33,6 +33,11 @@ class MultiprocessingParallelizer(Parallelizer):
     def solve_circuits_parallel(self, tuples):
         yield from self.pool.imap_unordered(self.process_func, tuples)
 
+    def done(self):
+        self.pool.close()
+        self.pool.terminate()
+        self.pool.join()
+
 class ProcessPoolParallelizer(Parallelizer):
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
@@ -42,6 +47,9 @@ class ProcessPoolParallelizer(Parallelizer):
 
     def solve_circuits_parallel(self, tuples):
         return self.pool.map(self.process_func, tuples)
+
+    def done(self):
+        self.pool.shutdown()
 
 class MPIParallelizer(Parallelizer):
     def __init__(self, options):
@@ -81,3 +89,10 @@ class MPIParallelizer(Parallelizer):
 
     def done(self):
         self.comm.bcast(True, root=0)
+
+class SequentialParallelizer(Parallelizer):
+    def __init__(self, options):
+        self.process_func = partial(evaluate_step, options=options)
+
+    def solve_circuits_parallel(self, tuples):
+        return map(self.process_func, tuples)
