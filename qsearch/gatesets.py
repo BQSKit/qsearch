@@ -1,9 +1,5 @@
 from .circuits import *
 
-try:
-    from qsearch_rs import QubitCNOTLinearNative
-except ImportError:
-    pass
 
 #TODO: rename all the n's in here to "dits" as appropriate
 
