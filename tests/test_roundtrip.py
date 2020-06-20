@@ -24,12 +24,7 @@ from qsearch import unitaries, advanced_unitaries, utils, gatesets
 import sys
 import os
 
-def test_roundtrip():
-    # create a new project
-    if not os.path.isdir('.test'):
-        os.mkdir('.test')
-    project = qsearch.Project(".test/round-trip")
-    project.clear()
+def test_roundtrip(project):
     # add some gates to compile
     project.add_compilation("qft2", unitaries.qft(4))
     project.add_compilation("qft3", unitaries.qft(8))
@@ -69,6 +64,3 @@ def test_roundtrip():
         distance = qsearch.utils.matrix_distance_squared(U1, U2)
         # Compare the two unitaries and check the result.  The values should be close to 0.
         assert distance < 1e-15, "Distance for {}: {}".format(compilation, distance)
-
-if __name__ == '__main__':
-    test_roundtrip()
