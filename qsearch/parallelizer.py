@@ -89,3 +89,10 @@ class MPIParallelizer(Parallelizer):
 
     def done(self):
         self.comm.bcast(True, root=0)
+
+class SequentialParallelizer(Parallelizer):
+    def __init__(self, options):
+        self.process_func = partial(evaluate_step, options=options)
+
+    def solve_circuits_parallel(self, tuples):
+        return map(self.process_func, tuples)
