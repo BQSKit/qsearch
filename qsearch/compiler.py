@@ -47,7 +47,7 @@ class SearchCompiler(Compiler):
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         if options.gateset.d**dits != np.shape(U)[0]:
-            raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.d))
+            raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
         I = circuits.IdentityStep(options.gateset.d)
 
@@ -57,8 +57,8 @@ class SearchCompiler(Compiler):
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
-            result = options.solver.solve_for_unitary(root, U, self.eval_func)
-            return (result[0], root, result[1])
+            result = solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
+            return (root, result[1])
 
         parallel = options.parallelizer(options)
         # TODO move these print statements somewhere else
@@ -82,7 +82,7 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = solver.solve_for_unitary(root, options)
+            result = solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
