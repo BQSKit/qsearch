@@ -24,7 +24,7 @@ def default_solver(options):
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
-    dits = 0 if options.target is None else np.log(options.target.shape[0]) // np.log(gateset.d)
+    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
@@ -140,7 +140,7 @@ class LeastSquares_Jac_Solver(Solver):
         # 2. This solver (currently) does not correct for an overall phase, and so may not be able to find a solution for some gates with some gatesets.  It has been tested and works fine with QubitCNOTLinear, so any single-qubit and CNOT-based gateset is likely to work fine.
         I = np.eye(options.target.shape[0])
         eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
-        jac_func = lambda v: options.error_resi_jac(options.target, *circuit.mat_jac(v))
+        jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
         result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
