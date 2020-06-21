@@ -23,7 +23,7 @@ def default_error_jac(options):
     else:
         return None
 
-def default_error_resi_jac(options):
+def default_error_residuals_jac(options):
     if options.error_residuals == utils.matrix_residuals:
         return utils.matrix_residuals_jac
     else:
@@ -44,7 +44,7 @@ defaults = {
 smart_defaults = {
         "eval_func":default_eval_func,
         "error_jac":default_error_jac,
-        "error_resi_jac":default_error_resi_jac,
+        "error_residuals_jac":default_error_residuals_jac,
         "solver":solver.default_solver,
         "heuristic":default_heuristic
         }
