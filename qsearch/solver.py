@@ -13,7 +13,7 @@ from .logging import Logger
 def default_solver(options):
     options = options.copy()
     # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
-    options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None)
+    options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None, target=None)
     options.remove_smart_defaults("error_func", "error_jac")
 
     # Choosse the best default solver for the given gateset
@@ -24,7 +24,7 @@ def default_solver(options):
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
-    dits = options.target.shape[0]
+    dits = 0 if options.target is None else np.log(options.target.shape[0]) // np.log(gateset.d)
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
