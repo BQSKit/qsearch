@@ -127,7 +127,7 @@ class QubitCNOTAdjacencyList(Gateset):
 
     def search_layers(self, n):
         if n == 2:
-            return [ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step))] # prevents the creation of an extra cnot placement in the 2 qubit case
+            return [(ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step)), 1)] # prevents the creation of an extra cnot placement in the 2 qubit case
 
         steps = []
         for pair in self.adjacency:
