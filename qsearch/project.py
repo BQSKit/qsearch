@@ -219,7 +219,7 @@ class Project:
         return self._overall_status() == Project_Status.COMPLETE
 
     def finish(self):
-        if MPI is not None:
+        if MPI is not None and self.comm is not None:
             self.comm.bcast(True, root=0)
 
     def status(self, name=None, logger=None):
