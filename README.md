@@ -1,3 +1,5 @@
+![run tests](https://github.com/WolfLink/search_compiler/workflows/run%20tests/badge.svg?branch=master)
+
 # search_compiler
 An implementation of a quantum gate synthesis algorithm based on A* and numerical optimization.  It relies on [NumPy](https://numpy.org) and [SciPy](https://www.scipy.org).  It can export code for [Qiskit](https://qiskit.org) and [OpenQASM](https://github.com/Qiskit/openqasm).
 
