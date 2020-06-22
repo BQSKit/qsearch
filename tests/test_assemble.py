@@ -1,8 +1,12 @@
 from qsearch.assembler import assemble, ASSEMBLY_IBMOPENQASM
 from qsearch.circuits import *
 from qsearch import utils
-from qiskit import QuantumCircuit
-import qiskit
+import pytest
+try:
+    from qiskit import QuantumCircuit
+    import qiskit
+except Exception:
+    qiskit = None
 
 circ = ProductStep(KroneckerStep(QiskitU3QubitStep(), QiskitU3QubitStep()), KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),), KroneckerStep(
     ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),), KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),))
@@ -14,6 +18,7 @@ vec = np.array([5.00000000e-01, 6.68212734e-01, 6.68212734e-01, 2.25848361e+00,
                 1.36762044e-01, 2.25000000e+00, 2.50000000e-01, 2.83496183e+00,
                 5.00000000e-01])
 
+@pytest.mark.skipif(qiskit == None, reason="Qiskit not installed")
 def test_openqasm_assemble_roundtrip():
     s = assemble(circ, vec, ASSEMBLY_IBMOPENQASM)
     qc = QuantumCircuit.from_qasm_str(s)

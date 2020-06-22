@@ -23,7 +23,15 @@ import numpy as np
 from qsearch import unitaries, advanced_unitaries, utils, gatesets
 import sys
 import os
+try:
+    import qiskit
+    from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+except Exception:
+    qiskit = None
 
+import pytest
+
+@pytest.mark.skipif(qiskit is None, reason="Qiskit not installed")
 def test_roundtrip(project):
     # add some gates to compile
     project.add_compilation("qft2", unitaries.qft(4))
