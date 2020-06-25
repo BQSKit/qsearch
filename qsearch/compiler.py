@@ -37,10 +37,6 @@ class SearchCompiler(Compiler):
         depth = options.depth
         statefile = options.statefile
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
-        solver = options.solver
-        eval_func = options.eval_func
-        error_func = options.error_func
-        error_jac = options.error_jac
 
         startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
@@ -57,7 +53,7 @@ class SearchCompiler(Compiler):
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
-            result = solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
+            result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             return (root, result[1])
 
         parallel = options.parallelizer(options)
@@ -82,8 +78,8 @@ class SearchCompiler(Compiler):
         rectime = 0
         if recovered_state == None:
             root = ProductStep(initial_layer)
-            result = solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            best_value = eval_func(U, result[0])
+            result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
+            best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
@@ -97,6 +93,7 @@ class SearchCompiler(Compiler):
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
+        options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
         while len(queue) > 0:
             if best_value < options.threshold:
                 queue = []
@@ -112,8 +109,7 @@ class SearchCompiler(Compiler):
             then = timer()
             new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
             for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
-            #for step, result, current_depth, weight in pool.imap_unordered(partial(evaluate_step, U=U, error_func=self.error_func, error_jac=self.error_jac, solver=self.solver, I=I), new_steps):
-                current_value = eval_func(U, result[0])
+                current_value = options.eval_func(U, result[0])
                 new_depth = current_depth + weight
                 if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
                     best_value = current_value

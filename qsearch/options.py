@@ -50,6 +50,11 @@ class Options():
             return self.defaults[name]
         raise AttributeError()
 
+    def __setattr__(self, name, value):
+        if name not in _options_actual_paramters:
+            self.cache = dict()
+        super().__setattr__(name, value)
+
     def __contains__(self, name):
         if name in self.__dict__:
             return True
@@ -72,6 +77,7 @@ class Options():
         newOptions.smart_defaults.update(self.smart_defaults)
         newOptions._update_dict(self.__dict__)
         newOptions.required = self.required.copy()
+        newOptions.cache = self.cache.copy()
         return newOptions
 
     def __copy__(self):
@@ -79,6 +85,7 @@ class Options():
         newOptions.smart_defaults.update(self.smart_defaults)
         newOptions._update_dict(self.__dict__)
         newOptions.required = self.required.copy()
+        newOptions.cache = self.cache.copy()
         return newOptions
 
     def updated(self, other=None, **xtraargs):
@@ -126,6 +133,7 @@ class Options():
 
     def make_required(self, *names):
         self.required.update(names)
+        self.cache = dict()
 
     def remove_defaults(self, *names):
         for name in names:
@@ -139,3 +147,8 @@ class Options():
                 del self.smart_defaults[name]
         self.cache = dict()
 
+    def generate_cache(self):
+        for key in self.smart_defaults:
+            getattr(self, key) 
+            # this may look weird, but calling getattr on these keys will populate
+            # the cache with any keys that have not been already cached.
