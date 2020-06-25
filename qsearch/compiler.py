@@ -11,7 +11,7 @@ from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
-    def __init__(self, *kwargs):
+    def __init__(self, *args, **kwargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
     def compile(self, U, depth, statefile, logger):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
