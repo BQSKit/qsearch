@@ -1,6 +1,8 @@
 from functools import partial
 from timeit import default_timer as timer
 import heapq
+from scipy.stats import linregress
+import numpy as np
 
 from .circuits import *
 
@@ -11,11 +13,10 @@ from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
-    def __init__(self, *kwargs):
+    def __init__(self, options=Options(), *kwargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
-    def compile(self, U, depth, statefile, logger):
+    def compile(self, options=Options(), **xtraargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
-        return (U, None)
 
 class SearchCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
@@ -94,6 +95,9 @@ class SearchCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
+        avg_err = 0.0
+        previous_bests_depths = []
+        previous_bests_values = []
         while len(queue) > 0:
             if best_value < options.threshold:
                 queue = []
@@ -116,6 +120,20 @@ class SearchCompiler(Compiler):
                     best_pair = (step, result[1])
                     best_depth = new_depth
                     logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
+                    if best_value < options.threshold:
+                        queue = []
+                        break
+                    if len(previous_bests_values) > 1:
+                        slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                        predicted_best = slope * new_depth + intercept
+                        delta = predicted_best - best_value
+                        logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
+                        if delta < 0 and ('min_depth' not in options or new_depth > options.min_depth):
+                            options.gateset = gatesets.PartialCompilation(step, options.gateset)
+                            return self.compile(options)
+                    previous_bests_depths.append(best_depth)
+                    previous_bests_values.append(best_value)
+
                 if depth is None or new_depth < depth:
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1

@@ -21,6 +21,8 @@ def default_solver(options):
 
     # Check to see if the gateset and error func are explicitly supported by LeastSquares
     gateset = options.gateset
+    if isinstance(gateset, PartialCompilation):
+        gateset = gateset.inner
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
