@@ -41,7 +41,7 @@ class Options():
             # this behavior of removing the smart default function and putting it back is intended
             # to generate an error rather than recurse infinitely when there are interdependent smart default functions
             smartfunc = self.smart_defaults[name]
-            self.required.update(name)
+            self.required.add(name)
             retval = smartfunc(self)
             self.smart_defaults[name] = smartfunc
             self.cache[name] = retval
