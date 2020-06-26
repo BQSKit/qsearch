@@ -43,17 +43,6 @@ class Gateset():
                     return True
         return False
 
-
-class PartialCompilation(Gateset):
-    def __init__(self, soln, inner):
-        self.d = inner.d
-        self.soln = soln
-        self.search_layers = inner.search_layers
-        self.inner = inner
-
-    def initial_layer(self, n):
-        return self.soln
-
 class ZXZXZCNOTLinear(Gateset):
     def __init__(self):
         self.single_step = ZXZXZQubitStep()
