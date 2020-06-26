@@ -1,6 +1,17 @@
+'''
+sub compiler ~= search compiler but return if cutting
+leap compiler:
+ - handle parameterized layers/partial unitary soln
+ - sub compiler returns (circ, vec)
+ - (change initial structure) options.initial_layer (smart_default)
+ - or in unitary case, modify target
+'''
+
 from functools import partial
 from timeit import default_timer as timer
 import heapq
+from scipy.stats import linregress
+import numpy as np
 
 from .circuits import *
 
@@ -9,15 +20,59 @@ from .options import Options
 from .defaults import defaults, smart_defaults
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
+from .compiler import Compiler
 
-class Compiler():
-    def __init__(self, *kwargs):
-        raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
-    def compile(self, U, depth, statefile, logger):
-        raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
-        return (U, None)
+class LeapCompiler(Compiler):
+    def __init__(self, options=Options(), **xtraargs):
+        self.options = options.copy()
+        self.options.update(**xtraargs)
+        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
+        self.options.set_smart_defaults(**smart_defaults)
+    
+    def compile(self, options=Options(), **xtraargs):
+        options = self.options.updated(options)
+        if "U" in xtraargs:
+            # allowing the old name for legacy code purposes
+            # maybe remove this at some point
+            options.target = U
+        options.make_required("target")
+        options.update(**xtraargs)
 
-class SearchCompiler(Compiler):
+        U = options.target
+        depth = options.depth
+        statefile = options.statefile
+
+        logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
+
+        startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+
+        sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
+        sc = sub_compiler(options)
+        initial_layer = options.gateset.initial_layer(dits)
+        total_depth = 0
+        best_value = 1.0
+        while True:
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value)
+            total_depth += best_depth
+            if best_value < options.threshold:
+                break
+            if 'constant_leap' in options and options.constant_leap:
+                # A B = U -> A = U B^-1
+                circ, vec = best_pair
+                B = circ.matrix(vec)
+                B_daggar = np.conj(B.T)
+                options.target = np.dot(U, B_daggar)
+            else:
+                initial_layer = best_pair[0]
+
+        logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
+        return best_pair
+
+
+
+class SubCompiler(Compiler):
+    """A modified SearchCompiler for the LeapCompiler"""
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
@@ -47,7 +102,7 @@ class SearchCompiler(Compiler):
 
         I = circuits.IdentityStep(options.gateset.d)
 
-        initial_layer = options.gateset.initial_layer(dits)
+        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
         search_layers = options.gateset.search_layers(dits)
 
         if len(search_layers) <= 0:
@@ -116,6 +171,10 @@ class SearchCompiler(Compiler):
                     best_pair = (step, result[1])
                     best_depth = new_depth
                     logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
+                    if best_depth >= options.min_depth and best_value < options.local_threshold:
+                        parallel.done()
+                        return (best_pair, best_value, best_depth)
+
                 if depth is None or new_depth < depth:
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
@@ -125,5 +184,4 @@ class SearchCompiler(Compiler):
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
         parallel.done()
-        return best_pair
-
+        return (best_pair, best_value, best_depth)

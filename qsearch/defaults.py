@@ -33,6 +33,7 @@ defaults = {
         "threshold":1e-10,
         "gateset":gatesets.Default(),
         "beams":-1,
+        "delta": 0,
         "depth":None,
         "search_type":"astar",
         "statefile":None,
