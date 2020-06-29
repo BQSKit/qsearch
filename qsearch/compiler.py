@@ -47,7 +47,7 @@ class SearchCompiler(Compiler):
 
         I = circuits.IdentityStep(options.gateset.d)
 
-        initial_layer = options.gateset.initial_layer(dits)
+        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
         search_layers = options.gateset.search_layers(dits)
 
         if len(search_layers) <= 0:
@@ -77,6 +77,10 @@ class SearchCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
+            if isinstance(initial_layer, ProductStep):
+                root = initial_layer
+            else:
+                root = ProductStep(initial_layer)
             root = ProductStep(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])

@@ -20,7 +20,12 @@ from .options import Options
 from .defaults import defaults, smart_defaults
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
-from .compiler import Compiler
+from .compiler import Compiler, SearchCompiler
+
+def cut_end(circ, depth):
+    if isinstance(circ._substeps[0], ProductStep):
+        return cut_end(circ._substeps[0], depth)
+    return circuits.ProductStep(*circ._substeps[:-depth])
 
 class LeapCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
@@ -65,10 +70,22 @@ class LeapCompiler(Compiler):
                 options.target = np.dot(U, B_daggar)
             else:
                 initial_layer = best_pair[0]
-
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
+        if 'reoptimize_size' in options and options.reoptimize_size:
+            while True:
+                old_best_pair = best_pair
+                shorter_circ = cut_end(best_pair[0], options.reoptimize_size)
+                old_depth = str(best_pair[0]).count('CNOT')
+                comp = SearchCompiler(options)
+                print(old_best_pair[0])
+                best_pair = comp.compile(options, initial_layer=shorter_circ)
+                reoptimized = str(best_pair[0]).count('CNOT')
+                if reoptimized < old_depth:
+                    logger.logprint(f"Re-optimized from depth {old_depth} to depth {reoptimized}", verbosity=2)
+                else:
+                    best_pair = old_best_pair
+                    break
         return best_pair
-
 
 
 class SubCompiler(Compiler):
@@ -132,7 +149,10 @@ class SubCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
-            root = ProductStep(initial_layer)
+            if isinstance(initial_layer, ProductStep):
+                root = initial_layer
+            else:
+                root = ProductStep(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])
@@ -149,6 +169,8 @@ class SubCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
+        previous_bests_depths = []
+        previous_bests_values = []
         while len(queue) > 0:
             if best_value < options.threshold:
                 queue = []
@@ -171,9 +193,16 @@ class SubCompiler(Compiler):
                     best_pair = (step, result[1])
                     best_depth = new_depth
                     logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
-                    if best_depth >= options.min_depth and best_value < options.local_threshold:
-                        parallel.done()
-                        return (best_pair, best_value, best_depth)
+                    if len(previous_bests_values) > 1:
+                        slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                        predicted_best = slope * new_depth + intercept
+                        delta = predicted_best - best_value
+                        logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
+                        if not np.isnan(predicted_best) and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
+                            parallel.done()
+                            return (best_pair, best_value, best_depth)
+                    previous_bests_depths.append(best_depth)
+                    previous_bests_values.append(best_value)
 
                 if depth is None or new_depth < depth:
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
