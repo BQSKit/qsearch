@@ -28,13 +28,11 @@ def default_solver(options):
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
-        ls_failed = True
     elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
-        # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
+        # since all provided gatesets support jacobians, this is the only check we need
         logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
         return LeastSquares_Jac_Solver()
 

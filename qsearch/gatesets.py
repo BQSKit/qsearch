@@ -165,6 +165,7 @@ class QutritCPIPhaseLinear(Gateset):
         return fill_row(self.single_step, n)
     
     def search_layers(self, n):
+        print("the culprit is {}".format(n))
         return linear_topology(CPIPhaseStep(), self.single_step, n, self.d)
 
 

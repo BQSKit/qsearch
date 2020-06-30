@@ -232,6 +232,9 @@ class SingleQutritStep(QuantumStep):
     def matrix(self, v):
         return utils.qt_arb_rot(*v)
 
+    def mat_jac(self, v):
+        return utils.qt_arb_rot_jac(*v)
+
     def assemble(self, v, i=0):
         return [("qutrit", tuple(v), (i,))]
     

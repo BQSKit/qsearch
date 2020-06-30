@@ -116,6 +116,123 @@ def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
 
     return evaluated_unitary
 
+def qt_arb_rot_jac(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
+    # Original matrix calculation
+    #TODO: rewrite this mess in a way that is more efficient to calculate and easier to read (like the implementation of QiskitU3QubitStep)
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    evaluated_unitary = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    u11 = -np.sin(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.cos(Theta_1)*np.exp(1j*Phi_3)
+    u13 = -np.sin(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - np.cos(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = -np.sin(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.cos(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1*np.cos(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = -np.sin(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.cos(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dt1 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    u11 = -np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) + np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = -np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dt2 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = -np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) + np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = -np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) + np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) + np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_5)
+    u33 = -np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dt3 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    u11 = -1j*np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - 1j*np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = 1j*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1j*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = 1j*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dp1 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - 1j*np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = 1j*np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) -1j*np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) + 1j*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = -1j*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dp2 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = 1j*np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) + 1j*np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) + 1j*np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = 1j*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) + 1j*np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dp3 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = 1j*np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = -1j*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = -1*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - 1j*np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) + 1j*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - 1j*np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dp4 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+
+    u11 = np.cos(Theta_1)*np.cos(Theta_2)*np.exp(1j*Phi_1)
+    u12 = np.sin(Theta_1)*np.exp(1j*Phi_3)
+    u13 = np.cos(Theta_1)*np.sin(Theta_2)*np.exp(1j*Phi_4)
+    u21 = -1j*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_4 - 1j*Phi_5) - np.sin(Theta_1)*np.cos(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_1+1j*Phi_2-1j*Phi_3)
+    u22 = np.cos(Theta_1)*np.cos(Theta_3)*np.exp(1j*Phi_2)
+    u23 = 1j*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_5) - np.sin(Theta_1)*np.sin(Theta_2)*np.cos(Theta_3)*np.exp(1j*Phi_2 - 1j*Phi_3 + 1j*Phi_4)
+    u31 = -1j*np.sin(Theta_1)*np.cos(Theta_2)*np.sin(Theta_3)*np.exp(1j*Phi_1 - 1j*Phi_3 + 1j*Phi_5) - np.sin(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_2-1j*Phi_4)
+    u32 = 1j*np.cos(Theta_1)*np.sin(Theta_3)*np.exp(1j*Phi_5)
+    u33 = np.cos(Theta_2)*np.cos(Theta_3)*np.exp(-1j*Phi_1 - 1j*Phi_2) - 1j*np.sin(Theta_1)*np.sin(Theta_2)*np.sin(Theta_3)*np.exp(-1j*Phi_3 + 1j*Phi_4 + 1j*Phi_5)
+
+    dp5 = np.array([[u11, u12, u13], [u21, u22, u23], [u31, u32, u33]])
+
+    return (evaluated_unitary, [dt1, dt2, dt3, dp1, dp2, dp3, dp4, dp5])
+
 # based on old solovay kitaev code
 def random_near_identity(n, alpha):
     # generate a random hermitian matrix
@@ -159,6 +276,10 @@ def remap(U, order, d=2):
                     current_loc = current_loc + 1
 
     return matrix_product(beforemat, U, aftermat)
+
+def upgrade_unitary(U, di=2, df=3):
+    #use np.insert to upgrade matrices
+    pass
 
 
 def endian_reverse(U, d=2):
