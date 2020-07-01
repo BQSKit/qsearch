@@ -77,6 +77,8 @@ def q1_unitary(x):
     return matrix_product(rot_z(x[0]), rot_x(np.pi/2), rot_z(np.pi + x[1]), rot_x(np.pi/2), rot_z(x[2] - np.pi))
 
 def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
+    # this code is now deprecated, because SingleQutritStep now contains a better implementation (more compact and more performant)
+    # make sure to move this red comment over to SingleQutritStep before deleting this code for documentation purposes
     """Using the parameterization found in https://journals.aps.org/prd/pdf/10.1103/PhysRevD.38.1994,
         this method constructs an arbitrary single_qutrit unitary operation.
 
@@ -159,6 +161,38 @@ def remap(U, order, d=2):
                     current_loc = current_loc + 1
 
     return matrix_product(beforemat, U, aftermat)
+
+def upgrade_dits(U, di=2, df=3):
+    dits = int(np.log(U.shape[0])/np.log(di))
+    new_unitary = np.array(np.eye(df**dits), dtype='complex128')
+    for i in range(df**dits):
+        skip = False
+        testi = i
+        oi = 0
+        for dit in range(dits):
+            if testi % df >= di:
+                skip = True
+                break
+            else:
+                oi += (testi % df) *di**dit
+            testi //= df
+
+        if not skip:
+            for j in range(df**dits):
+                skip = False
+                testj = j
+                oj = 0
+                for dit in range(dits):
+                    if testj % df >= di:
+                        skip = True
+                        break
+                    else:
+                        oj += (testj % df) * di**dit
+                    testj //= df
+
+                if not skip:
+                    new_unitary[i][j] = U[oi][oj]
+    return new_unitary
 
 
 def endian_reverse(U, d=2):

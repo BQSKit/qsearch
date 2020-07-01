@@ -28,13 +28,11 @@ def default_solver(options):
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
-        ls_failed = True
     elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
-        # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
+        # since all provided gatesets support jacobians, this is the only check we need
         logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
         return LeastSquares_Jac_Solver()
 
@@ -129,7 +127,7 @@ class BFGS_Jac_Solver(Solver):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
             return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs), method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
@@ -141,7 +139,7 @@ class LeastSquares_Jac_Solver(Solver):
         I = np.eye(options.target.shape[0])
         eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
         jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
-        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
+        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
