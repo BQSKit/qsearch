@@ -24,7 +24,6 @@ class MultiStart_Solver(Solver):
     # this function call needs to keep this format to work with our existiing api
     # def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
     def solve_for_unitary(self, circuit, options):
-        circuit = native_from_object(circuit) # this converts a python circuit to a rust-implemented circuit which runs ~10x faster but conforms to the same API
         U = options.target
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         if self.optimizer_name == "BFGS":
