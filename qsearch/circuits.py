@@ -230,7 +230,31 @@ class SingleQutritStep(QuantumStep):
         self.dits = 1
 
     def matrix(self, v):
-        return utils.qt_arb_rot(*v)
+        # for reference see the original implementation, qt_arb_rot in utils.py, which is now deprecated
+        # this was re-written to be computationally more efficient, and in my opinion, more readable
+        s1 = np.sin(v[0] * np.pi * 2)
+        c1 = np.cos(v[0] * np.pi * 2)
+        s2 = np.sin(v[1] * np.pi * 2)
+        c2 = np.cos(v[1] * np.pi * 2)
+        s3 = np.sin(v[2] * np.pi * 2)
+        c3 = np.cos(v[2] * np.pi * 2)
+        
+        p1 = np.exp(1j * v[3] * np.pi * 2)
+        m1 = np.exp(-1j * v[3] * np.pi * 2)
+        p2 = np.exp(1j * v[4] * np.pi * 2)
+        m2 = np.exp(-1j * v[4] * np.pi * 2)
+        p3 = np.exp(1j * v[5] * np.pi * 2)
+        m3 = np.exp(-1j * v[5] * np.pi * 2)
+        p4 = np.exp(1j * v[6] * np.pi * 2)
+        m4 = np.exp(-1j * v[6] * np.pi * 2)
+        p5 = np.exp(1j * v[7] * np.pi * 2)
+        m5 = np.exp(-1j * v[7] * np.pi * 2)
+
+        return np.array([
+            [c1*c2*p1, s1*p3, c1*s2*p4],
+            [s2*s3*m4*m5 - s1*c2*c3*p1*p2*m3, c1*c3*p2, -1*c2*s3*m1*m5 - s1*s2*c3*p2*m3*p4],
+            [-1*s1*c2*s3*p1*m3*p5 - s2*c3*m2*m4, c1*s3*p5, c2*c3*m1*m2 - s1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128')
 
     def mat_jac(self, v):
         return utils.qt_arb_rot_jac(*v)
