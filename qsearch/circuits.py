@@ -511,6 +511,7 @@ class UpgradedConstantStep(QuantumStep):
         di = int(OU.shape[0]**(1/other.dits))
         if df <= di:
             raise AttributeError("Gate cannot be upgraded because it is already of an equal or higher dit level")
+        self.df = df
         self.dits = other.dits
         self.U = utils.upgrade_dits(OU, di, df)
         self.num_inputs = 0
@@ -526,7 +527,7 @@ class UpgradedConstantStep(QuantumStep):
         return self.substep._draw_assemble(v, i)
 
     def __repr__(self):
-        return "UpgradedConstantStep({}, df={})".format(repr(self.substep), self.d)
+        return "UpgradedConstantStep({}, df={})".format(repr(self.substep), self.df)
 
 
 class CUStep(QuantumStep):
