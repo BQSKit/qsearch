@@ -95,7 +95,7 @@ def qft(n):
 def identity(n): # not super necessary but saves a little code length
     return np.array(np.eye(n), dtype='complex128')
 
-def swap(d=2): # generates the swap matrix for qu-dits
+def general_swap(d=2): # generates the swap matrix for qu-dits
     pass # TODO
 
 
