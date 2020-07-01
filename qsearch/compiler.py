@@ -94,6 +94,7 @@ class SearchCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
+
         while len(queue) > 0:
             if best_value < options.threshold:
                 queue = []

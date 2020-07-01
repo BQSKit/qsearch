@@ -224,6 +224,33 @@ class QiskitU3QubitStep(QuantumStep):
     def __repr__(self):
         return "QiskitU3QubitStep()"
 
+class ParameterFixedStep(QuantumStep):
+    # this class was designed for debuggin purposes, but it may be a bit buggy itself
+    def __init__(self, substep, fixedindices):
+        self.substep = substep
+        self.fixedindices = fixedindices
+        self.num_inputs = substep.num_inputs - len(fixedindices)
+        self.dits = self.substep.dits
+        self.v = [0 for _ in range(substep.num_inputs)]
+
+    def matrix(self, v):
+        j = 0
+        for i in range(self.substep.num_inputs):
+            if i not in self.fixedindices:
+                self.v[i] = v[j]
+                j += 1
+        return self.substep.matrix(self.v)
+
+    def mat_jac(self, v):
+        j = 0
+        for i in range(self.substep.num_inputs):
+            if i not in self.fixedindices:
+                self.v[i] = v[j]
+                j += 1
+        U, Js = self.substep.mat_jac(self.v)
+        Js = [Js[i] for i in range(self.substep.num_inputs) if i not in self.fixedindices]
+        return (U, Js)
+
 class SingleQutritStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 8
@@ -252,12 +279,84 @@ class SingleQutritStep(QuantumStep):
 
         return np.array([
             [c1*c2*p1, s1*p3, c1*s2*p4],
-            [s2*s3*m4*m5 - s1*c2*c3*p1*p2*m3, c1*c3*p2, -1*c2*s3*m1*m5 - s1*s2*c3*p2*m3*p4],
-            [-1*s1*c2*s3*p1*m3*p5 - s2*c3*m2*m4, c1*s3*p5, c2*c3*m1*m2 - s1*s2*s3*m3*p4*p5]
+            [s2*s3*m4*m5 - s1*c2*c3*p1*p2*m3, c1*c3*p2, -c2*s3*m1*m5 - s1*s2*c3*p2*m3*p4],
+            [-s1*c2*s3*p1*m3*p5 - s2*c3*m2*m4, c1*s3*p5, c2*c3*m1*m2 - s1*s2*s3*m3*p4*p5]
             ], dtype = 'complex128')
 
     def mat_jac(self, v):
-        return utils.qt_arb_rot_jac(*v)
+        s1 = np.sin(v[0] * np.pi * 2)
+        c1 = np.cos(v[0] * np.pi * 2)
+        s2 = np.sin(v[1] * np.pi * 2)
+        c2 = np.cos(v[1] * np.pi * 2)
+        s3 = np.sin(v[2] * np.pi * 2)
+        c3 = np.cos(v[2] * np.pi * 2)
+        
+        p1 = np.exp(1j * v[3] * np.pi * 2)
+        m1 = np.exp(-1j * v[3] * np.pi * 2)
+        p2 = np.exp(1j * v[4] * np.pi * 2)
+        m2 = np.exp(-1j * v[4] * np.pi * 2)
+        p3 = np.exp(1j * v[5] * np.pi * 2)
+        m3 = np.exp(-1j * v[5] * np.pi * 2)
+        p4 = np.exp(1j * v[6] * np.pi * 2)
+        m4 = np.exp(-1j * v[6] * np.pi * 2)
+        p5 = np.exp(1j * v[7] * np.pi * 2)
+        m5 = np.exp(-1j * v[7] * np.pi * 2)
+
+        U = np.array([
+            [c1*c2*p1, s1*p3, c1*s2*p4],
+            [s2*s3*m4*m5 - s1*c2*c3*p1*p2*m3, c1*c3*p2, -c2*s3*m1*m5 - s1*s2*c3*p2*m3*p4],
+            [-s1*c2*s3*p1*m3*p5 - s2*c3*m2*m4, c1*s3*p5, c2*c3*m1*m2 - s1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128')
+
+        Jt1 = np.array([
+            [-s1*c2*p1, c1*p3, -s1*s2*p4],
+            [-c1*c2*c3*p1*p2*m3, -s1*c3*p2, -c1*s2*c3*p2*m3*p4],
+            [-c1*c2*s3*p1*m3*p5, -s1*s3*p5, -c1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 *np.pi
+
+        Jt2 = np.array([
+            [-c1*s2*p1, 0, c1*c2*p4],
+            [c2*s3*m4*m5 + s1*s2*c3*p1*p2*m3, 0, s2*s3*m1*m5 - s1*c2*c3*p2*m3*p4],
+            [s1*s2*s3*p1*m3*p5, 0, -s2*c3*m1*m2 - s1*c2*s3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        Jt3 = np.array([
+            [0, 0, 0],
+            [s2*c3*m4*m5 + s1*c2*s3*p1*p2*m3, -c1*s3*p2, -c2*c3*m1*m5 + s1*s2*s3*p2*m3*p4],
+            [-s1*c2*c3*p1*m3*p5 + s2*s3*m2*m4, c1*c3*p5, -c2*s3*m1*m2 - s1*s2*c3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        Je1 = np.array([
+            [1j*c1*c2*p1, 0, 0],
+            [-1j*s1*c2*c3*p1*p2*m3, 0, 1j*c2*s3*m1*m5],
+            [-1j*s1*c2*s3*p1*m3*p5, 0, -1j*c2*c3*m1*m2]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        Je2 = np.array([
+            [0, 0, 0],
+            [-1j*s1*c2*c3*p1*p2*m3, 1j*c1*c3*p2, -1j*s1*s2*c3*p2*m3*p4],
+            [1j*s2*c3*m2*m4, 0, -1j*c2*c3*m1*m2]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        Je3 = np.array([
+            [0, 1j*s1*p3, 0],
+            [1j*s1*c2*c3*p1*p2*m3, 0, 1j*s1*s2*c3*p2*m3*p4],
+            [1j*s1*c2*s3*p1*m3*p5, 0, 1j*s1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        Je4 = np.array([
+            [0, 0, 1j*c1*s2*p4],
+            [-1j*s2*s3*m4*m5, 0, -1j*s1*s2*c3*p2*m3*p4],
+            [1j*s2*c3*m2*m4, 0, -1j*s1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 *np.pi
+
+        Je5 = np.array([
+            [0, 0, 0],
+            [-1j*s2*s3*m4*m5, 0, 1j*c2*s3*m1*m5],
+            [-1j*s1*c2*s3*p1*m3*p5, 1j*c1*s3*p5, -1j*s1*s2*s3*m3*p4*p5]
+            ], dtype = 'complex128') * 2 * np.pi
+
+        return (U, [Jt1, Jt2, Jt3, Je1, Je2, Je3, Je4, Je5])
 
     def assemble(self, v, i=0):
         return [("qutrit", tuple(v), (i,))]

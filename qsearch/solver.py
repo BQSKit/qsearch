@@ -127,7 +127,7 @@ class BFGS_Jac_Solver(Solver):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
             return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs), method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
