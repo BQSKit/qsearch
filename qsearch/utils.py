@@ -162,9 +162,37 @@ def remap(U, order, d=2):
 
     return matrix_product(beforemat, U, aftermat)
 
-def upgrade_unitary(U, di=2, df=3):
-    #use np.insert to upgrade matrices
-    pass
+def upgrade_dits(U, di=2, df=3):
+    dits = int(np.log(U.shape[0])/np.log(di))
+    new_unitary = np.array(np.eye(df**dits), dtype='complex128')
+    for i in range(df**dits):
+        skip = False
+        testi = i
+        oi = 0
+        for dit in range(dits):
+            if testi % df >= di:
+                skip = True
+                break
+            else:
+                oi += (testi % df) *di**dit
+            testi //= df
+
+        if not skip:
+            for j in range(df**dits):
+                skip = False
+                testj = j
+                oj = 0
+                for dit in range(dits):
+                    if testj % df >= di:
+                        skip = True
+                        break
+                    else:
+                        oj += (testj % df) * di**dit
+                    testj //= df
+
+                if not skip:
+                    new_unitary[i][j] = U[oi][oj]
+    return new_unitary
 
 
 def endian_reverse(U, d=2):
