@@ -1,6 +1,7 @@
 from multiprocessing import get_context, cpu_count, reduction
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
+import concurrent.futures
 from functools import partial
 import pickle
 from dill import Pickler, Unpickler
@@ -22,7 +23,7 @@ class DillProcessPoolExecutor(ProcessPoolExecutor):
         def _adjust_process_count(self):
             for _ in range(len(self._processes), self._max_workers):
                 p = self.mp_context.Process(
-                        target=_process_worker,
+                        target=concurrent.futures._process_worker,
                         args=(self._call_queue,
                             self._result_queue))
                 p.start()
