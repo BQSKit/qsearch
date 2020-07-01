@@ -1,13 +1,32 @@
 from multiprocessing import get_context, cpu_count, reduction
-from concurrent.futures import ProcessPoolExecutor as Pool
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import pickle
 from dill import Pickler, Unpickler
+import sys
 
 try:
     from mpi4py import MPI
 except ImportError:
     MPI = None
+
+class DillProcessPoolExecutor(ProcessPoolExecutor):
+    def __init__(self, *args, mp_context=multiprocessing, **kwargs):
+        if sys.version_info < (3, 7, 0):
+            super().__init__(*args, **kwargs)
+            self.mp_context = mp_context
+        else:
+            super().__init__(*args, **kwargs)
+    if sys.version_info < (3, 7, 0):
+        def _adjust_process_count(self):
+            for _ in range(len(self._processes), self._max_workers):
+                p = self.mp_context.Process(
+                        target=_process_worker,
+                        args=(self._call_queue,
+                            self._result_queue))
+                p.start()
+                self._processes[p.pid] = p
 
 class DillForkingPickler(reduction.ForkingPickler):
     """Wrapper for using dill with multiprocessing.reduction.ForkingPickler
@@ -70,7 +89,7 @@ class ProcessPoolParallelizer(Parallelizer):
         options.set_smart_defaults(num_tasks=default_num_tasks)
         dill_context = get_context(method='fork')
         dill_context.reducer = DillReducer
-        self.pool = Pool(options.num_tasks, mp_context=dill_context)
+        self.pool = DillProcessPoolExecutor(options.num_tasks, mp_context=dill_context)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
