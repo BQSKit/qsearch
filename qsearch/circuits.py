@@ -503,6 +503,32 @@ class UStep(QuantumStep):
         else:
             return "UStep({}, d={})".format(repr(U), self.d)
 
+class UpgradedConstantStep(QuantumStep):
+    def __init__(self, other, df=3):
+        if other.num_inputs > 0:
+            raise AttributeError("UpgradedConstantStep is designed for only constant gates")
+        OU = other.matrix([])
+        di = int(OU.shape[0]**(1/other.dits))
+        if df <= di:
+            raise AttributeError("Gate cannot be upgraded because it is already of an equal or higher dit level")
+        self.dits = other.dits
+        self.U = utils.upgrade_dits(OU, di, df)
+        self.num_inputs = 0
+        self.substep = other
+
+    def matrix(self, v):
+        return self.U
+
+    def assemble(self, v, i=0):
+        return self.substep.assemble(v, i)
+
+    def _draw_assemble(self, v, i):
+        return self.substep._draw_assemble(v, i)
+
+    def __repr__(self):
+        return "UpgradedConstantStep({}, df={})".format(repr(self.substep), self.d)
+
+
 class CUStep(QuantumStep):
     def __init__(self, U, name=None, flipped=False):
         self.name = name
