@@ -317,7 +317,7 @@ class SingleQutritStep(QuantumStep):
         Jt2 = np.array([
             [-c1*s2*p1, 0, c1*c2*p4],
             [c2*s3*m4*m5 + s1*s2*c3*p1*p2*m3, 0, s2*s3*m1*m5 - s1*c2*c3*p2*m3*p4],
-            [s1*s2*s3*p1*m3*p5, 0, -s2*c3*m1*m2 - s1*c2*s3*m3*p4*p5]
+            [s1*s2*s3*p1*m3*p5 -c2*c3*m2*m4, 0, -s2*c3*m1*m2 - s1*c2*s3*m3*p4*p5]
             ], dtype = 'complex128') * 2 * np.pi
 
         Jt3 = np.array([
