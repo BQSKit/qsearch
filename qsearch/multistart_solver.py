@@ -29,10 +29,10 @@ class MultiStart_Solver(Solver):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         if self.optimizer_name == "BFGS":
             # feel free to re-format this eval_func as long as it uses circuit, U, and error_jac in the same way
-            eval_func = lambda v: error_jac(U, *circuit.mat_jac(v))
+            eval_func = lambda v: options.error_jac(U, *circuit.mat_jac(v))
             # eval_func returns (objective_value, [jacobian values]) (with the jacobian as a 1D numpy ndarray)
 
-        if self.optimizer_name == "least_squares":
+        elif self.optimizer_name == "least_squares":
             I = np.eye(U.shape[0])
             # because scipy least squares takes the jacobian as a separate function, our least squares code is set up accordingly
             resid_func = lambda v: options.error_residuals(U, circuit.matrix(v), I)
@@ -52,6 +52,15 @@ class MultiStart_Solver(Solver):
             res = sp.optimize.least_squares(f, x0, g, method="lm")
             queue.put(res)
 
+        def run_local_scipy_bfgs(x0, f, queue):
+            '''worker function'''
+
+            lb = np.zeros(len(x0))
+            ub = np.ones(len(x0))
+
+            res = sp.optimize.minimize(f, x0, method='BFGS', jac=True)
+            queue.put(res)
+
         specs = {'lb': np.zeros(n),
                  'ub': np.ones(n),
                  'standalone': True,
@@ -63,8 +72,12 @@ class MultiStart_Solver(Solver):
 
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
-        for i, x in enumerate(initial_sample):
-            H['f'][i] = np.sum(resid_func(x)**2)
+        if self.optimizer_name == 'BFGS':
+            for i, x in enumerate(initial_sample):
+                H['f'][i] = eval_func(x)[0]
+        elif self.optimizer_name == 'least_squares':    
+            for i, x in enumerate(initial_sample):
+                H['f'][i] = np.sum(resid_func(x)**2)
 
         H[['returned']] = True
 
@@ -77,8 +90,14 @@ class MultiStart_Solver(Solver):
         q = Queue()
         processes = []
         rets = []
+        if self.optimizer_name == 'BFGS':
+            optimize_worker = run_local_scipy_bfgs
+            args = (eval_func, q)
+        elif self.optimizer_name == 'least_squares':
+            optimize_worker = run_local_scipy_least_squares
+            args = (resid_func, jac_func, q)
         for x0 in starting_points:
-            p = Process(target=run_local_scipy_least_squares, args=(x0, resid_func, jac_func, q))
+            p = Process(target=optimize_worker, args=(x0, *args))
             processes.append(p)
             p.start()
         for p in processes:
@@ -88,9 +107,14 @@ class MultiStart_Solver(Solver):
             p.join()
         end = time.time()
 
-        best_found = np.argmin([r['cost'] for r in rets])
+        if self.optimizer_name == 'BFGS':
+            best_found = np.argmin([r['fun'] for r in rets])
+            best_val = rets[best_found]['fun']
+        elif self.optimizer_name == 'least_squares':
+            best_found = np.argmin([r['cost'] for r in rets])
+            best_val = rets[best_found]['cost']
 
-        logger.logprint("Multistart with {} runs found a point with function value {} ({} seconds)".format(num_localopt_runs, rets[best_found]['cost'], end-start), verbosity=2)
+        logger.logprint("Multistart with {} runs found a point with function value {} ({} seconds)".format(num_localopt_runs, best_val, end-start), verbosity=2)
 
         xopt = rets[best_found]['x']
 
