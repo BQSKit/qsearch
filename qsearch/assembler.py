@@ -89,11 +89,18 @@ ibmopenqasmdict = {
         "CNOT" : "cx q[{}], q[{}];\n"
 }
 
+qutritdict = {
+        "initial" : "",
+        "QUTRIT" : "qutrit({}, {}, {}, {}, {}, {}, {}, {}) index: {}\n",
+        "CNOT" : "cnot control: {} target: {}\n"
+}
+
 
 
 ASSEMBLY_QISKIT = DictionaryAssembly(qiskitdict)
 ASSEMBLY_OPENQASM = DictionaryAssembly(openqasmdict)
 ASSEMBLY_IBMOPENQASM = DictionaryAssembly(ibmopenqasmdict)
+ASSEMBLY_QUTRIT_READABLE = DictionaryAssembly(qutritdict)
 
 
 

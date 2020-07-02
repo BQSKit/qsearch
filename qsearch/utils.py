@@ -128,9 +128,8 @@ def random_near_identity(n, alpha):
     
 def remap(U, order, d=2):
     U = np.array(U, dtype='complex128')
-    if d != 2:
-        raise NotImplementedError("This function is not yet implemented for dits other than qubits because I have not implemented the swap for those qudits yet.")
 
+    swap = unitaries.general_swap(d)
     dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
     beforemat = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
     aftermat  = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
@@ -145,7 +144,7 @@ def remap(U, order, d=2):
             while not target_loc == current_loc:
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
-                    swapmat = matrix_kron(*[I]*(current_loc-1), unitaries.swap, *[I]*(dits - current_loc - 1))
+                    swapmat = matrix_kron(*[I]*(current_loc-1), swap, *[I]*(dits - current_loc - 1))
 #                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
                     current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
@@ -153,7 +152,7 @@ def remap(U, order, d=2):
                     current_loc = current_loc - 1
                 else:
                     # perform the swap current_loc and current_loc + 1
-                    swapmat = matrix_kron(*[I]*(current_loc), unitaries.swap, *[I]*(dits - current_loc - 2))
+                    swapmat = matrix_kron(*[I]*(current_loc), swap, *[I]*(dits - current_loc - 2))
  #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
                     current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
@@ -197,7 +196,7 @@ def upgrade_dits(U, di=2, df=3):
 
 def endian_reverse(U, d=2):
     n = int(np.log(U.shape[0])/np.log(d))
-    return remap(U, list(reversed(range(0, n))))
+    return remap(U, list(reversed(range(0, n))), d)
 
 def mpi_rank():
     if MPI is None:
