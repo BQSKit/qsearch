@@ -359,7 +359,7 @@ class SingleQutritStep(QuantumStep):
         return (U, [Jt1, Jt2, Jt3, Je1, Je2, Je3, Je4, Je5])
 
     def assemble(self, v, i=0):
-        return [("qutrit", tuple(v), (i,))]
+        return [("gate", "QUTRIT", (vv*2*np.pi for vv in v), (i,))]
     
     def __repr__(self):
         return "SingleQutritStep()"
