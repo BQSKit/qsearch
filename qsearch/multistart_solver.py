@@ -6,13 +6,35 @@ import scipy.optimize
 from qsearch_rs import native_from_object
 import time
 from math import pi, gamma, sqrt
-# from mpmath import gamma
-
-from loky import wrap_non_picklable_objects
 
 from multiprocessing import Queue, Process
 from .persistent_aposmm import initialize_APOSMM, decide_where_to_start_localopt, update_history_dist, add_to_local_H
 
+
+def run_local_scipy_least_squares(x0, options, circuit, queue):
+    '''worker function'''
+    U = options.target
+    I = np.eye(U.shape[0])
+    def resid_func(v):
+        return options.error_residuals(U, circuit.matrix(v), I)
+    def jac_func(v):
+        return options.error_residuals_jac(U, *circuit.mat_jac(v))
+    lb = np.zeros(len(x0))
+    ub = np.ones(len(x0))
+
+    res = sp.optimize.least_squares(resid_func, x0, jac_func, method="lm")
+    queue.put(res)
+
+def run_local_scipy_bfgs(x0, options, circuit, queue):
+    '''worker function'''
+    def eval_func(v):
+        return options.error_jac(U, *circuit.mat_jac(v))
+    U = options.target
+    lb = np.zeros(len(x0))
+    ub = np.ones(len(x0))
+
+    res = sp.optimize.minimize(eval_func, x0, method='BFGS', jac=True)
+    queue.put(res)
 
 class MultiStart_Solver(Solver):
 
@@ -30,7 +52,6 @@ class MultiStart_Solver(Solver):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         if self.optimizer_name == "BFGS":
             # feel free to re-format this eval_func as long as it uses circuit, U, and error_jac in the same way
-            @wrap_non_picklable_objects
             def eval_func(v):
                 return options.error_jac(U, *circuit.mat_jac(v))
             # eval_func returns (objective_value, [jacobian values]) (with the jacobian as a 1D numpy ndarray)
@@ -38,10 +59,8 @@ class MultiStart_Solver(Solver):
         elif self.optimizer_name == "LeastSquares":
             I = np.eye(U.shape[0])
             # because scipy least squares takes the jacobian as a separate function, our least squares code is set up accordingly
-            @wrap_non_picklable_objects
             def resid_func(v):
                 return options.error_residuals(U, circuit.matrix(v), I)
-            @wrap_non_picklable_objects
             def jac_func(v):
                 return options.error_residuals_jac(U, *circuit.mat_jac(v))
 
@@ -49,24 +68,6 @@ class MultiStart_Solver(Solver):
         n = circuit.num_inputs # the number of parameters to optimize (the length that v should be when passed to one of the lambdas created above)
         initial_sample_size = 100  # How many points do you want to sample before deciding where to start runs.
         num_localopt_runs = self.num_threads  # How many localopt runs to start?
-        @wrap_non_picklable_objects
-        def run_local_scipy_least_squares(x0, f, g, queue):
-            '''worker function'''
-
-            lb = np.zeros(len(x0))
-            ub = np.ones(len(x0))
-
-            res = sp.optimize.least_squares(f, x0, g, method="lm")
-            queue.put(res)
-        @wrap_non_picklable_objects
-        def run_local_scipy_bfgs(x0, f, queue):
-            '''worker function'''
-
-            lb = np.zeros(len(x0))
-            ub = np.ones(len(x0))
-
-            res = sp.optimize.minimize(f, x0, method='BFGS', jac=True)
-            queue.put(res)
 
         specs = {'lb': np.zeros(n),
                  'ub': np.ones(n),
@@ -99,12 +100,10 @@ class MultiStart_Solver(Solver):
         rets = []
         if self.optimizer_name == 'BFGS':
             optimize_worker = run_local_scipy_bfgs
-            args = (eval_func, q)
         elif self.optimizer_name == "LeastSquares":
             optimize_worker = run_local_scipy_least_squares
-            args = (resid_func, jac_func, q)
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(x0, *args))
+            p = Process(target=optimize_worker, args=(x0, options, circuit, q))
             processes.append(p)
             p.start()
         for p in processes:
