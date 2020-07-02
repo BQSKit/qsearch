@@ -2,5 +2,3 @@ numpy>=1.16.1
 parse
 scipy
 cma
-loky
-cloudpickle

@@ -30,14 +30,20 @@ class MultiStart_Solver(Solver):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         if self.optimizer_name == "BFGS":
             # feel free to re-format this eval_func as long as it uses circuit, U, and error_jac in the same way
-            eval_func = lambda v: options.error_jac(U, *circuit.mat_jac(v))
+            @wrap_non_picklable_objects
+            def eval_func(v):
+                return options.error_jac(U, *circuit.mat_jac(v))
             # eval_func returns (objective_value, [jacobian values]) (with the jacobian as a 1D numpy ndarray)
 
-        elif self.optimizer_name == "least_squares":
+        elif self.optimizer_name == "LeastSquares":
             I = np.eye(U.shape[0])
             # because scipy least squares takes the jacobian as a separate function, our least squares code is set up accordingly
-            resid_func = lambda v: options.error_residuals(U, circuit.matrix(v), I)
-            jac_func = lambda v: options.error_residuals_jac(U, *circuit.mat_jac(v))
+            @wrap_non_picklable_objects
+            def resid_func(v):
+                return options.error_residuals(U, circuit.matrix(v), I)
+            @wrap_non_picklable_objects
+            def jac_func(v):
+                return options.error_residuals_jac(U, *circuit.mat_jac(v))
 
         #np.random.seed(4) # usually we do not want fixed seeds, but it can be useful for some debugging
         n = circuit.num_inputs # the number of parameters to optimize (the length that v should be when passed to one of the lambdas created above)
@@ -76,7 +82,7 @@ class MultiStart_Solver(Solver):
         if self.optimizer_name == 'BFGS':
             for i, x in enumerate(initial_sample):
                 H['f'][i] = eval_func(x)[0]
-        elif self.optimizer_name == 'least_squares':    
+        elif self.optimizer_name == "LeastSquares":    
             for i, x in enumerate(initial_sample):
                 H['f'][i] = np.sum(resid_func(x)**2)
 
@@ -94,7 +100,7 @@ class MultiStart_Solver(Solver):
         if self.optimizer_name == 'BFGS':
             optimize_worker = run_local_scipy_bfgs
             args = (eval_func, q)
-        elif self.optimizer_name == 'least_squares':
+        elif self.optimizer_name == "LeastSquares":
             optimize_worker = run_local_scipy_least_squares
             args = (resid_func, jac_func, q)
         for x0 in starting_points:
@@ -111,7 +117,7 @@ class MultiStart_Solver(Solver):
         if self.optimizer_name == 'BFGS':
             best_found = np.argmin([r['fun'] for r in rets])
             best_val = rets[best_found]['fun']
-        elif self.optimizer_name == 'least_squares':
+        elif self.optimizer_name == "LeastSquares":
             best_found = np.argmin([r['cost'] for r in rets])
             best_val = rets[best_found]['cost']
 
