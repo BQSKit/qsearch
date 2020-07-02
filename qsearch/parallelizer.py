@@ -1,6 +1,8 @@
-from multiprocessing import get_context, cpu_count
-from concurrent.futures import ProcessPoolExecutor as Pool
+from multiprocess import get_context, cpu_count, reduction
+import multiprocess
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+
 try:
     from mpi4py import MPI
 except ImportError:
@@ -26,7 +28,6 @@ class MultiprocessingParallelizer(Parallelizer):
     def __init__(self, options):
         ctx = get_context("fork")
         options.set_smart_defaults(num_tasks=default_num_tasks)
-
         self.pool = ctx.Pool(options.num_tasks)
         self.process_func = partial(evaluate_step, options=options)
 
@@ -41,8 +42,7 @@ class MultiprocessingParallelizer(Parallelizer):
 class ProcessPoolParallelizer(Parallelizer):
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
-
-        self.pool = Pool(options.num_tasks)
+        self.pool = ProcessPoolExecutor(options.num_tasks)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
@@ -53,6 +53,7 @@ class ProcessPoolParallelizer(Parallelizer):
 
 class MPIParallelizer(Parallelizer):
     def __init__(self, options):
+        options.set_smart_defaults(num_tasks=self.comm.size)
         if MPI is not None:
             self.comm = MPI.COMM_WORLD
             self.comm.bcast(False, root=0)
@@ -92,6 +93,7 @@ class MPIParallelizer(Parallelizer):
 
 class SequentialParallelizer(Parallelizer):
     def __init__(self, options):
+        options.set_smart_defaults(num_tasks=lambda opts: 1)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):

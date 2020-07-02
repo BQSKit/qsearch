@@ -12,6 +12,26 @@ from multiprocessing import Queue, Process
 from .persistent_aposmm import initialize_APOSMM, decide_where_to_start_localopt, update_history_dist, add_to_local_H
 
 
+def run_local_scipy_least_squares(x0, f, g, queue):
+    '''Worker function for Multistart solver'''
+
+    lb = np.zeros(len(x0))
+    ub = np.ones(len(x0))
+
+    res = sp.optimize.least_squares(f, x0, g, method="lm")
+    queue.put(res)
+
+
+def run_local_scipy_bfgs(x0, f, queue):
+    '''Worker function for Multistart solver'''
+
+    lb = np.zeros(len(x0))
+    ub = np.ones(len(x0))
+
+    res = sp.optimize.minimize(f, x0, method='BFGS', jac=True)
+    queue.put(res)
+
+
 class MultiStart_Solver(Solver):
 
     def __init__(self, num_threads, optimizer_name):
@@ -41,24 +61,6 @@ class MultiStart_Solver(Solver):
         n = circuit.num_inputs # the number of parameters to optimize (the length that v should be when passed to one of the lambdas created above)
         initial_sample_size = 100  # How many points do you want to sample before deciding where to start runs.
         num_localopt_runs = self.num_threads  # How many localopt runs to start?
-
-        def run_local_scipy_least_squares(x0, f, g, queue):
-            '''worker function'''
-
-            lb = np.zeros(len(x0))
-            ub = np.ones(len(x0))
-
-            res = sp.optimize.least_squares(f, x0, g, method="lm")
-            queue.put(res)
-
-        def run_local_scipy_bfgs(x0, f, queue):
-            '''worker function'''
-
-            lb = np.zeros(len(x0))
-            ub = np.ones(len(x0))
-
-            res = sp.optimize.minimize(f, x0, method='BFGS', jac=True)
-            queue.put(res)
 
         specs = {'lb': np.zeros(n),
                  'ub': np.ones(n),
