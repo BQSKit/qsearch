@@ -39,7 +39,8 @@ defaults = {
         "error_func":utils.matrix_distance_squared,
         "error_residuals":utils.matrix_residuals,
         "backend":backend.SmartDefaultBackend(),
-        "parallelizer":parallelizer.MultiprocessingParallelizer
+        "parallelizer":parallelizer.MultiprocessingParallelizer,
+        "log_file":None
         }
 smart_defaults = {
         "eval_func":default_eval_func,
