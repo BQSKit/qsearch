@@ -3,3 +3,4 @@ parse
 scipy
 cma
 multiprocess
+dill
