@@ -2,5 +2,5 @@ numpy>=1.16.1
 parse
 scipy
 cma
-multiprocess
-dill
+loky
+cloudpickle

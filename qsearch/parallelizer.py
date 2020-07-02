@@ -2,6 +2,7 @@ from multiprocess import get_context, cpu_count, reduction
 import multiprocess
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+import loky
 
 try:
     from mpi4py import MPI
@@ -42,7 +43,8 @@ class MultiprocessingParallelizer(Parallelizer):
 class ProcessPoolParallelizer(Parallelizer):
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
-        self.pool = ProcessPoolExecutor(options.num_tasks)
+        loky.set_loky_pickler('pickle')
+        self.pool = loky.get_reusable_executor(max_workers=options.num_tasks)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
