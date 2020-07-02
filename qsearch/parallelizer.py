@@ -1,5 +1,4 @@
-from multiprocess import get_context, cpu_count, reduction
-import multiprocess
+from multiprocessing import get_context, cpu_count
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import loky
