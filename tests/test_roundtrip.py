@@ -17,8 +17,6 @@
 ##################################################
 
 import qsearch
-import qiskit
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 import numpy as np
 from qsearch import unitaries, advanced_unitaries, utils, gatesets
 import sys
