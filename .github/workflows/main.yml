@@ -24,6 +24,8 @@ jobs:
           uses: actions/setup-python@v1
           with:
             python-version: ${{ matrix.python-version }}
+        - if: startsWith(matrix.os, 'ubuntu')
+          run: sudo apt install libceres-dev
         - if: startsWith(matrix.os, 'macOS')
           run: brew install ceres-solver
         - name: install search_compiler
