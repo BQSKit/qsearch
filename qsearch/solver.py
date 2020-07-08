@@ -8,7 +8,10 @@ from . import circuits
 from . import utils
 from .gatesets import *
 from .logging import Logger
-
+try:
+    from qsearch_rs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object
+except ImportError:
+    LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = None
 
 def default_solver(options):
     options = options.copy()
@@ -19,12 +22,25 @@ def default_solver(options):
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
-    # Check to see if the gateset and error func are explicitly supported by LeastSquares
+    # check if Rust works on the layers
     gateset = options.gateset
+    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+
+    rs_failed = True
+    if native_from_object is not None:
+        layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
+        for layer in layers:
+            try:
+                native_from_object(layer[0])
+            except ValueError:
+                break
+        else:
+            rs_failed = False
+
+    # Check to see if the gateset and error func are explicitly supported by LeastSquares
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
-    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
@@ -33,8 +49,12 @@ def default_solver(options):
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
-        return LeastSquares_Jac_Solver()
+        if rs_failed:
+            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
+            return LeastSquares_Jac_Solver()
+        else:
+            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=2)
+            return LeastSquares_Jac_SolverNative()
 
     if dits < 1:
         logger.logprint("Smart default fell back to COBYLA_Solver.  Pass a different Solver to SearchCompiler for better results.", verbosity=1)
@@ -42,7 +62,6 @@ def default_solver(options):
 
     # least squares won't work, so check for jacobian and rust success
     jac_failed = False
-    layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
     for layer, _ in layers:
         try:
             layer.mat_jac(np.random.rand(layer.num_inputs))
