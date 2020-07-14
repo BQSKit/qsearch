@@ -33,7 +33,7 @@ class LeapCompiler(Compiler):
         self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
-    
+
     def compile(self, options=Options(), **xtraargs):
         options = self.options.updated(options)
         if "U" in xtraargs:
