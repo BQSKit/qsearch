@@ -1,5 +1,5 @@
 import qsearch
-from qsearch import unitaries, advanced_unitaries
+from qsearch import unitaries, advanced_unitaries, multistart_solver, parallelizer, solver
 import time
 
 # create the project
@@ -23,9 +23,9 @@ with qsearch.Project("benchmarks") as project:
 
     # compiler configuration example
     #project["gateset"] = qsearch.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
-    #project["solver"]  = qsearch.solver.BFGS_Jac_SolverNative() # use this to force the compiler to use the Rust version of the BFGS solver instead of using the default setting
     #project["verbosity"] = 2 # use this to have more information reported to stdout and the log files, or set it to 0 to disable logging altogether
-
+    #project["solver"] = multistart_solver.MultiStart_Solver(8) # Use the more accurate multistart solver
+    #project["parallelizer"] = parallelizer.ProcessPoolParallelizer # Multistart requires nested processes, so we use ProcessPoolExecutor
     # once everything is set up, let the project run!
     project.run()
 
