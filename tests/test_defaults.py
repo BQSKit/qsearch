@@ -1,6 +1,10 @@
 from qsearch import unitaries, gatesets, solver, utils, compiler, backend, Options
 from qsearch.circuits import CNOTStep, QuantumStep
 import numpy as np
+try:
+    from qsearch_rs import LeastSquares_Jac_SolverNative
+except ImportError:
+    LeastSquares_Jac_SolverNative = None
 
 class NoJacQiskitU3QubitStep(QuantumStep):
     def __init__(self):
@@ -27,7 +31,10 @@ def test_smart_defaults():
     options.log_file=None
     c = compiler.SearchCompiler(options=options)
     res = c.compile()
-    assert isinstance(c.options.solver, solver.LeastSquares_Jac_Solver)
+    if LeastSquares_Jac_SolverNative is not None:
+        assert isinstance(c.options.solver, LeastSquares_Jac_SolverNative)
+    else:
+        assert isinstance(c.options.solver, solver.LeastSquares_Jac_Solver)
     assert isinstance(c.options.backend, backend.SmartDefaultBackend)
     assert not isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), QuantumStep)
     assert isinstance(c.options.gateset, gatesets.QubitCNOTLinear)

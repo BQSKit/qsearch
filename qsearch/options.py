@@ -49,7 +49,7 @@ class Options():
             return retval
         elif name in self.defaults:
             return self.defaults[name]
-        raise AttributeError()
+        raise AttributeError("Could not find option {}".format(name))
 
     def __setattr__(self, name, value):
         if name not in _options_actual_paramters:

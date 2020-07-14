@@ -95,6 +95,9 @@ def qft(n):
 def identity(n): # not super necessary but saves a little code length
     return np.array(np.eye(n), dtype='complex128')
 
+def general_swap(d=2): # generates the swap matrix for qu-dits
+    f = lambda i, j: (i % d == j//d) and (i // d == j % d)
+    return np.array(np.fromfunction(np.vectorize(f), (d**2, d**2)), dtype='complex128')
 
 # generates an arbitrary cnot gate by classical logic and brute force
 # it may be a good idea to write a better version of this at some point, but this should be good enough for use with the search compiler on 2-4 qubits.

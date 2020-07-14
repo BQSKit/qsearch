@@ -1,4 +1,4 @@
-from qsearch import Project, solver, unitaries, utils
+from qsearch import Project, solver, unitaries, utils, multistart_solver, parallelizer
 import scipy as sp
 import os
 
@@ -20,4 +20,18 @@ def test_least_squares_jac(project):
     project['solver'] = solver.LeastSquares_Jac_Solver()
     project['error_func'] = utils.matrix_residuals
     project['error_jac'] = utils.matrix_residuals_jac
+    project.run()
+
+def test_multistart_least_squares(project):
+    project.add_compilation('qft3', qft3)
+    project['solver'] = multistart_solver.MultiStart_Solver(4, 'LeastSquares')
+    project['parallelizer'] = parallelizer.ProcessPoolParallelizer
+    project['error_func'] = utils.matrix_residuals
+    project['error_jac'] = utils.matrix_residuals_jac
+    project.run()
+
+def test_multistart_bfgs(project):
+    project.add_compilation('qft3', qft3)
+    project['solver'] = multistart_solver.MultiStart_Solver(4, 'BFGS')
+    project['parallelizer'] = parallelizer.ProcessPoolParallelizer
     project.run()

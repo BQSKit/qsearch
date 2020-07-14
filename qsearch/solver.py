@@ -8,7 +8,10 @@ from . import circuits
 from . import utils
 from .gatesets import *
 from .logging import Logger
-
+try:
+    from qsearch_rs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object
+except ImportError:
+    LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = None
 
 def default_solver(options):
     options = options.copy()
@@ -19,24 +22,39 @@ def default_solver(options):
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
-    # Check to see if the gateset and error func are explicitly supported by LeastSquares
+    # check if Rust works on the layers
     gateset = options.gateset
+    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+
+    rs_failed = True
+    if native_from_object is not None:
+        layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
+        for layer in layers:
+            try:
+                native_from_object(layer[0])
+            except ValueError:
+                break
+        else:
+            rs_failed = False
+
+    # Check to see if the gateset and error func are explicitly supported by LeastSquares
     error_func = options.error_func
     error_jac = options.error_jac
     logger = options.logger
-    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
-        ls_failed = True
-    elif type(gateset).__name__ not in [QubitCNOTLinear.__name__, QiskitU3Linear,__name__, QubitCNOTRing.__name__, QubitCNOTAdjacencyList.__name__, ZXZXZCNOTLinear.__name__]:
         ls_failed = True
     elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
-        # since all gatesets supported by LeastSquares are supported by rust, this is the only check we need
-        logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
-        return LeastSquares_Jac_Solver()
+        # since all provided gatesets support jacobians, this is the only check we need
+        if rs_failed:
+            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
+            return LeastSquares_Jac_Solver()
+        else:
+            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=2)
+            return LeastSquares_Jac_SolverNative()
 
     if dits < 1:
         logger.logprint("Smart default fell back to COBYLA_Solver.  Pass a different Solver to SearchCompiler for better results.", verbosity=1)
@@ -44,7 +62,6 @@ def default_solver(options):
 
     # least squares won't work, so check for jacobian and rust success
     jac_failed = False
-    layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
     for layer, _ in layers:
         try:
             layer.mat_jac(np.random.rand(layer.num_inputs))
@@ -73,6 +90,10 @@ class Solver():
             if type(self) == type(other):
                 return True
         return False
+
+    @property
+    def distance_metric(self):
+        return "Frobenius"
 
 class CMA_Solver(Solver):
     def solve_for_unitary(self, circuit, options):
@@ -129,7 +150,7 @@ class BFGS_Jac_Solver(Solver):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
             return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi, method='BFGS', jac=True)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs), method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
@@ -141,7 +162,11 @@ class LeastSquares_Jac_Solver(Solver):
         I = np.eye(options.target.shape[0])
         eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
         jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
-        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*np.pi, jac_func, method="lm")
+        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
+
+    @property
+    def distance_metric(self):
+        return "Residuals"
 

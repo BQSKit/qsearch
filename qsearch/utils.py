@@ -77,6 +77,8 @@ def q1_unitary(x):
     return matrix_product(rot_z(x[0]), rot_x(np.pi/2), rot_z(np.pi + x[1]), rot_x(np.pi/2), rot_z(x[2] - np.pi))
 
 def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
+    # this code is now deprecated, because SingleQutritStep now contains a better implementation (more compact and more performant)
+    # make sure to move this red comment over to SingleQutritStep before deleting this code for documentation purposes
     """Using the parameterization found in https://journals.aps.org/prd/pdf/10.1103/PhysRevD.38.1994,
         this method constructs an arbitrary single_qutrit unitary operation.
 
@@ -126,9 +128,8 @@ def random_near_identity(n, alpha):
     
 def remap(U, order, d=2):
     U = np.array(U, dtype='complex128')
-    if d != 2:
-        raise NotImplementedError("This function is not yet implemented for dits other than qubits because I have not implemented the swap for those qudits yet.")
 
+    swap = unitaries.general_swap(d)
     dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
     beforemat = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
     aftermat  = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
@@ -143,7 +144,7 @@ def remap(U, order, d=2):
             while not target_loc == current_loc:
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
-                    swapmat = matrix_kron(*[I]*(current_loc-1), unitaries.swap, *[I]*(dits - current_loc - 1))
+                    swapmat = matrix_kron(*[I]*(current_loc-1), swap, *[I]*(dits - current_loc - 1))
 #                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
                     current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
@@ -151,7 +152,7 @@ def remap(U, order, d=2):
                     current_loc = current_loc - 1
                 else:
                     # perform the swap current_loc and current_loc + 1
-                    swapmat = matrix_kron(*[I]*(current_loc), unitaries.swap, *[I]*(dits - current_loc - 2))
+                    swapmat = matrix_kron(*[I]*(current_loc), swap, *[I]*(dits - current_loc - 2))
  #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
                     current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
@@ -160,10 +161,42 @@ def remap(U, order, d=2):
 
     return matrix_product(beforemat, U, aftermat)
 
+def upgrade_dits(U, di=2, df=3):
+    dits = int(np.log(U.shape[0])/np.log(di))
+    new_unitary = np.array(np.eye(df**dits), dtype='complex128')
+    for i in range(df**dits):
+        skip = False
+        testi = i
+        oi = 0
+        for dit in range(dits):
+            if testi % df >= di:
+                skip = True
+                break
+            else:
+                oi += (testi % df) *di**dit
+            testi //= df
+
+        if not skip:
+            for j in range(df**dits):
+                skip = False
+                testj = j
+                oj = 0
+                for dit in range(dits):
+                    if testj % df >= di:
+                        skip = True
+                        break
+                    else:
+                        oj += (testj % df) * di**dit
+                    testj //= df
+
+                if not skip:
+                    new_unitary[i][j] = U[oi][oj]
+    return new_unitary
+
 
 def endian_reverse(U, d=2):
     n = int(np.log(U.shape[0])/np.log(d))
-    return remap(U, list(reversed(range(0, n))))
+    return remap(U, list(reversed(range(0, n))), d)
 
 def mpi_rank():
     if MPI is None:

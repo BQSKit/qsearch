@@ -11,7 +11,7 @@ from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
-    def __init__(self, *kwargs):
+    def __init__(self, *args, **kwargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
     def compile(self, U, depth, statefile, logger):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
@@ -36,7 +36,8 @@ class SearchCompiler(Compiler):
         U = options.target
         depth = options.depth
         statefile = options.statefile
-        logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
+        options.set_defaults(logger=logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file))
+        logger = options.logger
 
         startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
@@ -98,6 +99,7 @@ class SearchCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
+
         while len(queue) > 0:
             if best_value < options.threshold:
                 queue = []

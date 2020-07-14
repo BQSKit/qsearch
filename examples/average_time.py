@@ -2,8 +2,7 @@ import qsearch
 from qsearch import unitaries, advanced_unitaries
 import time
 
-if qsearch.utils.mpi_rank == 0:
-    project = qsearch.Project("benchmarks")
+with qsearch.Project("benchmarks") as project:
     project.add_compilation("qft2", unitaries.qft(4))
     project.add_compilation("qft3", unitaries.qft(8))
     project.add_compilation("fredkin", unitaries.fredkin)
@@ -29,6 +28,3 @@ if qsearch.utils.mpi_rank == 0:
 
     for compilation in project.compilations:
         print(f'Compilation {compilation} took {times[compilation]/10}s on average.')
-    project.finish()
-else:
-    qsearch.utils.mpi_worker()

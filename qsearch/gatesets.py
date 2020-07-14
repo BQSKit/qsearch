@@ -166,6 +166,18 @@ class QutritCPIPhaseLinear(Gateset):
     def search_layers(self, n):
         return linear_topology(CPIPhaseStep(), self.single_step, n, self.d)
 
+class QutritCNOTLinear(Gateset):
+    def __init__(self):
+        self.single_step = SingleQutritStep()
+        self.d = 3
+
+    def initial_layer(self, n):
+        return fill_row(self.single_step, n)
+    
+    def search_layers(self, n):
+        return linear_topology(UpgradedConstantStep(CNOTStep()), self.single_step, n, self.d)
+
+
 
 # commonly used defaults
 DefaultQubit = QubitCNOTLinear

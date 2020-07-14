@@ -20,7 +20,7 @@ These are some results showing how search_compiler can provide optimal or near o
 | TFIM_6_3      | 3      | 8   | 6           | 6         | 17             | 4.44 * 10<sup>-16</sup> | 0.0                     |
 | TFIM_42_3     | 3      | 56  | 6           | 6         | 17             | 8.88 * 10<sup>-16</sup> | 0.0                     |
 | TFIM_60_3     | 3      | 80  | 6           | 6         | 17             | 6.66 * 10<sup>-16</sup> | 0.0                     |
-| QFT           | 4      | N/A | 14          |           | 89             | 6.66 * 10<sup>-16</sup> |                         |
+| QFT           | 4      | N/A | 13*          |           | 89             | 6.66 * 10<sup>-16</sup> |                         |
 | TFIM_30_4     | 4      | 60  | 11          |           | 87             | 9.08 * 10<sup>-11</sup> |                         |
 | IBM Challenge | 4      | N/A | 4           |           | DNR            | 0.0                     |                         |
 

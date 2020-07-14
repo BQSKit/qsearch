@@ -14,7 +14,7 @@ from math import log, gamma, pi, sqrt
 
 STOP_TAG = 3
 PERSIS_STOP = 4 
-FINISHED_PERSISTENT_GEN_TAG = 12 
+FINISHED_PERSISTENT_GEN_TAG = 12
 
 
 def aposmm(H, persis_info, gen_specs, libE_info):
@@ -677,20 +677,3 @@ def clean_up_and_stop(local_H, local_opters, run_order):
 
     for i, p in local_opters.items():
         p.destroy(local_H['x_on_cube'][run_order[i][-1]])
-
-
-# def display_exception(e):
-#     print(e.__doc__)
-#     print(e.args)
-#     _, _, tb = sys.exc_info()
-#     traceback.print_tb(tb)  # Fixed format
-#     tb_info = traceback.extract_tb(tb)
-#     filename, line, func, text = tb_info[-1]
-#     print('An error occurred on line {} of function {} with statement {}'.format(line, func, text))
-
-#     # PETSc/TAO errors are printed in the following manner:
-#     if hasattr(e, '_traceback_'):
-#         print('The error was:')
-#         for i in e._traceback_:
-#             print(i)
-#     sys.stdout.flush()
