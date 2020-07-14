@@ -1,5 +1,5 @@
 from . import utils, logging
-from .solver import Solver
+from .solver import Solver, default_solver
 import numpy as np
 import scipy as sp
 import scipy.optimize
@@ -10,59 +10,26 @@ from math import pi, gamma, sqrt
 from multiprocessing import Queue, Process
 from .persistent_aposmm import initialize_APOSMM, decide_where_to_start_localopt, update_history_dist, add_to_local_H
 
+def distance_for_x(x, options, circuit):
+    if options.inner_solver.distance_metric == "Frobenius":
+        return options.error_func(options.target, circuit.matrix(x))
+    elif options.inner_solver.distance_metric == "Residuals":
+        return np.sum(options.error_residuals(options.target, circuit.matrix(x), np.eye(options.target.shape[0]))**2)
 
-def run_local_scipy_least_squares(x0, options, circuit, queue):
-    '''worker function'''
-    U = options.target
-    I = np.eye(U.shape[0])
-    def resid_func(v):
-        return options.error_residuals(U, circuit.matrix(v), I)
-    def jac_func(v):
-        return options.error_residuals_jac(U, *circuit.mat_jac(v))
-    lb = np.zeros(len(x0))
-    ub = np.ones(len(x0))
-
-    res = sp.optimize.least_squares(resid_func, x0, jac_func, method="lm")
-    queue.put(res)
-
-def run_local_scipy_bfgs(x0, options, circuit, queue):
-    '''worker function'''
-    def eval_func(v):
-        return options.error_jac(U, *circuit.mat_jac(v))
-    U = options.target
-    lb = np.zeros(len(x0))
-    ub = np.ones(len(x0))
-
-    res = sp.optimize.minimize(eval_func, x0, method='BFGS', jac=True)
-    queue.put(res)
+def optimize_worker(circuit, options, q):
+    _, xopt = options.inner_solver.solve_for_unitary(circuit, options)
+    q.put((distance_for_x(xopt, options, circuit), xopt))
 
 class MultiStart_Solver(Solver):
 
-    def __init__(self, num_threads, optimizer_name):
-        # add any other initialization or config you think is necessary
-        # there is nothing our API requires about the initializer
+    def __init__(self, num_threads):
         self.num_threads = num_threads
-        self.optimizer_name = optimizer_name
 
-
-    # this function call needs to keep this format to work with our existiing api
-    # def solve_for_unitary(self, circuit, U, error_func=utils.matrix_distance_squared, error_jac=utils.matrix_distance_squared_jac):
     def solve_for_unitary(self, circuit, options):
+        if 'inner_solver' not in options:
+            options.inner_solver = default_solver(options)
         U = options.target
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
-        if self.optimizer_name == "BFGS":
-            # feel free to re-format this eval_func as long as it uses circuit, U, and error_jac in the same way
-            def eval_func(v):
-                return options.error_jac(U, *circuit.mat_jac(v))
-            # eval_func returns (objective_value, [jacobian values]) (with the jacobian as a 1D numpy ndarray)
-
-        elif self.optimizer_name == "LeastSquares":
-            I = np.eye(U.shape[0])
-            # because scipy least squares takes the jacobian as a separate function, our least squares code is set up accordingly
-            def resid_func(v):
-                return options.error_residuals(U, circuit.matrix(v), I)
-            def jac_func(v):
-                return options.error_residuals_jac(U, *circuit.mat_jac(v))
 
         #np.random.seed(4) # usually we do not want fixed seeds, but it can be useful for some debugging
         n = circuit.num_inputs # the number of parameters to optimize (the length that v should be when passed to one of the lambdas created above)
@@ -80,12 +47,8 @@ class MultiStart_Solver(Solver):
 
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
-        if self.optimizer_name == 'BFGS':
-            for i, x in enumerate(initial_sample):
-                H['f'][i] = eval_func(x)[0]
-        elif self.optimizer_name == "LeastSquares":    
-            for i, x in enumerate(initial_sample):
-                H['f'][i] = np.sum(resid_func(x)**2)
+        for i, x in enumerate(initial_sample):
+            H['f'][i] = distance_for_x(x, options, circuit)
 
         H[['returned']] = True
 
@@ -98,12 +61,8 @@ class MultiStart_Solver(Solver):
         q = Queue()
         processes = []
         rets = []
-        if self.optimizer_name == 'BFGS':
-            optimize_worker = run_local_scipy_bfgs
-        elif self.optimizer_name == "LeastSquares":
-            optimize_worker = run_local_scipy_least_squares
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(x0, options, circuit, q))
+            p = Process(target=optimize_worker, args=(circuit, options, q))
             processes.append(p)
             p.start()
         for p in processes:
@@ -113,15 +72,9 @@ class MultiStart_Solver(Solver):
             p.join()
         end = time.time()
 
-        if self.optimizer_name == 'BFGS':
-            best_found = np.argmin([r['fun'] for r in rets])
-            best_val = rets[best_found]['fun']
-        elif self.optimizer_name == "LeastSquares":
-            best_found = np.argmin([r['cost'] for r in rets])
-            best_val = rets[best_found]['cost']
+        best_found = np.argmin([r[0] for r in rets])
+        best_val = rets[best_found][0]
 
-        logger.logprint("Multistart with {} runs found a point with function value {} ({} seconds)".format(num_localopt_runs, best_val, end-start), verbosity=2)
-
-        xopt = rets[best_found]['x']
+        xopt = rets[best_found][1]
 
         return (circuit.matrix(xopt), xopt)

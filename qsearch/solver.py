@@ -91,6 +91,10 @@ class Solver():
                 return True
         return False
 
+    @property
+    def distance_metric(self):
+        return "Frobenius"
+
 class CMA_Solver(Solver):
     def solve_for_unitary(self, circuit, options):
         try:
@@ -161,4 +165,8 @@ class LeastSquares_Jac_Solver(Solver):
         result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
+
+    @property
+    def distance_metric(self):
+        return "Residuals"
 
