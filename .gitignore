@@ -6,3 +6,5 @@ __pycache__
 compilations
 .env/
 .test/
+benchmarks/
+*.egg-info/
