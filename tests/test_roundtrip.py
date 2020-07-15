@@ -69,4 +69,4 @@ def test_roundtrip(project):
         U2 = qsearch.utils.endian_reverse(U2) # switch from Qiskit endianess search_compiler endianess
         distance = qsearch.utils.matrix_distance_squared(U1, U2)
         # Compare the two unitaries and check the result.  The values should be close to 0.
-        assert distance < 1e-15, "Distance for {}: {}".format(compilation, distance)
+        assert distance < 1e-13, "Distance for {}: {}".format(compilation, distance)
