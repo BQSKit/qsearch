@@ -24,7 +24,8 @@ def test_least_squares_jac(project):
 
 def test_multistart_least_squares(project):
     project.add_compilation('qft3', qft3)
-    project['solver'] = multistart_solver.MultiStart_Solver(4, 'LeastSquares')
+    project['solver'] = multistart_solver.MultiStart_Solver(2)
+    project['inner_solver'] = solver.LeastSquares_Jac_Solver()
     project['parallelizer'] = parallelizer.ProcessPoolParallelizer
     project['error_func'] = utils.matrix_residuals
     project['error_jac'] = utils.matrix_residuals_jac
@@ -32,6 +33,7 @@ def test_multistart_least_squares(project):
 
 def test_multistart_bfgs(project):
     project.add_compilation('qft3', qft3)
-    project['solver'] = multistart_solver.MultiStart_Solver(4, 'BFGS')
+    project['solver'] = multistart_solver.MultiStart_Solver(2)
+    project['inner_solver'] = solver.BFGS_Jac_Solver()
     project['parallelizer'] = parallelizer.ProcessPoolParallelizer
     project.run()
