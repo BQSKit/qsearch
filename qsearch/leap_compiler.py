@@ -1,12 +1,3 @@
-'''
-sub compiler ~= search compiler but return if cutting
-leap compiler:
- - handle parameterized layers/partial unitary soln
- - sub compiler returns (circ, vec)
- - (change initial structure) options.initial_layer (smart_default)
- - or in unitary case, modify target
-'''
-
 from functools import partial
 from timeit import default_timer as timer
 import heapq
@@ -63,11 +54,11 @@ class LeapCompiler(Compiler):
             if best_value < options.threshold:
                 break
             if 'constant_leap' in options and options.constant_leap:
-                # A B = U -> A = U B^-1
+                # A B = U -> B = A* U
                 circ, vec = best_pair
-                B = circ.matrix(vec)
-                B_daggar = np.conj(B.T)
-                options.target = np.dot(U, B_daggar)
+                A = circ.matrix(vec)
+                A_dagger = np.conj(A.T)
+                options.target = np.dot(A_dagger, U)
             else:
                 initial_layer = best_pair[0]
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
