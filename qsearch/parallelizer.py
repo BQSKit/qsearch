@@ -26,7 +26,10 @@ class Parallelizer():
 
 class MultiprocessingParallelizer(Parallelizer):
     def __init__(self, options):
-        ctx = get_context("fork")
+        if sys.platform != 'win32':
+            ctx = get_context('fork')
+        else:
+            ctx = get_context()
         options.set_smart_defaults(num_tasks=default_num_tasks)
         self.pool = ctx.Pool(options.num_tasks)
         self.process_func = partial(evaluate_step, options=options)
@@ -42,8 +45,8 @@ class MultiprocessingParallelizer(Parallelizer):
 class ProcessPoolParallelizer(Parallelizer):
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
-        if sys.version_info >= (3, 8, 0):
-            ctx = get_context("fork")
+        if sys.version_info >= (3, 8, 0) and sys.platform != 'win32':
+            ctx = get_context('fork')
             self.pool = ProcessPoolExecutor(options.num_tasks, mp_context=ctx)
         else:
             self.pool = ProcessPoolExecutor(options.num_tasks)
