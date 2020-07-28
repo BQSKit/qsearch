@@ -8,6 +8,11 @@ try:
 except ImportError:
     MPI = None
 
+try:
+    from loky import get_reusable_executor
+except ImportError:
+    get_reusable_executor = None
+
 
 def default_num_tasks(options):
     return cpu_count()
@@ -23,6 +28,14 @@ class Parallelizer():
     def done(self):
         pass
 
+class LokyParallelizer(Parallelizer):
+    def __init__(self, options):
+        options.set_smart_defaults(num_tasks=default_num_tasks)
+        self.executor = get_reusable_executor(max_workers=options.num_tasks)
+        self.process_func = partial(evaluate_step, options=options)
+
+    def solve_circuits_parallel(self, tuples):
+        return self.executor.map(self.process_func, tuples)
 
 class MultiprocessingParallelizer(Parallelizer):
     def __init__(self, options):
