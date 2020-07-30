@@ -85,9 +85,13 @@ class Project:
         self._save()
 
     def __setitem__(self, keyword, value):
-        if keyword in self.options and self.options[keyword] == value:
-            self.options.update(**{keyword:value})
-            return # no need to send out a warning if nothing is being changed
+        try:
+            if keyword in self.options and self.options[keyword] == value:
+                self.options.update(**{keyword:value})
+                return # no need to send out a warning if nothing is being changed
+        except ValueError:
+            self.options.update(keyword=value)
+            return
         if not keyword in ["verbosity", "stdout_enabled"]: # "safe" keywords here
             for name in self._compilations:
                 s = self._compilation_status(name)
@@ -196,15 +200,14 @@ class Project:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                structure, vector = compiler.compile(runopt.updated(cdict["options"]))
+                result = compiler.compile(runopt.updated(cdict["options"]))
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    structure, vector = compiler.compile(runopt.updated(cdict["options"]))
+                    result = compiler.compile(runopt.updated(cdict["options"]))
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
-            cdict["structure"] = structure
-            cdict["vector"] = vector
+            cdict.update(**result)
             cdict["time"] = endtime - starttime
             self._compilations[name] = cdict
             self._save()
@@ -277,7 +280,7 @@ class Project:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
             return None, None
 
-        return cdict["structure"], cdict["vector"]
+        return cdict
 
     def get_target(self, name):
         cdict = self._compilations[name]

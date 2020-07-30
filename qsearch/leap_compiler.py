@@ -48,9 +48,11 @@ class LeapCompiler(Compiler):
         initial_layer = options.gateset.initial_layer(dits)
         total_depth = 0
         best_value = 1.0
+        depths = [total_depth]
         while True:
             best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value)
             total_depth += best_depth
+            depths.append(total_depth)
             if best_value < options.threshold:
                 break
             if 'constant_leap' in options and options.constant_leap:
@@ -62,21 +64,7 @@ class LeapCompiler(Compiler):
             else:
                 initial_layer = best_pair[0]
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
-        if 'reoptimize_size' in options and options.reoptimize_size:
-            while True:
-                old_best_pair = best_pair
-                shorter_circ = cut_end(best_pair[0], options.reoptimize_size)
-                old_depth = str(best_pair[0]).count('CNOT')
-                comp = SearchCompiler(options)
-                print(old_best_pair[0])
-                best_pair = comp.compile(options, initial_layer=shorter_circ)
-                reoptimized = str(best_pair[0]).count('CNOT')
-                if reoptimized < old_depth:
-                    logger.logprint(f"Re-optimized from depth {old_depth} to depth {reoptimized}", verbosity=2)
-                else:
-                    best_pair = old_best_pair
-                    break
-        return best_pair
+        return {'structure': best_pair[0], 'vector': best_pair[1], 'cut_depths': depths}
 
 
 class SubCompiler(Compiler):
@@ -149,7 +137,7 @@ class SubCompiler(Compiler):
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
-                return best_pair
+                return (best_pair, best_value, 0)
 
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
