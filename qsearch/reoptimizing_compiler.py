@@ -48,7 +48,8 @@ class ReoptimizingCompiler(Compiler):
             print(f'midpoints initialized as {midpoints}')
         start_point = 1
         while True:
-
+            if 'timeout' in options and timer() - overall_startime > options.timeout:
+                break
             best_circuit = overall_best_pair[0]
             best_circuit_depth = len(best_circuit._substeps) - 1
             if 'cut_depths' in options:
@@ -56,6 +57,8 @@ class ReoptimizingCompiler(Compiler):
             else:
                 insertion_points = range(start_point,best_circuit_depth)
             for point in insertion_points:
+                if 'timeout' in options and timer() - overall_startime > options.timeout:
+                    break
                 startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
                 root = ProductStep(*best_circuit._substeps[:point], *best_circuit._substeps[point + depth:])
                 h = options.heuristic
@@ -113,6 +116,8 @@ class ReoptimizingCompiler(Compiler):
                 options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
 
                 while len(queue) > 0:
+                    if 'timeout' in options and timer() - overall_startime > options.timeout:
+                        break
                     if best_value < options.threshold:
                         queue = []
                         break

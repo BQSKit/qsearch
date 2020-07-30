@@ -40,7 +40,7 @@ class LeapCompiler(Compiler):
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
-        startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+        starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
@@ -50,7 +50,9 @@ class LeapCompiler(Compiler):
         best_value = 1.0
         depths = [total_depth]
         while True:
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value)
+            if 'timeout' in options and timer() - starttime > options.timeout:
+                break
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime)
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
@@ -63,7 +65,7 @@ class LeapCompiler(Compiler):
                 options.target = np.dot(A_dagger, U)
             else:
                 initial_layer = best_pair[0]
-        logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
+        logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-starttime)))
         return {'structure': best_pair[0], 'vector': best_pair[1], 'cut_depths': depths}
 
 
@@ -89,7 +91,7 @@ class SubCompiler(Compiler):
         statefile = options.statefile
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
-        startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+        starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
@@ -142,7 +144,7 @@ class SubCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -151,6 +153,8 @@ class SubCompiler(Compiler):
         previous_bests_depths = []
         previous_bests_values = []
         while len(queue) > 0:
+            if 'timeout' in options and timer() - options.overall_starttime > options.timeout:
+                break
             if best_value < options.threshold:
                 queue = []
                 break
@@ -187,9 +191,9 @@ class SubCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
 
 
-        logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
+        logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))
         parallel.done()
         return (best_pair, best_value, best_depth)
