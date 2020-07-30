@@ -162,5 +162,5 @@ class ReoptimizingCompiler(Compiler):
                 break
         parallel.done()
         logger.logprint("Finished all compilations at depth {} with score {} after {} seconds.".format(best_circuit_depth, best_value, rectime+(timer()-overall_startime)))
-        return (*overall_best_pair, [])
+        return {'structure': overall_best_pair[0], 'vector': overall_best_pair[1]}
         

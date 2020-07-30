@@ -131,5 +131,5 @@ class SearchCompiler(Compiler):
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
         parallel.done()
-        return (*best_pair, [])
+        return {'structure': best_pair[0], 'vector': best_pair[1]}
 

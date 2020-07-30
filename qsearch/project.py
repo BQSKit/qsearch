@@ -200,16 +200,14 @@ class Project:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                structure, vector, cut_depths = compiler.compile(runopt.updated(cdict["options"]))
+                result = compiler.compile(runopt.updated(cdict["options"]))
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    structure, vector, cut_depths = compiler.compile(runopt.updated(cdict["options"]))
+                    result = compiler.compile(runopt.updated(cdict["options"]))
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
-            cdict["structure"] = structure
-            cdict["vector"] = vector
-            cdict["cut_depths"] = cut_depths
+            cdict.update(**result)
             cdict["time"] = endtime - starttime
             self._compilations[name] = cdict
             self._save()
@@ -282,7 +280,7 @@ class Project:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
             return None, None
 
-        return cdict["structure"], cdict["vector"], cdict["cut_depths"]
+        return cdict
 
     def get_target(self, name):
         cdict = self._compilations[name]

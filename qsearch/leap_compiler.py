@@ -64,7 +64,7 @@ class LeapCompiler(Compiler):
             else:
                 initial_layer = best_pair[0]
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-startime)))
-        return (*best_pair, depths)
+        return {'structure': best_pair[0], 'vector': best_pair[1], 'cut_depths': depths}
 
 
 class SubCompiler(Compiler):
@@ -137,7 +137,7 @@ class SubCompiler(Compiler):
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
-                return best_pair
+                return (best_pair, best_value, 0)
 
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
