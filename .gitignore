@@ -9,4 +9,5 @@ compilations
 benchmarks/
 *.egg-info/
 leapex/
+leapex-reoptimize/
 multistart/
