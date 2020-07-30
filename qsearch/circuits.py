@@ -745,6 +745,9 @@ class ProductStep(QuantumStep):
     def appending(self, *steps):
         return ProductStep(*self._substeps, *steps)
 
+    def inserting(self, *steps, depth=-1):
+        return ProductStep(*self._substeps[:depth], *steps, *self._substeps[depth:])
+
     def __deepcopy__(self, memo):
         return ProductStep(self._substeps.__deepcopy__(memo))
 
