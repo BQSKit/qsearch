@@ -11,6 +11,8 @@ def project(tmp_path):
 def check_project():
     def check(project):
         for comp in project.compilations:
-            c, v = project.get_result(comp)
+            res = project.get_result(comp)
+            c = res['structure']
+            v = res['vector']
             assert matrix_distance_squared(c.matrix(v), project.get_target(comp)) < 1e-10
     return check
