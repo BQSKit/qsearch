@@ -39,7 +39,7 @@ class SearchCompiler(Compiler):
         options.set_defaults(logger=logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file))
         logger = options.logger
 
-        startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+        starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
@@ -93,7 +93,7 @@ class SearchCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
         else:
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -128,10 +128,10 @@ class SearchCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
 
 
-        logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
+        logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))
         parallel.done()
         return {'structure': best_pair[0], 'vector': best_pair[1]}
 
