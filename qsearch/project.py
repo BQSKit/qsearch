@@ -11,7 +11,7 @@ from multiprocessing import freeze_support
 from .compiler import SearchCompiler
 from . import solver as scsolver
 from .options import Options
-from .defaults import defaults, smart_defaults
+from .defaults import standard_defaults, standard_smart_defaults
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler
 from time import time
 
@@ -174,8 +174,8 @@ class Project:
             sys.exit(0)
 
     def set_defaults(self):
-        self.options.set_defaults(verbosity=1,stdout_enabled=True,blas_threads=None,compiler_class=SearchCompiler,**defaults)
-        self.options.set_smart_defaults(**smart_defaults)
+        self.options.set_defaults(verbosity=1,stdout_enabled=True,blas_threads=None,compiler_class=SearchCompiler,**standard_defaults)
+        self.options.set_smart_defaults(**standard_smart_defaults)
 
     def run(self, target=None):
         runopt = self.options.copy()
