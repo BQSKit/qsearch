@@ -84,6 +84,32 @@ def matrix_residuals_slice_jac(slices, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(K[slices]), (1,-1)), np.reshape(np.imag(K[slices]), (1,-1))) for K in J])
     return JU.T
 
+
+def index_test(i, di, df):
+    if i < df:
+        return False
+    elif i % di >= df:
+        return True
+    else:
+        return index_test(i//di)
+
+def downgrade_dits_residuals(di=3, df=2, A, B, I):
+    M = (B - A)
+    dits = int(np.log(U.shape[0])/np.log(di))
+    M = np.delete(M, [i for i in range(di**dits) if index_test(i, di, df)], axis=0)
+    M = np.delete(M, [i for i in range(di**dits) if index_test(i, di, df)], axis=1)
+    #M *= np.abs(M[0][0])/M[0][0]
+    Re, Im = np.real(M), np.imag(M)
+    Re = np.reshape(Re, (1,-1))
+    Im = np.reshape(Im, (1,-1))
+    return np.append(Re, Im)
+
+def downgrade_dits_residuals_jac(di=3, df=2, A, B, J):
+    JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=0) for K in J]
+    JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=1) for K in JU]
+    JU = np.array([np.append(np.reshape(np.real(K), (1,-1)), np.reshape(np.imag(K), (1,-1))) for K in JU])
+    return JU.T
+
 def eval_func_from_residuals(f, A, B):
     return np.sum(np.square(f(A,B,I=np.array(np.eye(A.shape[0]), dtype='float64'))))
 
