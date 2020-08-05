@@ -1,4 +1,5 @@
 from . import utils, gatesets, solver, backend, parallelizer, heuristics
+from functools import partial
 
 
 
@@ -29,7 +30,7 @@ def default_error_residuals_jac(options):
     else:
         return None
 
-defaults = {
+standard_defaults = {
         "threshold":1e-10,
         "gateset":gatesets.Default(),
         "beams":-1,
@@ -43,10 +44,17 @@ defaults = {
         "parallelizer":parallelizer.MultiprocessingParallelizer,
         "log_file":None
         }
-smart_defaults = {
+standard_smart_defaults = {
         "eval_func":default_eval_func,
         "error_jac":default_error_jac,
         "error_residuals_jac":default_error_residuals_jac,
         "solver":solver.default_solver,
         "heuristic":default_heuristic
         }
+
+stateprep_defaults = {
+        "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
+        "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
+        "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None))))
+        }
+
