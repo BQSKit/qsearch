@@ -47,6 +47,7 @@ class ReoptimizingCompiler(Compiler):
             midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
             print(f'midpoints initialized as {midpoints}')
         start_point = 1
+        overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
         while True:
             if 'timeout' in options and timer() - overall_startime > options.timeout:
                 break
@@ -151,6 +152,7 @@ class ReoptimizingCompiler(Compiler):
                 if best_value < options.threshold and new_circuit_depth < best_circuit_depth:
                     logger.logprint(f"With starting point {point} re-optimized from depth {best_circuit_depth} to depth {new_circuit_depth}")
                     overall_best_pair = best_pair
+                    overall_best_value = best_value
                     # select the points which are greater than the search window and adjust by new reoptimization
                     print(f'old midpoinst: {midpoints}')
                     midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + options.depth)) > 0]
@@ -166,6 +168,6 @@ class ReoptimizingCompiler(Compiler):
             if new_circuit_depth >= best_circuit_depth:
                 break
         parallel.done()
-        logger.logprint("Finished all compilations at depth {} with score {} after {} seconds.".format(best_circuit_depth, best_value, rectime+(timer()-overall_startime)))
+        logger.logprint("Finished all compilations at depth {} with score {} after {} seconds.".format(best_circuit_depth, overall_best_value, rectime+(timer()-overall_startime)))
         return {'structure': overall_best_pair[0], 'vector': overall_best_pair[1]}
         
