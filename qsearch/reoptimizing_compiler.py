@@ -8,7 +8,7 @@ from .circuits import *
 
 from . import solver as scsolver
 from .options import Options
-from .defaults import defaults, smart_defaults
+from .defaults import standard_defaults as defaults, standard_smart_defaults as smart_defaults
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
