@@ -9,9 +9,9 @@ from . import utils
 from .gatesets import *
 from .logging import Logger
 try:
-    from qsearch_rs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object
+    from qsearch_rs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object, matrix_residuals, matrix_residuals_jac
 except ImportError:
-    LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = None
+    LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = matrix_residuals= matrix_residuals_jac = None
 
 def default_solver(options):
     options = options.copy()
@@ -49,7 +49,7 @@ def default_solver(options):
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed:
+        if rs_failed or options.error_residuals not in (utils.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (utils.matrix_residuals_jac, matrix_residuals_jac):
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
             return LeastSquares_Jac_Solver()
         else:
