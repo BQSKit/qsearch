@@ -52,7 +52,7 @@ class LeapCompiler(Compiler):
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime)
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value)
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
@@ -181,7 +181,7 @@ class SubCompiler(Compiler):
                         predicted_best = slope * new_depth + intercept
                         delta = predicted_best - best_value
                         logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
-                        if not np.isnan(predicted_best) and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
+                        if not np.isnan(predicted_best) and best_value < options.overall_best_value and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
                             parallel.done()
                             return (best_pair, best_value, best_depth)
                     previous_bests_depths.append(best_depth)
