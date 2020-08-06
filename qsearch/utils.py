@@ -93,7 +93,7 @@ def index_test(i, di, df):
     else:
         return index_test(i//di)
 
-def downgrade_dits_residuals(di=3, df=2, A, B, I):
+def downgrade_dits_residuals(di, df, A, B, I):
     M = (B - A)
     dits = int(np.log(U.shape[0])/np.log(di))
     M = np.delete(M, [i for i in range(di**dits) if index_test(i, di, df)], axis=0)
@@ -104,7 +104,7 @@ def downgrade_dits_residuals(di=3, df=2, A, B, I):
     Im = np.reshape(Im, (1,-1))
     return np.append(Re, Im)
 
-def downgrade_dits_residuals_jac(di=3, df=2, A, B, J):
+def downgrade_dits_residuals_jac(di, df, A, B, J):
     JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=0) for K in J]
     JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=1) for K in JU]
     JU = np.array([np.append(np.reshape(np.real(K), (1,-1)), np.reshape(np.imag(K), (1,-1))) for K in JU])

@@ -121,7 +121,7 @@ class ZXZXZQubitStep(QuantumStep):
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
-        v = v%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
+        v = np.array(v)%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
         out.append(("gate", "Z", (v[0]*np.pi*2,), (i,)))
         out.append(("gate", "X", (np.pi/2,), (i,)))
         out.append(("gate", "Z", (v[1]*np.pi*2 + np.pi,), (i,)))
@@ -173,7 +173,7 @@ class XZXZPartialQubitStep(QuantumStep):
     def assemble(self, v, i=0):
         # later use IBM's parameterization and convert to ZXZXZ in post processing
         out = []
-        v = v%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
+        v = np.array(v)%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
         out.append(("gate", "X", (np.pi/2,), (i,)))
         out.append(("gate", "Z", (v[0]*np.pi*2 + np.pi,), (i,)))
         out.append(("gate", "X", (np.pi/2,), (i,)))
@@ -215,7 +215,7 @@ class QiskitU3QubitStep(QuantumStep):
         return (U, [J1, J2, J3])
 
     def assemble(self, v, i=0):
-        v = v%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
+        v = np.array(v)%1 # confine the range of what we print to come up with nicer numbers at no loss of generality
         return [("gate", "U3", (v[0]*np.pi*2, v[1]*np.pi*2, v[2]*np.pi*2), (i,))]
 
     def _draw_assemble(self, i=0):

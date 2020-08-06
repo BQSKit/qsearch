@@ -48,10 +48,9 @@ class SearchCompiler(Compiler):
 
         I = circuits.IdentityStep(options.gateset.d)
 
-        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
-        search_layers = options.gateset.search_layers(dits)
-
-        if len(search_layers) <= 0:
+        initial_layer = options.gateset.initial_layer(dits)
+        branching_factor = options.gateset.branching_factor(dits)
+        if branching_factor <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
@@ -61,10 +60,10 @@ class SearchCompiler(Compiler):
         # TODO move these print statements somewhere else
         # this is good informati
         logger.logprint("There are {} processors available to Pool.".format(options.num_tasks))
-        logger.logprint("The branching factor is {}.".format(len(search_layers)))
+        logger.logprint("The branching factor is {}.".format(branching_factor))
         beams = int(options.beams)
-        if beams < 1 and len(search_layers) > 0:
-            beams = int(options.num_tasks // len(search_layers))
+        if beams < 1 and branching_factor > 0:
+            beams = int(options.num_tasks // branching_factor)
         if beams < 1:
             beams = 1
         if beams > 1:
@@ -115,7 +114,7 @@ class SearchCompiler(Compiler):
                 logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
 
             then = timer()
-            new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
+            new_steps = [(successor[0], current_tup[1], successor[1]) for current_tup in popped for successor in options.gateset.successors(current_tup[5])]
             for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
                 current_value = options.eval_func(U, result[0])
                 new_depth = current_depth + weight

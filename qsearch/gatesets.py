@@ -1,20 +1,34 @@
 from .circuits import *
+from .assembler import flatten_intermediate
+import numpy as np
 
 
 #TODO: rename all the n's in here to "dits" as appropriate
 
 # Commonly used functions for generating gatesets
-def linear_topology(double_step, single_step, n, d, identity_step=None, single_alt=None, double_weight=1, single_weight=0):
+def linear_topology(double_step, single_step, n, d, identity_step=None, single_alt=None, double_weight=1, single_weight=0, skip_index=None):
     weight = double_weight + 2*single_weight
     if not identity_step:
         identity_step = IdentityStep(d)
     if single_alt is None:
-        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_step, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1)]
+        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_step, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
     else:
-        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_alt, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1)]
+        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_alt, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
 
 def fill_row(step, n):
     return KroneckerStep(*[step]*n)
+
+
+def find_last_3_cnots(circuit):
+    # for CNOT-based circuit, this function will return the index of the last 3 CNOTs if they are all in a row, or None otherwise
+    il = [tup for tup in flatten_intermediate(circuit.assemble([0]*circuit.num_inputs)) if tup[1] == "CNOT"]
+    if len(il) < 3:
+        return None
+    il = il[-1:-4:-1]
+    if il[0] == il[1] and il[1] == il[2]:
+        return il[0]
+    else:
+        return None
 
 
 class Gateset():
@@ -33,6 +47,20 @@ class Gateset():
     # the set of possible multi-qubit gates for searching.  Generally a two-qubit gate with single qubit gates after it.
     def search_layers(self, dits):
         return [] # NOTES: Returns a LIST of tuples of (gate, weight)
+
+    def branching_factor(self, dits):
+        # returns an integer indicating the expected branching factor
+
+        # this implemenation is a backwards compatibility implementation and should not be relied on
+        return len(self.search_layers(dits))
+
+    def successors(self, circ, dits=None):
+        # NOTE: Returns a LIST of tuples of (gate, weight)
+        # NOTE: it is safe to assume that the circuit passed in here was produced by the functions of this class
+        
+        # this implementation is a backwards compatibility implementation and should not be relied on
+        dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        return [(circ.appending(t[0]), t[1]) for t in self.search_layers(dits)]
 
     def __eq__(self, other):
         if self is other:
@@ -79,6 +107,15 @@ class QubitCNOTLinear(Gateset):
     
     def search_layers(self, n):
         return linear_topology(self.cnot, self.single_step, n, self.d, single_alt=self.single_alt)
+
+    def branching_factor(self, dits):
+        return dits-1
+
+    def successors(self, circ, dits=None):
+        if dits is None:
+            dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        skip_index = find_last_3_cnots(circ)
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_step, dits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCRZLinear(Gateset):
     def __init__(self):

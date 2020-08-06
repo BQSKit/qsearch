@@ -8,7 +8,7 @@ from .circuits import *
 
 from . import solver as scsolver
 from .options import Options
-from .defaults import defaults, smart_defaults
+from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
@@ -22,8 +22,8 @@ class LeapCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
-        self.options.set_smart_defaults(**smart_defaults)
+        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
+        self.options.set_smart_defaults(**standard_smart_defaults)
 
     def compile(self, options=Options(), **xtraargs):
         options = self.options.updated(options)
@@ -74,8 +74,8 @@ class SubCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
-        self.options.set_smart_defaults(**smart_defaults)
+        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
+        self.options.set_smart_defaults(**standard_smart_defaults)
 
     def compile(self, options=Options(), **xtraargs):
         options = self.options.updated(options)
