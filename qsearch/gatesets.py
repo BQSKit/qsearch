@@ -19,17 +19,20 @@ def fill_row(step, n):
     return KroneckerStep(*[step]*n)
 
 
-def find_last_3_cnots(circuit):
-    # for CNOT-based circuit, this function will return the index of the last 3 CNOTs if they are all in a row, or None otherwise
-    il = [tup for tup in flatten_intermediate(circuit.assemble([0]*circuit.num_inputs)) if tup[1] == "CNOT"]
-    if len(il) < 3:
+def find_last_3_cnots_linear(circuit):
+    # this function finds the last 3 CNOTs in the circuit and returns the index if they are all in a row or None otherwise
+    # this function is written specifically for linear topology-based gatesets.  Other gatesets should use find_last_3_cnots_arbitrary.
+    # do not use either of these functions with gatesets not intended specifically for it
+
+    contents = circuit._substeps
+    if len(contents) < 4:
         return None
-    il = il[-1:-4:-1]
-    if il[0] == il[1] and il[1] == il[2]:
-        return il[0]
+    indices = [[type(sub) for sub in step._substeps].index(ProductStep) for step in contents[-1:-4:-1]]
+
+    if indices[0] == indices[1] and indices[1] == indices[2]:
+        return indices[0]
     else:
         return None
-
 
 class Gateset():
     def __init__(self):
@@ -114,7 +117,7 @@ class QubitCNOTLinear(Gateset):
     def successors(self, circ, dits=None):
         if dits is None:
             dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
-        skip_index = find_last_3_cnots(circ)
+        skip_index = find_last_3_cnots_linear(circ)
         return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_step, dits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCRZLinear(Gateset):

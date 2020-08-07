@@ -29,7 +29,7 @@ class QuantumStep:
         raise NotImplementedError("Subclasses of QuantumStep are required to implement the mat_jac(v) method in order to be used with gradient optimizers.")
 
     def __eq__(self, other):
-        return hash(self) == hash(other)
+        return repr(self) == repr(other)
 
     def __hash__(self):
         return int(md5(repr(self).encode()).hexdigest(), 16)
@@ -199,6 +199,9 @@ class QiskitU3QubitStep(QuantumStep):
         cl = np.cos(v[2] * np.pi * 2)
         sl = np.sin(v[2] * np.pi * 2)
         return np.array([[ct, -st * (cl + 1j * sl)], [st * (cp + 1j * sp), ct * (cl * cp - sl * sp + 1j * cl * sp + 1j * sl * cp)]], dtype='complex128')
+
+    def __eq__(self, other):
+        return type(self) == type(other)
 
     def mat_jac(self, v):
         ct = np.cos(v[0] * np.pi)
@@ -448,6 +451,9 @@ class CNOTStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 0
         self.dits = 2
+
+    def __eq__(self, other):
+        return type(self) == type(other)
 
     def matrix(self, v):
         return CNOTStep._cnot
