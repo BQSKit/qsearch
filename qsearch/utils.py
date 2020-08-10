@@ -30,16 +30,16 @@ def op_norm(A):
 def matrix_distance_squared(A,B):
     # this distance function is designed to be phase agnostic
     # optimized implementation
-    return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
+    return 1 - np.square(np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0])
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.T.conjugate()))) / A.shape[0]
 
 def matrix_distance_squared_jac(U, M, J):
     S = np.sum(np.multiply(U, np.conj(M)))
-    dsq = 1 - np.abs(S)/U.shape[0]
+    dsq = 1 - np.square(np.abs(S)/U.shape[0])
     JU = np.array([np.multiply(U,np.conj(K)) for K in J])
     JUS = np.sum(JU, axis=(1,2))
-    jacs = -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))*U.shape[0] / np.abs(S)
+    jacs = -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))/np.square(U.shape[0])
     return (dsq, jacs)
 
 def matrix_residuals(A, B, I):
