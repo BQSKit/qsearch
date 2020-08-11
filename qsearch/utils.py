@@ -39,7 +39,7 @@ def matrix_distance_squared_jac(U, M, J):
     dsq = 1 - np.square(np.abs(S)/U.shape[0])
     JU = np.array([np.multiply(U,np.conj(K)) for K in J])
     JUS = np.sum(JU, axis=(1,2))
-    jacs = -(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))/np.square(U.shape[0])
+    jacs = -2*(np.real(S)*np.real(JUS) + np.imag(S)*np.imag(JUS))/np.square(U.shape[0])
     return (dsq, jacs)
 
 def matrix_residuals(A, B, I):
