@@ -36,7 +36,6 @@ class SearchCompiler(Compiler):
         U = options.target
         depth = options.depth
         statefile = options.statefile
-        options.set_defaults(logger=logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file))
         logger = options.logger
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions

@@ -178,33 +178,33 @@ class Project:
         self.options.set_smart_defaults(**standard_smart_defaults)
 
     def run(self, target=None):
-        runopt = self.options.copy()
         freeze_support()
 
         self.logger.logprint("Started running project {}".format(self.name))
-        blas_threads = self.options.blas_threads
-
-        CompilerClass = self.options.compiler_class
-        compiler = CompilerClass(runopt)
         self.status(logger=self.logger)
         for name in self._compilations:
             cdict = self._compilations[name]
 
+            runopt = self.options.updated(cdict["options"])
+            blas_threads = runopt.blas_threads
+            CompilerClass = runopt.compiler_class
+            compiler = CompilerClass(runopt)
+
             statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
-            sublogger = logging.Logger(self.options.stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), self.options.verbosity)
+            sublogger = logging.Logger(runopt.stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), runopt.verbosity)
             runopt.logger = sublogger
             self.logger.logprint("Starting compilation of {}".format(name))
             try:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                result = compiler.compile(runopt.updated(cdict["options"]))
+                result = compiler.compile(runopt)
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    result = compiler.compile(runopt.updated(cdict["options"]))
+                    result = compiler.compile(runopt)
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
             cdict.update(**result)
@@ -218,6 +218,18 @@ class Project:
             self.status(logger=self.logger)
         self.logger.logprint("Finished running project {}".format(self.name))
 
+    def post_process(self, postprocessor, name=None, options=None, **xtraargs):
+        names = [name] if name else self._compilations
+        for name in names:
+            self.logger.logprint("Started postprocessing of {}".format(name))
+            cdict = self._compilations[name]
+            finaloptions = self.options.updated(cdict["options"]).updated(options, **xtraargs)
+            result = postprocessor.post_process_circuit(cdict["structure"], cdict["vector"], finaloptions)
+            cdict.update(**result)
+            self._compilation[name] = cdict
+            self.logger.logprint("Finished postprocessing of {}".format(name))
+        self._save()
+            
     def complete(self):
         return self._overall_status() == Project_Status.COMPLETE
 
