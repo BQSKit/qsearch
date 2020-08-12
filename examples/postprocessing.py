@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 import qsearch
 from qsearch import unitaries, advanced_unitaries, post_processing, multistart_solver, leap_compiler
 
@@ -29,5 +30,5 @@ with qsearch.Project("benchmarks") as project:
 
     # after running the project, run post-processing to reduce single qubit gate count
     # I've used the multistart solver for better post-processing results.  Increase the number of threads that you give the post-processor to increase the likelihood that you get the optimal final circuit.
-    project.post_process(post_processing.BasicSingleQubitReduction_PostProcessor(), solver=multistart_solver.MultiStart_Solver(8))
+    project.post_process(post_processing.BasicSingleQubitReduction_PostProcessor(), solver=multistart_solver.MultiStart_Solver(cpu_count()))
 

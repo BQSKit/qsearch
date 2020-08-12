@@ -226,7 +226,7 @@ class Project:
             finaloptions = self.options.updated(cdict["options"]).updated(options, **xtraargs)
             result = postprocessor.post_process_circuit(cdict["structure"], cdict["vector"], finaloptions)
             cdict.update(**result)
-            self._compilation[name] = cdict
+            self._compilations[name] = cdict
             self.logger.logprint("Finished postprocessing of {}".format(name))
         self._save()
             

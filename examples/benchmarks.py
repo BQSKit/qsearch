@@ -1,6 +1,5 @@
 import qsearch
-from qsearch import unitaries, advanced_unitaries, leap_compiler, multistart_solver, parallelizer
-import time
+from qsearch import unitaries, advanced_unitaries
 
 if __name__ == "__main__":
     # create the project
@@ -23,11 +22,10 @@ if __name__ == "__main__":
 
         # compiler configuration example
         #project["gateset"] = qsearch.gatesets.QubitCNOTRing() # use this to synthesize for the ring topology instead of the default line topology
-        #project["solver"]  = qsearch.solver.BFGS_Jac_Solver() # use this to force the compiler to use the BFGS solver instead of using the default setting
+        # project["solver"]  = qsearch.solver.BFGS_Jac_Solver() # use this to force the compiler to use the BFGS solver instead of using the default setting
         #project["verbosity"] = 2 # use this to have more information reported to stdout and the log files, or set it to 0 to disable logging altogether
         # once everything is set up, let the project run!
         project.run()
-
 
         # once its done you can use the following functions to get output
         # compilation_names = project.compilations # returns a list of the names that were specified when adding unitaries

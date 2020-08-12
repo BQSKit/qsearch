@@ -36,5 +36,5 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         finalstr = repr(finalcirc)
         final_count = sum([finalstr.count(sqn) for sqn in single_qubit_names])
         options.logger.logprint("Final count: {}".format(final_count), verbosity=2)
-        options.logger.logprint("Post-processing removed {}, or {}% of the single qubit gates".format(initial_count-final_count, (initial_count-final_count)/initial_count))
+        options.logger.logprint("Post-processing removed {}, or {}% of the single qubit gates".format(initial_count-final_count, 100*(initial_count-final_count)/initial_count))
         return {"structure":finalcirc, "vector":finalx}
