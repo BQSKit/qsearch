@@ -5,12 +5,14 @@ class PostProcessor():
     def __init__(self, options = opt.Options()):
         self.options=options
 
-    def post_process_circuit(self, circuit, vector, options=None):
-        return circuit
+    def post_process_circuit(self, result, options=None):
+        return result
 
 
 class BasicSingleQubitReduction_PostProcessor(PostProcessor):
-    def post_process_circuit(self, circuit, vector, options=None):
+    def post_process_circuit(self, result, options=None):
+        circuit = result["structure"]
+        finalx = result["vector"]
         options = self.options.updated(options)
         single_qubit_names = ["QiskitU3QubitStep()", "ZXZXZQubitStep()", "XZXZPartialQubitStep()"]
         identitystr = "IdentityStep(2)"
@@ -18,7 +20,6 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         initial_count = sum([circstr.count(sqn) for sqn in single_qubit_names])
         options.logger.logprint("Initial count: {}".format(initial_count), verbosity=2)
         finalcirc = circuit
-        finalx = vector
         for gate in single_qubit_names:
             components = circstr.split(gate)
             while len(components) > 1:
