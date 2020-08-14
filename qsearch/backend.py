@@ -2,13 +2,9 @@ try:
     from qsearch_rs import native_from_object
     RUST_ENABLED = True
 except ImportError:
-    try:
-        from search_compiler_rs import native_from_object # compatability with the old version should be kept at least until its time to release the renamed version
-        RUST_ENABLED = True
-    except ImportError:
-        RUST_ENABLED = False
-        def native_from_object(o):
-            raise Exception("Native code not installed.")
+    RUST_ENABLED = False
+    def native_from_object(o):
+        raise Exception("Native code not installed.")
 
 class Backend():
     def prepare_circuit(self, circ, options):
