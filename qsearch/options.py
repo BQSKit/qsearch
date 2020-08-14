@@ -2,6 +2,9 @@
 A class for holding and managing options that are passed to various other classes in the Qsearch suite.
 """
 
+import pickle
+import os
+
 _options_actual_paramters = ["defaults", "smart_defaults", "required", "cache"]
 
 class Options():
@@ -153,3 +156,60 @@ class Options():
             getattr(self, key) 
             # this may look weird, but calling getattr on these keys will populate
             # the cache with any keys that have not been already cached.
+
+    def save(self, filepath):
+        main_dict = dict()
+        for name in self.__dict__:
+            if not name in _options_actual_parameters:
+                main_dict[name] = pickle.dumps(self.__dict__[name])
+
+        defaults_dict = dict()
+        for name in self.defaults:
+            if not name in _options_actual_parameters:
+                defaults_dict[name] = pickle.dumps(self.defaults[name])
+
+        smart_defaults_dict = dict()
+        for name in self.smart_defaults:
+            if not name in _options_actual_parameters:
+                smart_defaults_dict[name] = pickle.dumps(self.smart_defaults[name])
+
+        pickle.dump((main_dict, defaults_dict, smart_defaults_dict), filepath)
+
+
+    def load(self, filepath, strict=False):
+        if not strict:
+            try:
+                main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
+            except:
+                return
+
+            for name in main_dict:
+                try:
+                    self.__dict__[name] = pickle.loads(main_dict[name])
+                except:
+                    pass
+
+            for name in defaults_dict:
+                try:
+                    self.defaults[name] = pickle.loads(defaults_dict[name])
+                except:
+                    pass
+
+            for name in smart_defaults_dict:
+                try:
+                    self.smart_defaults[name] = pickle.loads(smart_defaults_dict[name])
+                except:
+                    pass
+        else:
+            main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
+
+            for name in main_dict:
+                self.__dict__[name] = pickle.loads(main_dict[name])
+
+            for name in defaults_dict:
+                self.defaults[name] = pickle.loads(defaults_dict[name])
+
+            for name in smart_defaults_dict:
+                self.smart_defaults[name] = pickle.loads(smart_defaults_dict[name])
+
+
