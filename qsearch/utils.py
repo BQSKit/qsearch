@@ -84,6 +84,20 @@ def matrix_residuals_slice_jac(slices, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(K[slices]), (1,-1)), np.reshape(np.imag(K[slices]), (1,-1))) for K in J])
     return JU.T
 
+def matrix_residuals_blacklist(badrows, badcols, A, B, I):
+    M = (B - A)
+    M = np.delete(M, badrows, 0)
+    M = np.delete(M, badcols, 1)
+    #M *= np.abs(M[0][0])/M[0][0]
+    Re, Im = np.real(M), np.imag(M)
+    Re = np.reshape(Re, (1,-1))
+    Im = np.reshape(Im, (1,-1))
+    return np.append(Re, Im)
+
+def matrix_residuals_slice_jac(slices, A, B, J):
+    JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
+    return JU.T
+
 
 def index_test(i, di, df):
     if i < df:
