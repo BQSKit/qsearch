@@ -177,39 +177,30 @@ class Options():
 
 
     def load(self, filepath, strict=False):
-        if not strict:
-            try:
-                main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
-            except:
-                return
-
-            for name in main_dict:
-                try:
-                    self.__dict__[name] = pickle.loads(main_dict[name])
-                except:
-                    pass
-
-            for name in defaults_dict:
-                try:
-                    self.defaults[name] = pickle.loads(defaults_dict[name])
-                except:
-                    pass
-
-            for name in smart_defaults_dict:
-                try:
-                    self.smart_defaults[name] = pickle.loads(smart_defaults_dict[name])
-                except:
-                    pass
-        else:
+        try:
             main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
+        except:
+            if strict:
+                raise
+            return
 
-            for name in main_dict:
+        for name in main_dict:
+            try:
                 self.__dict__[name] = pickle.loads(main_dict[name])
+            except:
+                if strict:
+                    raise
 
-            for name in defaults_dict:
+        for name in defaults_dict:
+            try:
                 self.defaults[name] = pickle.loads(defaults_dict[name])
+            except:
+                if strict:
+                    raise
 
-            for name in smart_defaults_dict:
+        for name in smart_defaults_dict:
+            try:
                 self.smart_defaults[name] = pickle.loads(smart_defaults_dict[name])
-
-
+            except:
+                if strict:
+                    raise
