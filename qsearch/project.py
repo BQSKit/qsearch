@@ -190,7 +190,7 @@ class Project:
             CompilerClass = runopt.compiler_class
             compiler = CompilerClass(runopt)
 
-            statefile = self._checkpoint_path(name)
+            runopt.statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
             sublogger = logging.Logger(runopt.stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), runopt.verbosity)
@@ -213,7 +213,7 @@ class Project:
             self._save()
             self.logger.logprint("Recorded results from compilation.", verbosity=2)
 
-            checkpoint.delete(statefile)
+            checkpoint.delete(runopt.statefile)
             self.logger.logprint("Deleted checkpoint file.", verbosity=2)
             self.status(logger=self.logger)
         self.logger.logprint("Finished running project {}".format(self.name))

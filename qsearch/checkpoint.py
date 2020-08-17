@@ -12,10 +12,9 @@ def recover(filepath=None):
         return
     try:
         with open(filepath, "rb") as tmpfile:
-
             return pickle.load(tmpfile)
 
-    except Exception:
+    except:
         delete(filepath)
         return None
 

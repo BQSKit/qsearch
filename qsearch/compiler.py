@@ -91,9 +91,12 @@ class SearchCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
+            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
         else:
-            queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
+            options, queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
+            if options.load_error:
+                logger.logprint("Failed to recover state from checkpoint.  Resolve the issue or delete the checkpoint to finish the compilation.", 0)
+                raise options.load_error
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
 
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
@@ -126,7 +129,7 @@ class SearchCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
+            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
 
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))

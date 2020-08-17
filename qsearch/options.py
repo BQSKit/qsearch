@@ -5,7 +5,7 @@ A class for holding and managing options that are passed to various other classe
 import pickle
 import os
 
-_options_actual_paramters = ["defaults", "smart_defaults", "required", "cache"]
+_options_actual_parameters = ["defaults", "smart_defaults", "required", "cache", "load_error"]
 
 class Options():
     def __init__(self, **defaults):
@@ -14,9 +14,10 @@ class Options():
         self.smart_defaults = dict()
         self.required = set()
         self.cache = dict()
+        self.load_error = None
 
     def filtered(self, *names):
-        new_dict = {name:self.__dict__[name] for name in names if name in self.__dict__ and not name in _options_actual_paramters}
+        new_dict = {name:self.__dict__[name] for name in names if name in self.__dict__ and not name in _options_actual_parameters}
         new_defaults = {name:self.defaults[name] for name in names if name in self.defaults}
         new_smart_defaults = {name:self.smart_defaults[name] for name in names if name in self.smart_defaults}
         
@@ -29,12 +30,12 @@ class Options():
         return getattr(self, name)
 
     def __delitem__(self, name):
-        if name in _options_actual_paramters:
+        if name in _options_actual_parameters:
             raise AttributeError("This is one of the essential parameters and cannot be removed")
         del self.__dict__[name]
 
     def __getattr__(self, name):
-        if name in _options_actual_paramters:
+        if name in _options_actual_parameters:
             raise AttributeError("This options class is corrupt as it is missing its critical members")
         elif name in self.required:
             raise AttributeError("Missing required parameter {}".format(name))
@@ -55,7 +56,7 @@ class Options():
         raise AttributeError("Could not find option {}".format(name))
 
     def __setattr__(self, name, value):
-        if name not in _options_actual_paramters:
+        if name not in _options_actual_parameters:
             self.cache = dict()
         super().__setattr__(name, value)
 
@@ -114,7 +115,7 @@ class Options():
 
     def _update_dict(self, otherdict):
         for name in otherdict:
-            if name in _options_actual_paramters:
+            if name in _options_actual_parameters:
                 continue
             self.__dict__[name] = otherdict[name]
 
@@ -157,7 +158,7 @@ class Options():
             # this may look weird, but calling getattr on these keys will populate
             # the cache with any keys that have not been already cached.
 
-    def save(self, filepath):
+    def save(self, filepath=None):
         main_dict = dict()
         for name in self.__dict__:
             if not name in _options_actual_parameters:
@@ -173,34 +174,64 @@ class Options():
             if not name in _options_actual_parameters:
                 smart_defaults_dict[name] = pickle.dumps(self.smart_defaults[name])
 
+        if filepath is None:
+            return (main_dict, defaults_dict, smart_defaults_dict)
         pickle.dump((main_dict, defaults_dict, smart_defaults_dict), filepath)
 
 
-    def load(self, filepath, strict=False):
+    def load(self, filepath_or_tuple, strict=False):
         try:
-            main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
-        except:
+            if type(filepath_or_tuple) is tuple:
+                main_dict, defaults_dict, smart_defaults_dict = filepath_or_tuple
+            else:
+                main_dict, defaults_dict, smart_defaults_dict = pickle.load(filepath)
+        except Exception as e:
             if strict:
                 raise
+            else:
+                self.load_error = e
             return
 
         for name in main_dict:
             try:
                 self.__dict__[name] = pickle.loads(main_dict[name])
-            except:
+            except Exception as e:
                 if strict:
                     raise
+                else:
+                    self.load_error = e
 
         for name in defaults_dict:
             try:
                 self.defaults[name] = pickle.loads(defaults_dict[name])
-            except:
+            except Exception as e:
                 if strict:
                     raise
+                else:
+                    self.load_error = e
 
         for name in smart_defaults_dict:
             try:
                 self.smart_defaults[name] = pickle.loads(smart_defaults_dict[name])
-            except:
+            except Exception as e:
                 if strict:
                     raise
+                else:
+                    self.load_error = e
+
+    def __getstate__(self):
+        return self.save()
+
+    def __setstate__(self, state):
+        self.defaults = dict()
+        self.smart_defaults = dict()
+        self.required = set()
+        self.cache = dict()
+        self.load_error = None
+
+        try:
+            self.load(state, strict=True)
+        except Exception as e:
+            self.load(state, strict=False)
+            self.load_error = e
+
