@@ -8,12 +8,12 @@ from . import solver as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizer, backend
-from . import checkpoint, utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, circuits, logging, gatesets
 
 class Compiler():
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement their own initializers with relevant args")
-    def compile(self, U, depth, statefile, logger):
+    def compile(self, options, **xtraargs):
         raise NotImplementedError("Subclasses of Compiler are expected to implement the compile method.")
         return (U, None)
 
@@ -35,7 +35,7 @@ class SearchCompiler(Compiler):
 
         U = options.target
         depth = options.depth
-        statefile = options.statefile
+        checkpoint = options.checkpoint
         logger = options.logger
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
@@ -68,7 +68,7 @@ class SearchCompiler(Compiler):
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
 
-        recovered_state = checkpoint.recover(statefile)
+        recovered_state = checkpoint.recover()
         queue = []
         best_depth = 0
         best_value = 0
@@ -91,7 +91,7 @@ class SearchCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
+            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime))
         else:
             options, queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             if options.load_error:
@@ -129,7 +129,7 @@ class SearchCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
+            checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
 
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))

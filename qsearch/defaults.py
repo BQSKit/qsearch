@@ -1,4 +1,4 @@
-from . import utils, gatesets, solver, backend, parallelizer, heuristics, logging
+from . import utils, gatesets, solver, backend, parallelizer, heuristics, logging, checkpoint
 from functools import partial
 
 
@@ -33,6 +33,9 @@ def default_error_residuals_jac(options):
 def default_logger(options):
     return logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
+def default_checkpoint(options):
+    return checkpoint.FileCheckpoint(opt=options)
+
 standard_defaults = {
         "threshold":1e-10,
         "gateset":gatesets.Default(),
@@ -54,7 +57,8 @@ standard_smart_defaults = {
         "error_residuals_jac":default_error_residuals_jac,
         "solver":solver.default_solver,
         "heuristic":default_heuristic,
-        "logger" :default_logger
+        "logger" :default_logger,
+        "checkpoint":default_checkpoint
         }
 
 stateprep_defaults = {

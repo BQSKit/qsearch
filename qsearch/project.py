@@ -78,7 +78,7 @@ class Project:
                 warn("A compilation with name {} already exists.  To change it, remove it and then add it again.".format(name), RuntimeWarning, stacklevel=2)
                 return
         
-        compopt = Options()
+        compopt = Options(statefile=self._checkpoint_path(name))
         compopt.update(options, **extraargs)
         compopt.target = U
         self._compilations[name] = {"options" : compopt}
@@ -129,34 +129,25 @@ class Project:
         if name is None:
             [self.reset(n) for n in self._compilations]
         else:
-            statefile = self._checkpoint_path(name)
-            if os.path.exists(statefile):
-                os.remove(statefile)
-                self._save()
             cdict = self._compilations[name]
+            cdict["options"].checkpoint.delete()
             self._compilations[name] = {"options" : cdict["options"]}
         self._save()
 
-
     def remove_compilation(self, name):
-        statefile = self._checkpoint_path(name)
-        if os.path.exists(statefile):
-            os.remove(statefile)
-        self._compilations.pop(name)
+        cdict = self._compilations.pop(name)
+        cdict["options"].checkpoint.delete()
         self._save()
 
     def clear(self, name=None):
         if name is None:
             for name in self._compilations:
-                statefile = self._checkpoint_path(name)
-                checkpoint.delete(statefile)
+                self._compilations[name]["options"].checkpoint.delete()
             self._compilations = dict()
             self._compiler_config = dict()
         else:
-            statefile = self._checkpoint_path(name)
-            if os.path.exists(statefile):
-                os.remove(statefile)
-            self._compilations.pop(name)
+            cdict = self._compilations.pop(name)
+            cdict["options"].checkpoint.delete()
         self._save()
 
     def __enter__(self):
@@ -190,7 +181,6 @@ class Project:
             CompilerClass = runopt.compiler_class
             compiler = CompilerClass(runopt)
 
-            runopt.statefile = self._checkpoint_path(name)
             if self._compilation_status(name) == Project_Status.COMPLETE:
                 continue
             sublogger = logging.Logger(runopt.stdout_enabled, os.path.join(self.folder, "{}-log.txt".format(name)), runopt.verbosity)
@@ -213,7 +203,7 @@ class Project:
             self._save()
             self.logger.logprint("Recorded results from compilation.", verbosity=2)
 
-            checkpoint.delete(runopt.statefile)
+            runopt.checkpoint.delete()
             self.logger.logprint("Deleted checkpoint file.", verbosity=2)
             self.status(logger=self.logger)
         self.logger.logprint("Finished running project {}".format(self.name))
