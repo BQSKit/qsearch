@@ -50,10 +50,10 @@ def default_solver(options):
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
         if rs_failed or options.error_residuals not in (utils.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (utils.matrix_residuals_jac, matrix_residuals_jac):
-            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=2)
+            logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
-            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=2)
+            logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=3)
             return LeastSquares_Jac_SolverNative()
 
     if dits < 1:
