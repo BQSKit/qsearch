@@ -12,13 +12,19 @@ from .defaults import standard_defaults as defaults, standard_smart_defaults as 
 from . import parallelizer, backend
 from . import checkpoint, utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
+from .post_processing import PostProcessor
 
-class ReoptimizingCompiler(Compiler):
+class ReoptimizingCompiler(Compiler, PostProcessor):
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
+
+    def post_process_circuit(self, result, options=None):
+        best_pair = (result['structure'], result['vector'])
+        return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
+
 
     def compile(self, options=Options(), **xtraargs):
         options = self.options.updated(options)

@@ -41,22 +41,31 @@ class LeapCompiler(Compiler):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+        rectime = 0
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
         sc = sub_compiler(options)
         initial_layer = options.gateset.initial_layer(dits)
-        total_depth = 0
-        best_value = 1.0
-        depths = [total_depth]
+        recovered_state = checkpoint.recover(statefile)
+        if recovered_state is None:
+            total_depth = 0
+            best_value = 1.0
+            depths = [total_depth]
+        else:
+            total_depth = recovered_state[0]
+            best_value = recovered_state[1]
+            depths = recovered_state[2]
+            rectime = recovered_state[3]
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value)
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, statefile=statefile + str(len(depths)))
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
                 break
+            checkpoint.save((total_depth, best_value, depths, timer()-starttime), statefile)
             if 'constant_leap' in options and options.constant_leap:
                 # A B = U -> B = A* U
                 circ, vec = best_pair
