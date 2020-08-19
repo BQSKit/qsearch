@@ -2,6 +2,8 @@ from multiprocessing import cpu_count
 import qsearch
 from qsearch import unitaries, advanced_unitaries, post_processing, multistart_solver, leap_compiler
 
+import numpy as np
+
 # This simple script demonstrates how to use post-processing to reduce the number of single-qubit gates in the final solution.
 
 # With default settings, qsearch will add far more single qubit gates than necessary in order to prioritize runtime and CNOT reduction.  If the final single qubit gate count is too high, post processing can be used to reduce it.  It does so by trying different variants of the circuit with the same CNOT structure, but with certain single qubit gates changed to the identity.
@@ -22,8 +24,8 @@ with qsearch.Project("benchmarks") as project:
     # 4 qubit benchmarks are generally too hard to run with the normal compiler
     # the Leap compiler runs much faster but generally produces longer circuits
     LeapClass = leap_compiler.LeapCompiler
-    project.add_compilation("qft4", unitaries.qft(16), compiler_class=LeapClass)
-    project.add_compilation("full adder", unitaries.full_adder, compiler_class=LeapClass)
+#    project.add_compilation("qft4", unitaries.qft(16), compiler_class=LeapClass)
+#    project.add_compilation("full adder", unitaries.full_adder, compiler_class=LeapClass)
     # project.add_compilation("ethylene", advanced_unitaries.ethylene, compiler_class=LeapClass) ethylene is hard even for the Leap compiler
 
     project.run()
@@ -31,4 +33,10 @@ with qsearch.Project("benchmarks") as project:
     # after running the project, run post-processing to reduce single qubit gate count
     # I've used the multistart solver for better post-processing results.  Increase the number of threads that you give the post-processor to increase the likelihood that you get the optimal final circuit.
     project.post_process(post_processing.BasicSingleQubitReduction_PostProcessor(), solver=multistart_solver.MultiStart_Solver(cpu_count()))
+    for name in project.compilations:
+        target = project.get_target(name)
+        result = project.get_result(name)
+        while np.abs(project.options.eval_func(target, result["structure"].matrix(result["vector"]))) > 1e-15:
+            project.post_process(post_processing.ParameterTuning_PostProcessor(), name, solver=multistart_solver.MultiStart_Solver(16), inner_solver=qsearch.solver.LeastSquares_Jac_Solver())
+            result = project.get_result(name)
 

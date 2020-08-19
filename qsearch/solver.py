@@ -162,7 +162,10 @@ class LeastSquares_Jac_Solver(Solver):
         I = np.eye(options.target.shape[0])
         eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
         jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
-        result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm")
+        if options.max_quality_optimization:
+            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
+        else:
+            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs), jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 

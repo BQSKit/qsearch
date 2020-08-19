@@ -39,3 +39,23 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         options.logger.logprint("Final count: {}".format(final_count), verbosity=2)
         options.logger.logprint("Post-processing removed {}, or {}% of the single qubit gates".format(initial_count-final_count, 100*(initial_count-final_count)/initial_count))
         return {"structure":finalcirc, "vector":finalx}
+
+class ParameterTuning_PostProcessor(PostProcessor):
+    def post_process_circuit(self, result, options=None):
+        circuit = result["structure"]
+        initialx = result["vector"]
+        options = self.options.updated(options)
+        options.max_quality_optimization = True
+        initial_value = options.eval_func(options.target, circuit.matrix(initialx))
+        options.logger.logprint("Initial Distance: {}".format(initial_value))
+
+        U, x = options.solver.solve_for_unitary(circuit, options)
+
+        final_value = options.eval_func(options.target, U)
+        if np.abs(final_value) < np.abs(initial_value):
+            options.logger.logprint("Improved Distance: {}".format(final_value))
+            return {"vector":x}
+        else:
+            options.logger.logprint("Rejected Distance: {}".format(final_value))
+            return {}
+        

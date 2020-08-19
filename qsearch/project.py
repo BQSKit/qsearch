@@ -290,8 +290,6 @@ class Project:
         cdict = self._compilations[name]
         if not "structure" in cdict or not "vector" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
-            return None, None
-
         return cdict
 
     def get_target(self, name):

@@ -45,7 +45,8 @@ standard_defaults = {
         "error_residuals":utils.matrix_residuals,
         "backend":backend.SmartDefaultBackend(),
         "parallelizer":parallelizer.MultiprocessingParallelizer,
-        "log_file":None
+        "log_file":None,
+        "max_quality_optimization" : False
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
