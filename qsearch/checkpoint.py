@@ -44,22 +44,33 @@ class FileCheckpoint(Checkpoint):
         except:
             return
 
-def ChildCheckpoint(Checkpoint):
+class ChildCheckpoint(Checkpoint):
     def __init__(self, parent, opt=options.Options(), **xtraargs):
-        self.parent = parent
         super().__init__(opt, **xtraargs)
+        self.parent = parent
+        self.recover()
 
     def save(self, state):
-        self.parent.save((self.parentdata, state))
+        self.state = state
+        self.parent.save((self.parentstate, self.state))
+
+    def save_parent(self, parentstate):
+        self.parentstate = parentstate
+        self.save(self.state)
 
     def recover(self):
         recdata = self.parent.recover()
         if recdata is None:
-            self.parentdata = None
+            self.parentstate = None
+            self.state = None
             return None
         else:
-            self.parentdata = recdata[0]
-            return recdata[1]
+            self.parentstate, self.state = recdata
+            return self.state
+
+    def recover_parent(self):
+        self.recover()
+        return self.parentstate
 
     def delete(self):
         self.parent.delete()
