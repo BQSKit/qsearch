@@ -10,13 +10,16 @@ from . import solver as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizer, backend
-from . import checkpoint, utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
+from .checkpoint import ChildCheckpoint
+
 
 def cut_end(circ, depth):
     if isinstance(circ._substeps[0], ProductStep):
         return cut_end(circ._substeps[0], depth)
     return circuits.ProductStep(*circ._substeps[:-depth])
+
 
 class LeapCompiler(Compiler):
     def __init__(self, options=Options(), **xtraargs):
@@ -36,7 +39,7 @@ class LeapCompiler(Compiler):
 
         U = options.target
         depth = options.depth
-        statefile = options.statefile
+        checkpoint = ChildCheckpoint(options.checkpoint)
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
@@ -46,34 +49,30 @@ class LeapCompiler(Compiler):
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
         sc = sub_compiler(options)
-        initial_layer = options.gateset.initial_layer(dits)
-        recovered_state = checkpoint.recover(statefile)
+        recovered_state = checkpoint.recover_parent()
         if recovered_state is None:
             total_depth = 0
             best_value = 1.0
             depths = [total_depth]
+            initial_layer = options.gateset.initial_layer(dits)
         else:
             total_depth = recovered_state[0]
             best_value = recovered_state[1]
             depths = recovered_state[2]
             rectime = recovered_state[3]
+            initial_layer = recovered_state[4]
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, statefile=statefile + str(len(depths)))
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=checkpoint)
+            # clear child checkpoint for next run
+            checkpoint.save(None)
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
                 break
-            checkpoint.save((total_depth, best_value, depths, timer()-starttime), statefile)
-            if 'constant_leap' in options and options.constant_leap:
-                # A B = U -> B = A* U
-                circ, vec = best_pair
-                A = circ.matrix(vec)
-                A_dagger = np.conj(A.T)
-                options.target = np.dot(A_dagger, U)
-            else:
-                initial_layer = best_pair[0]
+            initial_layer = best_pair[0]
+            checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-starttime)))
         return {'structure': best_pair[0], 'vector': best_pair[1], 'cut_depths': depths}
 
@@ -97,7 +96,8 @@ class SubCompiler(Compiler):
 
         U = options.target
         depth = options.depth
-        statefile = options.statefile
+        checkpoint = options.checkpoint
+
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
@@ -131,7 +131,7 @@ class SubCompiler(Compiler):
         if beams > 1:
             logger.logprint("The beam factor is {}.".format(beams))
 
-        recovered_state = checkpoint.recover(statefile)
+        recovered_state = checkpoint.recover()
         queue = []
         best_depth = 0
         best_value = 0
@@ -153,7 +153,7 @@ class SubCompiler(Compiler):
             queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime))
         else:
             queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
             logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -200,7 +200,7 @@ class SubCompiler(Compiler):
                     heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)), statefile)
+            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
 
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))

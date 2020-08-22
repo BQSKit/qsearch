@@ -10,9 +10,11 @@ from . import solver as scsolver
 from .options import Options
 from .defaults import standard_defaults as defaults, standard_smart_defaults as smart_defaults
 from . import parallelizer, backend
-from . import checkpoint, utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
 from .post_processing import PostProcessor
+from .checkpoint import ChildCheckpoint
+
 
 class ReoptimizingCompiler(Compiler, PostProcessor):
     def __init__(self, options=Options(), **xtraargs):
@@ -37,7 +39,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
 
         U = options.target
         depth = options.depth
-        statefile = options.statefile
+        checkpoint = ChildCheckpoint(options.checkpoint)
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
@@ -45,15 +47,18 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         parallel = options.parallelizer(options)
-
-        overall_best_pair = options.best_pair
-        start_depth = len(overall_best_pair[0]._substeps) - 1
-        if 'cut_depths' in options:
-            # these are the "ideal" starting points, but we may need to modify them as we optimize
-            midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
-            print(f'midpoints initialized as {midpoints}')
-        start_point = 1
-        overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
+        recovered_outer = checkpoint.recover_parent()
+        if recovered_outer is None:    
+            overall_best_pair = options.best_pair
+            start_depth = len(overall_best_pair[0]._substeps) - 1
+            if 'cut_depths' in options:
+                # these are the "ideal" starting points, but we may need to modify them as we optimize
+                midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
+                print(f'midpoints initialized as {midpoints}')
+            start_point = 1
+            overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
+        else:
+            overall_best_pair, start_depth, midpoints, start_point, overall_best_value = recovered_outer
         while True:
             if 'timeout' in options and timer() - overall_startime > options.timeout:
                 break
@@ -97,7 +102,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                 if beams > 1:
                     logger.logprint("The beam factor is {}.".format(beams))
 
-                recovered_state = checkpoint.recover(statefile)
+                recovered_state = checkpoint.recover()
                 queue = []
                 best_depth = 0
                 best_value = 0
@@ -115,7 +120,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                     queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
                     #         heuristic      depth  distance tiebreaker vector structure
                     #             0            1      2         3         4        5
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime), statefile)
+                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
                 else:
                     queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
                     logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -150,7 +155,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                             heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                             tiebreaker+=1
                     logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)), statefile)
+                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
                 logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
@@ -163,6 +168,8 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                     print(f'old midpoinst: {midpoints}')
                     midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + options.depth)) > 0]
                     print(f'new midpoints: {midpoints}')
+                    checkpoint.save(None)
+                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     break # break out so we can re-run optimization on the better circuit
                 else:
                     logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
@@ -170,6 +177,8 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                     midpoints = [i for i in midpoints if (i - (point + options.depth)) > 0]
                     print(f'new midpoints: {midpoints}')
                     start_point = point
+                    checkpoint.save(None)
+                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     continue
             if new_circuit_depth >= best_circuit_depth:
                 break
