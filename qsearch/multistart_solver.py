@@ -16,8 +16,8 @@ def distance_for_x(x, options, circuit):
     elif options.inner_solver.distance_metric == "Residuals":
         return np.sum(options.error_residuals(options.target, circuit.matrix(x), np.eye(options.target.shape[0]))**2)
 
-def optimize_worker(circuit, options, q):
-    _, xopt = options.inner_solver.solve_for_unitary(circuit, options)
+def optimize_worker(circuit, options, q, x0):
+    _, xopt = options.inner_solver.solve_for_unitary(circuit, options, x0)
     q.put((distance_for_x(xopt, options, circuit), xopt))
 
 class MultiStart_Solver(Solver):
@@ -25,7 +25,7 @@ class MultiStart_Solver(Solver):
     def __init__(self, num_threads):
         self.num_threads = num_threads
 
-    def solve_for_unitary(self, circuit, options):
+    def solve_for_unitary(self, circuit, options, x0=None):
         if 'inner_solver' not in options:
             options.inner_solver = default_solver(options)
         U = options.target
@@ -62,7 +62,7 @@ class MultiStart_Solver(Solver):
         processes = []
         rets = []
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(circuit, options, q))
+            p = Process(target=optimize_worker, args=(circuit, options, q, x0))
             processes.append(p)
             p.start()
         for p in processes:
@@ -71,6 +71,37 @@ class MultiStart_Solver(Solver):
         for p in processes:
             p.join()
         end = time.time()
+
+        best_found = np.argmin([r[0] for r in rets])
+        best_val = rets[best_found][0]
+
+        xopt = rets[best_found][1]
+
+        return (circuit.matrix(xopt), xopt)
+
+class DumbMultiStart_Solver(Solver):
+    def __init__(self, num_threads):
+        self.threads = num_threads if num_threads else 1
+
+    def solve_for_unitary(self, circuit, options, x0=None):
+        if 'inner_solver' not in options:
+            options.inner_solver = default_solver(options)
+        U = options.target
+        logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
+        n = circuit.num_inputs
+        initial_samples = [np.random.uniform((i - 1)/self.threads, i/self.threads, (circuit.num_inputs,)) for i in range(1, self.threads+1)]
+        q = Queue()
+        processes = []
+        rets = []
+        for x0 in initial_samples:
+            p = Process(target=optimize_worker, args=(circuit, options, q, x0))
+            processes.append(p)
+            p.start()
+        for p in processes:
+            ret = q.get() # will block
+            rets.append(ret)
+        for p in processes:
+            p.join()
 
         best_found = np.argmin([r[0] for r in rets])
         best_val = rets[best_found][0]
