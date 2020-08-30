@@ -72,7 +72,8 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                 if 'timeout' in options and timer() - overall_startime > options.timeout:
                     break
                 startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
-                root = ProductStep(*best_circuit._substeps[:point], *best_circuit._substeps[point + depth:])
+                window_size = depth or options.reoptimize_size
+                root = ProductStep(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
                 h = options.heuristic
                 dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
@@ -155,6 +156,8 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                             heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
                             tiebreaker+=1
                     logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
+                    if (options.depth is not None and best_depth >= options.depth - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
+                        break
                     checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
@@ -166,7 +169,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                     overall_best_value = best_value
                     # select the points which are greater than the search window and adjust by new reoptimization
                     print(f'old midpoinst: {midpoints}')
-                    midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + options.depth)) > 0]
+                    midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
                     checkpoint.save(None)
                     checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
@@ -174,7 +177,7 @@ class ReoptimizingCompiler(Compiler, PostProcessor):
                 else:
                     logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
                     print(f'old midpoinst: {midpoints}')
-                    midpoints = [i for i in midpoints if (i - (point + options.depth)) > 0]
+                    midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
                     start_point = point
                     checkpoint.save(None)
