@@ -28,7 +28,9 @@ jobs:
           run: sudo apt install libceres-dev
         - if: startsWith(matrix.os, 'macOS')
           run: brew install ceres-solver
-        - name: install search_compiler
+        - name: install qsrs
+          run: cd qsrs && pip install . && cd ..
+        - name: install qsearch
           run: pip install .
         - name: install test dependencies
           run: pip install -r test-requirements.txt
