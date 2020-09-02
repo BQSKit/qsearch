@@ -2,7 +2,7 @@ from qsearch import unitaries, gatesets, solver, utils, compiler, backend, Optio
 from qsearch.circuits import CNOTStep, QuantumStep
 import numpy as np
 try:
-    from qsearch_rs import LeastSquares_Jac_SolverNative
+    from qsrs import LeastSquares_Jac_SolverNative
 except ImportError:
     LeastSquares_Jac_SolverNative = None
 

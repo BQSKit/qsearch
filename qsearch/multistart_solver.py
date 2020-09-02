@@ -3,7 +3,7 @@ from .solver import Solver, default_solver
 import numpy as np
 import scipy as sp
 import scipy.optimize
-from qsearch_rs import native_from_object
+from qsrs import native_from_object
 import time
 from math import pi, gamma, sqrt
 

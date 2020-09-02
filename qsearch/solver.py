@@ -9,7 +9,7 @@ from . import utils
 from .gatesets import *
 from .logging import Logger
 try:
-    from qsearch_rs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object, matrix_residuals, matrix_residuals_jac
+    from qsrs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object, matrix_residuals, matrix_residuals_jac
 except ImportError:
     LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = matrix_residuals= matrix_residuals_jac = None
 

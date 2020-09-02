@@ -1,0 +1,20 @@
+[package]
+name = "ceres"
+version = "0.1.0"
+authors = ["Ethan Smith <ethan@ethanhs.me>"]
+edition = "2018"
+license = "BSD-3-Clause"
+
+[dependencies]
+ceres-sys = { path = "./ceres-sys" }
+
+[features]
+static = ["ceres-sys/static"]
+
+
+[package.metadata.vcpkg]
+git = "https://github.com/microsoft/vcpkg"
+rev = "2020.06"
+
+[package.metadata.vcpkg.target]
+x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md", install = ["eigen3", "openblas"] }

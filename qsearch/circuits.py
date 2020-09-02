@@ -3,7 +3,7 @@ from . import utils, graphics, unitaries
 from hashlib import md5
 
 try:
-    from qsearch_rs import native_from_object
+    from qsrs import native_from_object
 except ImportError:
     native_from_object = None
 

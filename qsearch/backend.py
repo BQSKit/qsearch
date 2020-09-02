@@ -1,5 +1,5 @@
 try:
-    from qsearch_rs import native_from_object
+    from qsrs import native_from_object
     RUST_ENABLED = True
 except ImportError:
     RUST_ENABLED = False

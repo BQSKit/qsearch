@@ -1,7 +1,15 @@
-from qsearch import Project, solver, unitaries, utils, multistart_solver, parallelizer
+from qsearch import Project, solver, unitaries, utils, multistart_solver, parallelizer, compiler, options
 import scipy as sp
 import os
+try:
+    from qsrs import BFGS_Jac_SolverNative, LeastSquares_Jac_SolverNative
+except ImportError:
+    BFGS_Jac_SolverNative = None
+    LeastSquares_Jac_SolverNative = None
 
+import pytest
+import tempfile
+import os
 
 qft3 = unitaries.qft(8)
 
@@ -37,3 +45,31 @@ def test_multistart_bfgs(project):
     project['inner_solver'] = solver.BFGS_Jac_Solver()
     project['parallelizer'] = parallelizer.ProcessPoolParallelizer
     project.run()
+
+def compile(U, solver):
+    with tempfile.TemporaryDirectory() as dir:
+        opts = options.Options()
+        opts.target = U
+        opts.error_func = utils.matrix_distance_squared
+        opts.error_jac = utils.matrix_distance_squared_jac
+        opts.solver = solver
+        opts.log_file = os.path.join(dir, 'test.log')
+        comp = compiler.SearchCompiler()
+        res = comp.compile(opts)
+    return res
+
+@pytest.mark.skipif(BFGS_Jac_SolverNative is None, reason="The rustopt feature has not been enabled")
+def test_rust_solver_qft3():
+    U = unitaries.qft(8)
+    res = compile(U, BFGS_Jac_SolverNative())
+    circ = res['structure']
+    v = res['vector']
+    assert utils.matrix_distance_squared(U, circ.matrix(v)) < 1e-10
+
+@pytest.mark.skipif(LeastSquares_Jac_SolverNative is None, reason="The rustopt feature has not been enabled")
+def test_rust_solver_qft3():
+    U = unitaries.qft(8)
+    res = compile(U, LeastSquares_Jac_SolverNative())
+    circ = res['structure']
+    v = res['vector']
+    assert utils.matrix_distance_squared(U, circ.matrix(v)) < 1e-10

@@ -21,6 +21,9 @@ def evaluate_step(tup, options):
     step, depth, weight = tup
     return (step, options.solver.solve_for_unitary(options.backend.prepare_circuit(step, options), options), depth, weight)
 
+def single_task(opts):
+    return 1
+
 class Parallelizer():
     def solve_circuits_parallel(self, tuples):
         return None
@@ -114,7 +117,7 @@ class MPIParallelizer(Parallelizer):
 
 class SequentialParallelizer(Parallelizer):
     def __init__(self, options):
-        options.set_smart_defaults(num_tasks=lambda opts: 1)
+        options.set_smart_defaults(num_tasks=single_task)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
