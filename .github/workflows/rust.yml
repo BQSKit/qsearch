@@ -69,12 +69,12 @@ jobs:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'ubuntu')
         - name: Build macOS wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels scrs
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'macOS')
         - name: Build Windows wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,rustopt,static" --release --no-sdist && pip install --no-index --find-links=target/wheels scrs
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,rustopt,static" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'Windows')
@@ -95,6 +95,6 @@ jobs:
         - name: upload wheel artifacts
           uses: actions/upload-artifact@v1
           with:
-            name: scrs-wheels-${{matrix.os}}-${{matrix.python-version}}
+            name: qsrs-wheels-${{matrix.os}}-${{matrix.python-version}}
             path: qsrs/target/wheels
           if: startsWith(matrix.os, 'macOS') || matrix.python-version == 3.8

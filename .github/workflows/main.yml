@@ -68,7 +68,7 @@ jobs:
         - if: startsWith(matrix.os, 'macOS')
           run: brew install ceres-solver eigen
         - if: startsWith(matrix.os, 'Windows')
-          run: cargo install cargo-vcpkg && cargo vcpkg -v build
+          run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
         - name: install qsrs
           run: cd qsrs && pip install . && cd ..
         - name: install qsearch
