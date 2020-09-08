@@ -26,6 +26,7 @@ def test_cnotring(project, check_project):
 
 def test_adjacency_list(project, check_project):
     project.add_compilation('hhl', advanced_unitaries.HHL)
-    project.add_compilation('qft2', unitaries.qft(4))
+    project['gateset'] = gatesets.QubitCNOTAdjacencyList([(0,1), (1,2), (2,3), (2,0)])
+    project.add_compilation('qft3', unitaries.qft(8))
     project.run()
     check_project(project)
