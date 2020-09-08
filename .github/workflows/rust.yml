@@ -62,7 +62,7 @@ jobs:
         - if: startsWith(matrix.os, 'macOS')
           run: brew install ceres-solver eigen
         - if: startsWith(matrix.os, 'Windows')
-          run: cargo install cargo-vcpkg && cargo vcpkg -v build
+          run: cd qsrs && cargo install cargo-vcpkg && cargo vcpkg -v build
         - name: Test building & installing Rust extension
           run: cd qsrs && pip install .
           env:
