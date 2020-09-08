@@ -135,6 +135,7 @@ class Project:
         self._save()
 
     def remove_compilation(self, name):
+        warn("remove_compilation(name) is deprecated and will be removed in a future release.  Use clear(name) instead.", DeprecationWarning, stacklevel=2)
         self.get_options(name).checkpoint.delete()
         cdict = self._compilations.pop(name)
         self._save()
