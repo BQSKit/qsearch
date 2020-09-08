@@ -130,24 +130,24 @@ class Project:
             [self.reset(n) for n in self._compilations]
         else:
             cdict = self._compilations[name]
-            cdict["options"].checkpoint.delete()
+            self.get_options(name).checkpoint.delete()
             self._compilations[name] = {"options" : cdict["options"]}
         self._save()
 
     def remove_compilation(self, name):
+        self.get_options(name).checkpoint.delete()
         cdict = self._compilations.pop(name)
-        cdict["options"].checkpoint.delete()
         self._save()
 
     def clear(self, name=None):
         if name is None:
             for name in self._compilations:
-                self._compilations[name]["options"].checkpoint.delete()
+                self.get_options(name).checkpoint.delete()
             self._compilations = dict()
             self._compiler_config = dict()
         else:
+            self.get_options(name).checkpoint.delete()
             cdict = self._compilations.pop(name)
-            cdict["options"].checkpoint.delete()
         self._save()
 
     def __enter__(self):
@@ -176,7 +176,7 @@ class Project:
         for name in self._compilations:
             cdict = self._compilations[name]
 
-            runopt = self.options.updated(cdict["options"])
+            runopt = self.get_options(name)
             blas_threads = runopt.blas_threads
             CompilerClass = runopt.compiler_class
             compiler = CompilerClass(runopt)
@@ -292,6 +292,12 @@ class Project:
             return cdict["time"]
         else:
             return None
+
+    def get_options(self, name=None):
+        if name is None:
+            return self.options
+        else:
+            return self.options.updated(self._compilations[name]["options"])
 
     def verify_result(self, name):
         cdict = self._compilations[name]

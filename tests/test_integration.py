@@ -12,3 +12,10 @@ def test_per_compilation_options2(project):
     project.add_compilation('qft3', unitaries.qft(8), options=opts)
     qft2_opts = project._compilations['qft3']['options']
     assert isinstance(qft2_opts.backend, backend.PythonBackend)
+
+def test_project_clear(project):
+    project.add_compilation("qft3", unitaries.qft(8))
+    project.run()
+    project.clear()
+    project.add_compilation("qft3", unitaries.qft(8))
+    project.run()
