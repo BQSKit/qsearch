@@ -71,14 +71,8 @@ jobs:
           run: brew install ceres-solver eigen
         - if: startsWith(matrix.os, 'Windows')
           run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
-        - name: install qsrs
-          run: cd qsrs && pip install . && cd ..
-        - name: install qsearch
-          run: pip install .
         - name: install test dependencies
           run: pip install -r test-requirements.txt
-        - name: run pytest
-          run: pytest
         - name: Build macOS wheels
           run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
@@ -89,6 +83,15 @@ jobs:
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'Windows')
+        - name: Build Linux wheel
+          run: cd qsrs && pip install .
+          env:
+            RUST_BACKTRACE: 1
+          if: startsWith(matrix.os, 'ubuntu')
+        - name: install qsearch
+          run: pip install .
+        - name: run pytest
+          run: pytest
         - name: Remove target/ to prepare for building manylinux wheels
           run: cd qsrs && rm -rf target
           env:
