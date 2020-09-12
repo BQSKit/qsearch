@@ -10,7 +10,11 @@ use std::f64::consts::PI;
 #[enum_dispatch]
 pub trait QuantumGate: Clone {
     fn mat(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> SquareMatrix;
-    fn mat_jac(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>);
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>);
     fn inputs(&self) -> usize;
 }
 
@@ -71,7 +75,11 @@ impl QuantumGate for GateConstantUnitary {
         constant_gates[self.index].clone()
     }
 
-    fn mat_jac(&self, _v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        _v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         (constant_gates[self.index].clone(), vec![])
     }
 
@@ -103,7 +111,11 @@ impl QuantumGate for GateIdentity {
         constant_gates[self.index].clone()
     }
 
-    fn mat_jac(&self, _v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        _v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         (constant_gates[self.index].clone(), vec![])
     }
 
@@ -148,7 +160,11 @@ impl QuantumGate for GateU3 {
         )
     }
 
-    fn mat_jac(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         let ct = r!((v[0] * PI).cos());
         let st = r!((v[0] * PI).sin());
         let cp = (v[1] * PI * 2.0).cos();
@@ -234,7 +250,11 @@ impl QuantumGate for GateXZXZ {
     }
 
     #[allow(non_snake_case)]
-    fn mat_jac(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         let rotz_jac = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
         let buffer = rotz_jac.matmul(&constant_gates[self.x90_index]);
         let out = constant_gates[self.x90_index].matmul(&buffer);
@@ -281,7 +301,11 @@ impl QuantumGate for GateCNOT {
         constant_gates[self.index].clone()
     }
 
-    fn mat_jac(&self, _v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        _v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         (constant_gates[self.index].clone(), vec![])
     }
 
@@ -326,7 +350,11 @@ impl QuantumGate for GateKronecker {
     }
 
     #[allow(non_snake_case)]
-    fn mat_jac(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         if self.substeps.len() < 2 {
             return self.substeps[0].mat_jac(v, constant_gates);
         }
@@ -404,7 +432,11 @@ impl QuantumGate for GateProduct {
     }
 
     #[allow(non_snake_case)]
-    fn mat_jac(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         if self.substeps.len() < 2 {
             return self.substeps[0].mat_jac(v, constant_gates);
         }
@@ -497,7 +529,11 @@ impl QuantumGate for GateSingleQutrit {
             3,
         )
     }
-    fn mat_jac(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> (SquareMatrix, Vec<SquareMatrix>) {
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
         let s1 = (v[0] * PI * 2.0).sin();
         let c1 = (v[0] * PI * 2.0).cos();
         let s2 = (v[1] * PI * 2.0).sin();

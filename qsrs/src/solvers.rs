@@ -39,7 +39,11 @@ impl BfgsJacSolver {
             dsq
         };
         let mut rng = thread_rng();
-        let mut x0: Vec<f64> = if let Some(x) = x0 { x } else { (0..i).map(|_| rng.gen_range(0.0, 1.0)).collect() };
+        let mut x0: Vec<f64> = if let Some(x) = x0 {
+            x
+        } else {
+            (0..i).map(|_| rng.gen_range(0.0, 1.0)).collect()
+        };
         let mut fmin = Nlopt::new(Algorithm::Lbfgs, i, &f, Target::Minimize, ());
         fmin.set_upper_bound(1.0).unwrap();
         fmin.set_lower_bound(0.0).unwrap();
@@ -75,7 +79,11 @@ impl LeastSquaresJacSolver {
     ) -> (SquareMatrix, Vec<f64>) {
         let i = circ.inputs();
         let mut rng = thread_rng();
-        let mut x0: Vec<f64> = if let Some(x) = x0 { x } else { (0..i).map(|_| rng.gen_range(0.0, 1.0)).collect() };
+        let mut x0: Vec<f64> = if let Some(x) = x0 {
+            x
+        } else {
+            (0..i).map(|_| rng.gen_range(0.0, 1.0)).collect()
+        };
         let eye = Array2::eye(unitary.size);
         let mut cost_fn = |params: &[f64], resids: &mut [f64], jac: Option<&mut [f64]>| {
             let (m, jacs) = circ.mat_jac(&params, constant_gates);

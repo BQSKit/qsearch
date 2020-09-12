@@ -69,7 +69,12 @@ use utils::{
 };
 
 #[cfg(feature = "python")]
-fn gate_to_object(gate: &Gate, py: Python, constant_gates: &[SquareMatrix], circuits: &PyModule) -> PyResult<PyObject> {
+fn gate_to_object(
+    gate: &Gate,
+    py: Python,
+    constant_gates: &[SquareMatrix],
+    circuits: &PyModule,
+) -> PyResult<PyObject> {
     Ok(match gate {
         Gate::CNOT(..) => {
             let gate: PyObject = circuits.get("CNOTStep")?.extract()?;
@@ -77,7 +82,10 @@ fn gate_to_object(gate: &Gate, py: Python, constant_gates: &[SquareMatrix], circ
         }
         Gate::Identity(id) => {
             let gate: PyObject = circuits.get("IdentityStep")?.extract()?;
-            let args = PyTuple::new(py, vec![constant_gates[id.index].size, id.data.dits as usize]);
+            let args = PyTuple::new(
+                py,
+                vec![constant_gates[id.index].size, id.data.dits as usize],
+            );
             gate.call1(py, args)?
         }
         Gate::U3(..) => {
@@ -117,7 +125,11 @@ fn gate_to_object(gate: &Gate, py: Python, constant_gates: &[SquareMatrix], circ
 }
 
 #[cfg(feature = "python")]
-fn object_to_gate(obj: &PyObject, constant_gates: &mut Vec<SquareMatrix>, py: Python) -> PyResult<Gate> {
+fn object_to_gate(
+    obj: &PyObject,
+    constant_gates: &mut Vec<SquareMatrix>,
+    py: Python,
+) -> PyResult<Gate> {
     let cls = obj.getattr(py, "__class__")?;
     let dunder_name = cls.getattr(py, "__name__")?;
     let name: &str = dunder_name.extract(py)?;
@@ -133,7 +145,7 @@ fn object_to_gate(obj: &PyObject, constant_gates: &mut Vec<SquareMatrix>, py: Py
                 4,
             ));
             Ok(GateCNOT::new(index).into())
-        },
+        }
         "IdentityStep" => {
             let index = constant_gates.len();
             let n = obj.getattr(py, "_n")?.extract(py)?;
@@ -143,9 +155,9 @@ fn object_to_gate(obj: &PyObject, constant_gates: &mut Vec<SquareMatrix>, py: Py
         "QiskitU3QubitStep" => Ok(GateU3::new().into()),
         "XZXZPartialQubitStep" => {
             let index = constant_gates.len();
-            constant_gates.push(crate::utils::rot_x(std::f64::consts::PI/2.0));
+            constant_gates.push(crate::utils::rot_x(std::f64::consts::PI / 2.0));
             Ok(GateXZXZ::new(index).into())
-        },
+        }
         "ProductStep" => {
             let substeps: Vec<PyObject> = obj.getattr(py, "_substeps")?.extract(py)?;
             let mut steps: Vec<Gate> = Vec::with_capacity(substeps.len());
@@ -177,10 +189,7 @@ fn object_to_gate(obj: &PyObject, constant_gates: &mut Vec<SquareMatrix>, py: Py
                 let mat = unsafe { pymat.as_array() };
                 let index = constant_gates.len();
                 constant_gates.push(SquareMatrix::from_ndarray(mat.to_owned()).T());
-                Ok(
-                    GateConstantUnitary::new(index, dits)
-                        .into(),
-                )
+                Ok(GateConstantUnitary::new(index, dits).into())
             } else {
                 Err(exceptions::ValueError::py_err(format!(
                     "Unknown gate {}",
@@ -219,7 +228,9 @@ impl PyGateWrapper {
         py: Python,
         v: &PyArray1<f64>,
     ) -> (Py<PySquareMatrix>, Vec<Py<PySquareMatrix>>) {
-        let (m, jac) = self.gate.mat_jac( unsafe {v.as_slice().unwrap() }, &mut self.constant_gates);
+        let (m, jac) = self
+            .gate
+            .mat_jac(unsafe { v.as_slice().unwrap() }, &mut self.constant_gates);
         (
             PySquareMatrix::from_array(py, &m.clone().into_ndarray()).to_owned(),
             jac.iter()
@@ -229,8 +240,14 @@ impl PyGateWrapper {
     }
 
     pub fn matrix(&mut self, py: Python, v: &PyArray1<f64>) -> Py<PySquareMatrix> {
-        PySquareMatrix::from_array(py, &self.gate.mat(unsafe { v.as_slice().unwrap() }, &mut self.constant_gates).into_ndarray())
-            .to_owned()
+        PySquareMatrix::from_array(
+            py,
+            &self
+                .gate
+                .mat(unsafe { v.as_slice().unwrap() }, &mut self.constant_gates)
+                .into_ndarray(),
+        )
+        .to_owned()
     }
 
     #[getter]
@@ -323,12 +340,12 @@ impl PyBfgsJacSolver {
             Ok(c) => {
                 let pygate = c.as_ref(py).try_borrow().unwrap();
                 (pygate.gate.clone(), pygate.constant_gates.clone())
-            },
+            }
             Err(_) => {
                 let mut constant_gates = Vec::new();
                 let gate = object_to_gate(&circuit, &mut constant_gates, py)?;
                 (gate, constant_gates)
-            },
+            }
         };
         let unitary =
             SquareMatrix::from_ndarray(u.extract::<&PySquareMatrix>(py)?.to_owned_array());
@@ -404,12 +421,12 @@ impl PyLeastSquaresJacSolver {
             Ok(c) => {
                 let pygate = c.as_ref(py).try_borrow().unwrap();
                 (pygate.gate.clone(), pygate.constant_gates.clone())
-            },
+            }
             Err(_) => {
                 let mut constant_gates = Vec::new();
                 let gate = object_to_gate(&circuit, &mut constant_gates, py)?;
                 (gate, constant_gates)
-            },
+            }
         };
         let unitary =
             SquareMatrix::from_ndarray(u.extract::<&PySquareMatrix>(py)?.to_owned_array());
