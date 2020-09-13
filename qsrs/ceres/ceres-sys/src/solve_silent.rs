@@ -5,6 +5,8 @@ cpp! {{
     #include <ceres/ceres.h>
 }}
 
+/// # Safety
+/// The problem is initialized/used in lib.rs
 pub unsafe fn ceres_solve_silent(c_problem: *mut ceres_problem_t, max_iters: usize, num_threads: usize, ftol: f64, gtol: f64) {
     cpp!([c_problem as "ceres_problem_t *", max_iters as "size_t", num_threads as "size_t", ftol as "double", gtol as "double"] {
         ceres::Problem* problem = reinterpret_cast<ceres::Problem*>(c_problem);
