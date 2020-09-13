@@ -19,7 +19,7 @@ pub trait QuantumGate: Clone {
 }
 
 #[enum_dispatch(QuantumGate)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Gate {
     Identity(GateIdentity),
     CNOT(GateCNOT),
@@ -46,13 +46,13 @@ impl Gate {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct QuantumGateData {
     pub dits: u8,
     pub num_inputs: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateConstantUnitary {
     pub data: QuantumGateData,
     pub index: usize,
@@ -88,7 +88,7 @@ impl QuantumGate for GateConstantUnitary {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateIdentity {
     pub data: QuantumGateData,
     pub index: usize,
@@ -124,7 +124,7 @@ impl QuantumGate for GateIdentity {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateU3 {
     pub data: QuantumGateData,
 }
@@ -222,7 +222,7 @@ impl QuantumGate for GateU3 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateXZXZ {
     pub data: QuantumGateData,
     x90_index: usize,
@@ -278,7 +278,7 @@ impl QuantumGate for GateXZXZ {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateCNOT {
     pub data: QuantumGateData,
     index: usize,
@@ -314,7 +314,7 @@ impl QuantumGate for GateCNOT {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateKronecker {
     pub data: QuantumGateData,
     pub substeps: Vec<Gate>,
@@ -394,7 +394,7 @@ impl QuantumGate for GateKronecker {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateProduct {
     pub data: QuantumGateData,
     pub substeps: Vec<Gate>,
@@ -478,7 +478,7 @@ impl QuantumGate for GateProduct {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateSingleQutrit {
     pub data: QuantumGateData,
 }

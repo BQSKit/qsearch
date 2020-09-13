@@ -512,15 +512,16 @@ fn qsrs(_py: Python, m: &PyModule) -> PyResult<()> {
         m: &PySquareMatrix,
         jacs: Vec<&PySquareMatrix>,
     ) -> Py<PyArray2<f64>> {
+        let v: Vec<SquareMatrix> = jacs
+            .iter()
+            .map(|i| SquareMatrix::from_ndarray(i.to_owned_array()))
+            .collect();
         PyArray2::from_array(
             py,
             &matrix_residuals_jac(
                 &SquareMatrix::from_ndarray(u.to_owned_array()),
                 &SquareMatrix::from_ndarray(m.to_owned_array()),
-                &jacs
-                    .iter()
-                    .map(|i| SquareMatrix::from_ndarray(i.to_owned_array()))
-                    .collect(),
+                &v,
             ),
         )
         .to_owned()
