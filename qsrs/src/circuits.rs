@@ -327,7 +327,7 @@ impl GateKronecker {
                 dits: substeps.iter().map(|i| i.dits()).sum(),
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
-            substeps: substeps,
+            substeps,
         }
     }
 }
@@ -408,7 +408,7 @@ impl GateProduct {
                 dits: substeps[0].dits(),
                 num_inputs: substeps.iter().map(|i| i.inputs()).sum(),
             },
-            substeps: substeps,
+            substeps,
             index: 0,
         }
     }

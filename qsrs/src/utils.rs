@@ -78,14 +78,12 @@ pub fn matrix_distance_squared(a: &SquareMatrix, b: &SquareMatrix) -> f64 {
     let mul = a.multiply(&bc);
     let sum = mul.sum();
     let norm = sum.norm();
-    let res = 1f64 - (norm / a.size as f64).powf(2.0);
-    res
+    1f64 - (norm / a.size as f64).powf(2.0)
 }
 
 pub fn matrix_distance(a: &SquareMatrix, b: &SquareMatrix) -> f64 {
     let dist_sq = matrix_distance_squared(a, b);
-    let res = dist_sq.abs().sqrt();
-    res
+    dist_sq.abs().sqrt()
 }
 
 pub fn matrix_distance_squared_jac(
@@ -111,13 +109,13 @@ pub fn matrix_residuals(a: &SquareMatrix, b: &SquareMatrix, i: &Array2<f64>) -> 
     let m = b.matmul(&a.H());
     let (re, im) = m.split_complex();
     let r = re - i;
-    r.iter().chain(im.iter()).map(|i| *i).collect()
+    r.iter().chain(im.iter()).copied().collect()
 }
 
 pub fn matrix_residuals_jac(
     u: &SquareMatrix,
     _m: &SquareMatrix,
-    jacs: &Vec<SquareMatrix>,
+    jacs: &[SquareMatrix],
 ) -> Array2<f64> {
     let u_h = u.H();
     Array2::from_shape_vec(
@@ -125,7 +123,7 @@ pub fn matrix_residuals_jac(
         jacs.iter().fold(Vec::new(), |mut acc, j| {
             let m = j.matmul(&u_h.clone());
             let (re, im) = m.split_complex();
-            let row: Vec<f64> = re.iter().chain(im.iter()).map(|i| *i).collect();
+            let row: Vec<f64> = re.iter().chain(im.iter()).copied().collect();
             acc.extend(row);
             acc
         }),

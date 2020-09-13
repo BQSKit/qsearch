@@ -91,7 +91,7 @@ impl LeastSquaresJacSolver {
             resids.copy_from_slice(&res);
             if let Some(jacobian) = jac {
                 let jac_mat = matrix_residuals_jac(&unitary, &m, &jacs);
-                let v: Vec<f64> = jac_mat.iter().map(|i| *i).collect();
+                let v: Vec<f64> = jac_mat.iter().copied().collect();
                 jacobian.copy_from_slice(&v)
             }
         };
