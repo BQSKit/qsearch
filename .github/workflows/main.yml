@@ -94,8 +94,6 @@ jobs:
           run: pytest
         - name: Remove target/ to prepare for building manylinux wheels
           run: cd qsrs && rm -rf target
-          env:
-            RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'ubuntu')
         - name: Build manylinux wheels
           run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.5 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2010 --no-sdist
@@ -115,3 +113,5 @@ jobs:
             password: ${{ secrets.pypi_password }}
             packages_dir: target/wheels
           if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
+        - name: Remove target/wheels to prepare for building manylinux wheels
+          run: cd qsrs && rm -rf target/wheels
