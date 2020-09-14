@@ -108,3 +108,10 @@ jobs:
             name: qsrs-wheels-${{matrix.os}}-${{matrix.python-version}}
             path: qsrs/target/wheels
           if: startsWith(matrix.os, 'macOS') || matrix.python-version == 3.8
+        - name: Publish qsrs to PyPI
+          uses: pypa/gh-action-pypi-publish@master
+          with:
+            user: __token__
+            password: ${{ secrets.pypi_password }}
+            packages_dir: target/wheels
+          if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
