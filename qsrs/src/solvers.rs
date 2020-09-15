@@ -8,6 +8,16 @@ use nlopt::*;
 use rand::{thread_rng, Rng};
 use squaremat::SquareMatrix;
 
+pub trait Solver {
+    fn solve_for_unitary(
+        &self,
+        circ: &Gate,
+        constant_gates: &[SquareMatrix],
+        unitary: &SquareMatrix,
+        x0: Option<Vec<f64>>,
+    ) -> (SquareMatrix, Vec<f64>);
+}
+
 pub struct BfgsJacSolver {
     size: usize,
 }
@@ -16,8 +26,10 @@ impl BfgsJacSolver {
     pub fn new(size: usize) -> Self {
         BfgsJacSolver { size }
     }
+}
 
-    pub fn solve_for_unitary(
+impl Solver for BfgsJacSolver {
+    fn solve_for_unitary(
         &self,
         circ: &Gate,
         constant_gates: &[SquareMatrix],
@@ -69,8 +81,10 @@ impl LeastSquaresJacSolver {
             solver: CeresSolver::new(num_threads, ftol, gtol),
         }
     }
+}
 
-    pub fn solve_for_unitary(
+impl Solver for LeastSquaresJacSolver {
+    fn solve_for_unitary(
         &self,
         circ: &Gate,
         constant_gates: &[SquareMatrix],

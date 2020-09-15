@@ -412,6 +412,12 @@ impl GateProduct {
             index: 0,
         }
     }
+
+    pub fn append(mut self, gate: Gate) -> Self {
+        self.data.num_inputs += gate.inputs();
+        self.substeps.push(gate);
+        self
+    }
 }
 
 impl QuantumGate for GateProduct {

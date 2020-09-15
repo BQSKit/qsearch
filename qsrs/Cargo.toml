@@ -5,6 +5,7 @@ authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "LGPL-2.1 AND BSD-3-Clause"
 edition = "2018"
 build = "build.rs"
+publish = false
 
 [features]
 static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-src/cblas", "squaremat/openblas-static", "ceres/static"]
@@ -32,6 +33,7 @@ md5 = "0.7.0"
 rand = "0.7.3"
 nlopt = { version = "0.5.1", optional = true }
 ceres = { path = "./ceres", optional = true }
+num_cpus = "1.13"
 
 [dependencies.pyo3]
 version = "0.11.1"
@@ -44,6 +46,10 @@ openblas-src = { git = "https://github.com/ethanhs/openblas-src", branch="scrs" 
 name = "qsrs"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "qsearch_run"
+path = "src/main.rs"
 
 [profile.release]
 lto = "fat"

@@ -16,11 +16,13 @@ use pyo3::wrap_pyfunction;
 #[cfg(feature = "python")]
 use better_panic::install;
 #[cfg(all(feature = "python", feature = "rustopt"))]
-use solvers::{BfgsJacSolver, LeastSquaresJacSolver};
+use solvers::{BfgsJacSolver, LeastSquaresJacSolver, Solver};
 #[cfg(feature = "python")]
 use squaremat::SquareMatrix;
 
 pub mod circuits;
+pub mod compiler;
+pub mod gatesets;
 pub mod heuristic;
 #[cfg(feature = "rustopt")]
 pub mod solvers;
