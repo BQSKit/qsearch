@@ -113,5 +113,9 @@ jobs:
             password: ${{ secrets.pypi_password }}
             packages_dir: target/wheels
           if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
-        - name: Remove target/wheels to prepare for building manylinux wheels
+        - name: Remove target/wheels to clear some space
           run: cd qsrs && rm -rf target/wheels
+          if: startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')
+        - name: Remove target/wheels to clear some space
+          run: cd qsrs && rmdir /s /q target/wheels
+          if: startsWith(matrix.os, 'Windows')
