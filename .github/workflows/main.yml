@@ -118,4 +118,5 @@ jobs:
           if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.8
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rmdir /s /q target/wheels
+          shell: cmd
           if: startsWith(matrix.os, 'Windows')
