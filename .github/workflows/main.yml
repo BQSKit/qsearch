@@ -110,7 +110,7 @@ jobs:
           env:
             TWINE_USERNAME: __token__
             TWINE_PASSWORD: ${{ secrets.pypi_password }}
-          run: twine upload target/wheels/*
+          run: twine upload qsrs/target/wheels/*
           if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rm -rf target/wheels
