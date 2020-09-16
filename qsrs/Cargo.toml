@@ -69,7 +69,6 @@ classifier = [
     'Topic :: Software Development :: Compilers',
 ]
 
-
 [package.metadata.vcpkg]
 git = "https://github.com/microsoft/vcpkg"
 rev = "2020.06"
