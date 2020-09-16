@@ -117,6 +117,6 @@ jobs:
           run: cd qsrs && rm -rf target/wheels
           if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.8
         - name: Remove target/wheels to clear some space
-          run: cd qsrs && rmdir /s /q target\wheels
+          run: cd qsrs && rmdir /s /q target\vcpkg
           shell: cmd
           if: startsWith(matrix.os, 'Windows')
