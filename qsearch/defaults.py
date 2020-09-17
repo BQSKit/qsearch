@@ -12,8 +12,8 @@ def default_eval_func(options):
 def default_heuristic(options):
     if options.search_type == "astar":
         return heuristics.astar
-    if options.search_type == "breadth":
-        return heuristics.breadth
+    if options.search_type == "djikstra":
+        return heuristics.djikstra
     elif options.search_type == "greedy":
         return heuristics.greedy
     raise KeyError("Unknown search_type {}, and no alternative heuristic provided.".format(options.search_type))

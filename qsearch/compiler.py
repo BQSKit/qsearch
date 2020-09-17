@@ -88,7 +88,7 @@ class SearchCompiler(Compiler):
             if depth == 0:
                 return best_pair
 
-            queue = [(h(best_value, 0), 0, best_value, -1, result[1], root)]
+            queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
             #         heuristic      depth  distance tiebreaker vector structure
             #             0            1      2         3         4        5
             checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime))
@@ -126,7 +126,7 @@ class SearchCompiler(Compiler):
                     best_depth = new_depth
                     logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
                 if depth is None or new_depth < depth:
-                    heapq.heappush(queue, (h(current_value, new_depth), new_depth, current_value, tiebreaker, result[1], step))
+                    heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
                     tiebreaker+=1
             logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
             checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
