@@ -82,7 +82,7 @@ def plot_quantum_circuit(gates,inits={},labels=[],plot_labels=True,**kwargs):
         draw_labels(ax,labels,inits,gate_grid,wire_grid,plot_params)
 
     draw_gates(ax,gates,labels,gate_grid,wire_grid,plot_params,measured)
-    matplotlib.pyplot.show(ax)
+    matplotlib.pyplot.show()
     return ax
 
 def enumerate_gates(l,schedule=False):
