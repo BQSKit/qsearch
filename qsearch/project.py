@@ -9,7 +9,7 @@ import sys
 import pickle
 from multiprocessing import freeze_support
 from .compiler import SearchCompiler
-from . import solver as scsolver
+from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import logging, checkpoint, utils, gatesets, heuristics, assembler

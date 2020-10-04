@@ -6,10 +6,10 @@ import numpy as np
 
 from .circuits import *
 
-from . import solver as scsolver
+from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
-from . import parallelizer, backend
+from . import parallelizers, backends
 from . import utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
 from .checkpoint import ChildCheckpoint
