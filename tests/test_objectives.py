@@ -1,4 +1,4 @@
-from qsearch import utils, unitaries, Project, solver
+from qsearch import utils, unitaries, Project, solvers
 import qsrs
 import numpy as np
 
@@ -44,7 +44,7 @@ def test_matrix_residuals_jac(tmpdir):
 def test_project(tmpdir):
     p = Project(str(tmpdir))
     p.add_compilation('qft2', qft_py)
-    p['solver'] = solver.LeastSquares_Jac_Solver()
+    p['solver'] = solvers.LeastSquares_Jac_Solver()
     p['residuals_func'] = qsrs.matrix_residuals
     p['residuals_jac'] = qsrs.matrix_residuals_jac
     p.run()

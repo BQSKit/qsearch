@@ -1,4 +1,4 @@
-from . import utils, gatesets, solver, backend, parallelizer, heuristics, logging, checkpoint
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoint
 from functools import partial
 
 
@@ -46,8 +46,8 @@ standard_defaults = {
         "statefile":None,
         "error_func":utils.matrix_distance_squared,
         "error_residuals":utils.matrix_residuals,
-        "backend":backend.SmartDefaultBackend(),
-        "parallelizer":parallelizer.MultiprocessingParallelizer,
+        "backend":backends.SmartDefaultBackend(),
+        "parallelizer":parallelizers.MultiprocessingParallelizer,
         "log_file":None,
         "max_quality_optimization" : False
         }
@@ -55,7 +55,7 @@ standard_smart_defaults = {
         "eval_func":default_eval_func,
         "error_jac":default_error_jac,
         "error_residuals_jac":default_error_residuals_jac,
-        "solver":solver.default_solver,
+        "solver":solvers.default_solver,
         "heuristic":default_heuristic,
         "logger" :default_logger,
         "checkpoint":default_checkpoint

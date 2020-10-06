@@ -1,7 +1,7 @@
 
 import qsearch
 import numpy as np
-from qsearch import unitaries, advanced_unitaries, utils, gatesets, leap_compiler, reoptimizing_compiler, multistart_solver, parallelizer
+from qsearch import unitaries, advanced_unitaries, utils, gatesets, leap_compiler, reoptimizing_compiler, multistart_solvers, parallelizers
 
 def test_leap(project, check_project):
     project.add_compilation("qft4", unitaries.qft(16))
@@ -17,5 +17,5 @@ def test_reoptimize(project, check_project):
     project["min_depth"] = 4
     project["compiler_class"] = leap_compiler.LeapCompiler
     project.run()
-    project.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solver.MultiStart_Solver(8), parallelizer=parallelizer.ProcessPoolParallelizer, depth=5)
+    project.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=5)
     check_project(project)

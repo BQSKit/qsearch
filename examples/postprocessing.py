@@ -1,6 +1,6 @@
 from multiprocessing import cpu_count
 import qsearch
-from qsearch import unitaries, advanced_unitaries, post_processing, multistart_solver, leap_compiler
+from qsearch import unitaries, advanced_unitaries, post_processing, multistart_solvers, leap_compiler
 
 import numpy as np
 
@@ -32,11 +32,11 @@ with qsearch.Project("benchmarks") as project:
 
     # after running the project, run post-processing to reduce single qubit gate count
     # I've used the multistart solver for better post-processing results.  Increase the number of threads that you give the post-processor to increase the likelihood that you get the optimal final circuit.
-    project.post_process(post_processing.BasicSingleQubitReduction_PostProcessor(), solver=multistart_solver.MultiStart_Solver(cpu_count()))
+    project.post_process(post_processing.BasicSingleQubitReduction_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(cpu_count()))
     for name in project.compilations:
         target = project.get_target(name)
         result = project.get_result(name)
         while np.abs(project.options.eval_func(target, result["structure"].matrix(result["vector"]))) > 1e-15:
-            project.post_process(post_processing.ParameterTuning_PostProcessor(), name, solver=multistart_solver.MultiStart_Solver(16), inner_solver=qsearch.solver.LeastSquares_Jac_Solver())
+            project.post_process(post_processing.ParameterTuning_PostProcessor(), name, solver=multistart_solvers.MultiStart_Solver(16), inner_solver=qsearch.solver.LeastSquares_Jac_Solver())
             result = project.get_result(name)
 

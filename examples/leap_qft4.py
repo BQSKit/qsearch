@@ -1,5 +1,5 @@
 import qsearch
-from qsearch import unitaries, advanced_unitaries, leap_compiler, multistart_solver, parallelizer, reoptimizing_compiler
+from qsearch import unitaries, advanced_unitaries, leap_compiler, multistart_solvers, parallelizers, reoptimizing_compiler
 import time
 
 # create the project
@@ -12,4 +12,4 @@ with qsearch.Project("leapex") as project:
     project["compiler_class"] = leap_compiler.LeapCompiler
     project["verbosity"] = 2
     project.run()
-    project.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solver.MultiStart_Solver(8), parallelizer=parallelizer.ProcessPoolParallelizer, depth=7)
+    project.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
