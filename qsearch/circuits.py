@@ -69,6 +69,64 @@ class IdentityStep(QuantumStep):
     def __repr__(self):
         return "IdentityStep({})".format(self._n)
 
+
+class XStep(QuantumStep):
+    def __init__(self):
+        self.num_inputs = 1
+        self.dits = 1
+
+    def matrix(self, v):
+        return unitaries.rot_x(v[0]*2*np.pi)
+
+    def mat_jac(self, v):
+        U = unitaries.rot_x(v[0]*2*np.pi)
+        J1 = unitaries.rot_x_jac(v[0]*2*np.pi)
+        return U, [J1]
+
+    def assemble(self, v, i=0):
+        out.append(("gate", "X", (v[0],), (i,)))
+
+    def __repr__(self):
+        return "XStep()"
+
+class YStep(QuantumStep):
+    def __init__(self):
+        self.num_inputs = 1
+        self.dits = 1
+
+    def matrix(self, v):
+        return unitaries.rot_y(v[0]*2*np.pi)
+
+    def mat_jac(self, v):
+        U = unitaries.rot_y(v[0]*2*np.pi)
+        J1 = unitaries.rot_y_jac(v[0]*2*np.pi)
+        return U, [J1]
+
+    def assemble(self, v, i=0):
+        out.append(("gate", "Y", (v[0],), (i,)))
+
+    def __repr__(self):
+        return "YStep()"
+
+class ZStep(QuantumStep):
+    def __init__(self):
+        self.num_inputs = 1
+        self.dits = 1
+
+    def matrix(self, v):
+        return unitaries.rot_z(v[0]*2*np.pi)
+
+    def mat_jac(self, v):
+        U = unitaries.rot_z(v[0]*2*np.pi)
+        J1 = unitaries.rot_z_jac(v[0]*2*np.pi)
+        return U, [J1]
+
+    def assemble(self, v, i=0):
+        out.append(("gate", "Z", (v[0],), (i,)))
+
+    def __repr__(self):
+        return "ZStep()"
+
 class ZXZXZQubitStep(QuantumStep):
     def __init__(self):
         self.num_inputs = 3
@@ -134,45 +192,6 @@ class ZXZXZQubitStep(QuantumStep):
     
     def __repr__(self):
         return "ZXZXZQubitStep()"
-
-class XStep(QuantumStep):
-    def __init__(self):
-        self.num_inputs = 1
-        self.dits = 1
-
-    def matrix(self, v):
-        return unitaries.rot_x(v[0]*2*np.pi)
-
-    def mat_jac(self, v):
-        U = unitaries.rot_x(v[0]*2*np.pi)
-        J1 = unitaries.rot_x_jac(v[0]*2*np.pi)
-        return U, [J1]
-
-class YStep(QuantumStep):
-    def __init__(self):
-        self.num_inputs = 1
-        self.dits = 1
-
-    def matrix(self, v):
-        return unitaries.rot_y(v[0]*2*np.pi)
-
-    def mat_jac(self, v):
-        U = unitaries.rot_y(v[0]*2*np.pi)
-        J1 = unitaries.rot_y_jac(v[0]*2*np.pi)
-        return U, [J1]
-
-class ZStep(QuantumStep):
-    def __init__(self):
-        self.num_inputs = 1
-        self.dits = 1
-
-    def matrix(self, v):
-        return unitaries.rot_z(v[0]*2*np.pi)
-
-    def mat_jac(self, v):
-        U = unitaries.rot_z(v[0]*2*np.pi)
-        J1 = unitaries.rot_z_jac(v[0]*2*np.pi)
-        return U, [J1]
 
 class XZXZPartialQubitStep(QuantumStep):
     def __init__(self):
