@@ -59,6 +59,15 @@ def test_constant_unitary():
 def test_singlequtrit():
     check_circuit(qs.circuits.SingleQutritStep())
 
+def test_x():
+    check_circuit(qs.circuits.XStep())
+
+def test_y():
+    check_circuit(qs.circuits.YStep())
+
+def test_z():
+    check_circuit(qs.circuits.ZStep())
+
 if __name__ == '__main__':
     test_XZXZ()
     test_U3()

@@ -1,4 +1,4 @@
-use crate::utils::{rot_z, rot_z_jac};
+use crate::utils::{rot_x, rot_x_jac, rot_y, rot_y_jac, rot_z, rot_z_jac, rot_z_jac_mul};
 use crate::{i, r};
 use enum_dispatch::enum_dispatch;
 use num_complex::Complex64;
@@ -24,6 +24,9 @@ pub enum Gate {
     Identity(GateIdentity),
     CNOT(GateCNOT),
     U3(GateU3),
+    X(GateX),
+    Y(GateY),
+    Z(GateZ),
     XZXZ(GateXZXZ),
     Kronecker(GateKronecker),
     Product(GateProduct),
@@ -37,6 +40,9 @@ impl Gate {
             Gate::Identity(i) => i.data.dits,
             Gate::CNOT(c) => c.data.dits,
             Gate::U3(u) => u.data.dits,
+            Gate::X(x) => x.data.dits,
+            Gate::Y(y) => y.data.dits,
+            Gate::Z(z) => z.data.dits,
             Gate::XZXZ(x) => x.data.dits,
             Gate::Kronecker(k) => k.data.dits,
             Gate::Product(p) => p.data.dits,
@@ -223,6 +229,108 @@ impl QuantumGate for GateU3 {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct GateX {
+    pub data: QuantumGateData,
+}
+
+impl GateX {
+    pub fn new() -> Self {
+        GateX {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateX {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        rot_x(v[0] * 2.0 * PI)
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        (rot_x(v[0] * 2.0 * PI), vec![rot_x_jac(v[0] * 2.0 * PI)])
+    }
+
+    fn inputs(&self) -> usize {
+        1
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateY {
+    pub data: QuantumGateData,
+}
+
+impl GateY {
+    pub fn new() -> Self {
+        GateY {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateY {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        rot_y(v[0] * 2.0 * PI)
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        (rot_y(v[0] * 2.0 * PI), vec![rot_y_jac(v[0] * 2.0 * PI)])
+    }
+
+    fn inputs(&self) -> usize {
+        1
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateZ {
+    pub data: QuantumGateData,
+}
+
+impl GateZ {
+    pub fn new() -> Self {
+        GateZ {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateZ {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        rot_z(v[0] * 2.0 * PI)
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        (rot_z(v[0] * 2.0 * PI), vec![rot_z_jac(v[0] * 2.0 * PI)])
+    }
+
+    fn inputs(&self) -> usize {
+        1
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct GateXZXZ {
     pub data: QuantumGateData,
     x90_index: usize,
@@ -255,7 +363,7 @@ impl QuantumGate for GateXZXZ {
         v: &[f64],
         constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        let rotz_jac = rot_z_jac(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
+        let rotz_jac = rot_z_jac_mul(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
         let buffer = rotz_jac.matmul(&constant_gates[self.x90_index]);
         let out = constant_gates[self.x90_index].matmul(&buffer);
         let rotz = rot_z(v[1] * PI * 2.0 - PI);
@@ -264,7 +372,7 @@ impl QuantumGate for GateXZXZ {
         let rotz2 = rot_z(v[0] * PI * 2.0 + PI);
         let buffer2 = rotz2.matmul(&constant_gates[self.x90_index]);
         let out2 = constant_gates[self.x90_index].matmul(&buffer2);
-        let rotz_jac2 = rot_z_jac(v[1] * PI * 2.0 - PI, Some(PI * 2.0));
+        let rotz_jac2 = rot_z_jac_mul(v[1] * PI * 2.0 - PI, Some(PI * 2.0));
         let J2 = rotz_jac2.matmul(&out2);
 
         let rotz3 = rot_z(v[1] * PI * 2.0 - PI);

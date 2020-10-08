@@ -81,11 +81,20 @@ full_adder = np.array([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 def rot_z(theta):
     return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
+def rot_z_jac(theta):
+    return np.array([[-1j/2*theta * np.exp(-1j*theta/2), 0], [0, 1j/2*theta*np.exp(1j*theta/2)]], dtype='complex128')
+
 def rot_x(theta):
     return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
+def rot_x_jac(theta):
+    return np.array([[-1/2*np.sin(theta/2), -1j/2*np.cos(theta/2)], [-1j/2*np.cos(theta/2), -1/2*np.sin(theta/2)]], dtype='complex128')
+
 def rot_y(theta):
     return np.array([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
+
+def rot_y_jac(theta):
+    return np.array([[-1/2*np.sin(theta/2), -1/2*np.cos(theta/2)], [1/2*np.cos(theta/2), -1/2*np.sin(theta/2)]], dtype='complex128')
 
 def qft(n):
     root = np.e ** (2j * np.pi / n)

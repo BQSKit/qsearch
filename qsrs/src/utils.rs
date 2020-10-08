@@ -20,6 +20,22 @@ pub fn rot_x(theta: f64) -> SquareMatrix {
     )
 }
 
+pub fn rot_x_jac(theta: f64) -> SquareMatrix {
+    let half_theta = Complex64::new(theta / 2.0, 0.0);
+    let negi = Complex64::new(0.0, -1.0);
+    let half = Complex64::new(0.5, 0.0);
+    let neghalf = Complex64::new(-0.5, 0.0);
+    SquareMatrix::from_vec(
+        vec![
+            neghalf * half_theta.sin(),
+            negi * half * half_theta.cos(),
+            negi * half * half_theta.cos(),
+            neghalf * half_theta.sin(),
+        ],
+        2,
+    )
+}
+
 pub fn rot_y(theta: f64) -> SquareMatrix {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     SquareMatrix::from_vec(
@@ -28,6 +44,21 @@ pub fn rot_y(theta: f64) -> SquareMatrix {
             -half_theta.sin(),
             half_theta.sin(),
             half_theta.cos(),
+        ],
+        2,
+    )
+}
+
+pub fn rot_y_jac(theta: f64) -> SquareMatrix {
+    let half_theta = Complex64::new(theta / 2.0, 0.0);
+    let neghalf = Complex64::new(-0.5, 0.0);
+    let half = Complex64::new(0.5, 0.0);
+    SquareMatrix::from_vec(
+        vec![
+            neghalf * half_theta.sin(),
+            neghalf * half_theta.cos(),
+            half * half_theta.cos(),
+            neghalf * half_theta.sin(),
         ],
         2,
     )
@@ -49,7 +80,24 @@ pub fn rot_z(theta: f64) -> SquareMatrix {
     )
 }
 
-pub fn rot_z_jac(theta: f64, multiplier: Option<f64>) -> SquareMatrix {
+pub fn rot_z_jac(theta: f64) -> SquareMatrix {
+    let half_theta = Complex64::new(theta / 2.0, 0.0);
+    let negi = Complex64::new(0.0, -1.0);
+    let posi = Complex64::new(0.0, 1.0);
+    let zero = Complex64::new(0.0, 0.0);
+    let half = Complex64::new(0.5, 0.0);
+    SquareMatrix::from_vec(
+        vec![
+            negi * theta * half * (negi * half_theta).exp(),
+            zero,
+            zero,
+            posi * half * theta * (posi * half_theta).exp(),
+        ],
+        2,
+    )
+}
+
+pub fn rot_z_jac_mul(theta: f64, multiplier: Option<f64>) -> SquareMatrix {
     let half_theta = Complex64::new(theta / 2.0, 0.0);
     let negi = Complex64::new(0.0, -1.0);
     let posi = Complex64::new(0.0, 1.0);

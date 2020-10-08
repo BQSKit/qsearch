@@ -62,7 +62,7 @@ pub type PySquareMatrix = PyArray2<Complex64>;
 #[cfg(feature = "python")]
 use circuits::{
     Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct,
-    GateSingleQutrit, GateU3, GateXZXZ, QuantumGate,
+    GateSingleQutrit, GateU3, GateXZXZ, QuantumGate, GateX, GateY, GateZ,
 };
 
 #[cfg(feature = "python")]
@@ -94,6 +94,18 @@ fn gate_to_object(
             let gate: PyObject = circuits.get("QiskitU3QubitStep")?.extract()?;
             gate.call0(py)?
         }
+        Gate::X(..) => {
+            let gate: PyObject = circuits.get("XStep")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::Y(..) => {
+            let gate: PyObject = circuits.get("YStep")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::Z(..) => {
+            let gate: PyObject = circuits.get("ZStep")?.extract()?;
+            gate.call0(py)?
+        }
         Gate::XZXZ(..) => {
             let gate: PyObject = circuits.get("XZXZPartialQubitStep")?.extract()?;
             gate.call0(py)?
@@ -122,7 +134,12 @@ fn gate_to_object(
             let gate: PyObject = circuits.get("SingleQutritStep")?.extract()?;
             gate.call0(py)?
         }
-        _ => unreachable!(),
+        Gate::ConstantUnitary(u) => {
+            let mat = constant_gates[u.index].clone();
+            let gate: PyObject = circuits.get("UStep")?.extract()?;
+            let tup = PyTuple::new(py, [PySquareMatrix::from_array(py, &mat.into_ndarray()).to_owned()].iter());
+            gate.call1(py, tup)?
+        }
     })
 }
 
@@ -155,6 +172,15 @@ fn object_to_gate(
             Ok(GateIdentity::new(index).into())
         }
         "QiskitU3QubitStep" => Ok(GateU3::new().into()),
+        "XStep" => {
+            Ok(GateX::new().into())
+        }
+        "YStep" => {
+            Ok(GateY::new().into())
+        }
+        "ZStep" => {
+            Ok(GateZ::new().into())
+        }
         "XZXZPartialQubitStep" => {
             let index = constant_gates.len();
             constant_gates.push(crate::utils::rot_x(std::f64::consts::PI / 2.0));
@@ -262,6 +288,9 @@ impl PyGateWrapper {
             Gate::CNOT(..) => String::from("CNOT"),
             Gate::Identity(..) => String::from("Identity"),
             Gate::U3(..) => String::from("U3"),
+            Gate::X(..) => String::from("X"),
+            Gate::Y(..) => String::from("Y"),
+            Gate::Z(..) => String::from("Z"),
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
             Gate::Product(..) => String::from("Product"),
