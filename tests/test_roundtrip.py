@@ -16,17 +16,21 @@
 # Note that Qiskit is required for this script.  #
 ##################################################
 
-import search_compiler as sc
-import qiskit
-from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+import qsearch
 import numpy as np
-from search_compiler import unitaries, advanced_unitaries, utils, gatesets
+from qsearch import unitaries, advanced_unitaries, utils, gatesets
 import sys
+import os
+try:
+    import qiskit
+    from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+except Exception:
+    qiskit = None
 
-def test_roundtrip():
-    # create a new project
-    project = sc.Project("round-trip")
+import pytest
 
+@pytest.mark.skipif(qiskit is None, reason="Qiskit not installed")
+def test_roundtrip(project):
     # add some gates to compile
     project.add_compilation("qft2", unitaries.qft(4))
     project.add_compilation("qft3", unitaries.qft(8))
@@ -54,7 +58,7 @@ def test_roundtrip():
         U1 = project.get_target(compilation)
 
         # generate and run Qiskit code to create a Qiskit version of the circuit
-        qiskit_code = project.assemble(compilation, sc.assembler.ASSEMBLY_QISKIT)
+        qiskit_code = project.assemble(compilation, qsearch.assembler.ASSEMBLY_QISKIT)
         locals = {}
         exec(qiskit_code, globals(), locals)
         qc = locals['qc']
@@ -62,11 +66,7 @@ def test_roundtrip():
         # generate a unitary from the Qiskit circuit
         job = qiskit.execute(qc, backend)
         U2 = job.result().get_unitary()
-        U2 = sc.utils.endian_reverse(U2) # switch from Qiskit endianess search_compiler endianess
-        distance = sc.utils.matrix_distance_squared(U1, U2)
-        # Compare the two unitaries and print the result.  The values should be close to 0.
-        print("Match for {}: {}".format(compilation, distance))
-        assert distance < 1e-10
-
-if __name__ == '__main__':
-    test_roundtrip()
+        U2 = qsearch.utils.endian_reverse(U2) # switch from Qiskit endianess search_compiler endianess
+        distance = qsearch.utils.matrix_distance_squared(U1, U2)
+        # Compare the two unitaries and check the result.  The values should be close to 0.
+        assert distance < 1e-13, "Distance for {}: {}".format(compilation, distance)

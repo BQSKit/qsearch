@@ -1,35 +1,60 @@
-# search_compiler
+![run tests](https://github.com/BQSKit/qsearch/workflows/run%20tests/badge.svg?branch=master)
+
+# qsearch
 An implementation of a quantum gate synthesis algorithm based on A* and numerical optimization.  It relies on [NumPy](https://numpy.org) and [SciPy](https://www.scipy.org).  It can export code for [Qiskit](https://qiskit.org) and [OpenQASM](https://github.com/Qiskit/openqasm).
 
 This is an implementation of the algorithm described in the paper *[Heuristics for Quantum Compiling with a Continuous Gate Set](https://arxiv.org/abs/1912.02727)*.
 
+These are some results showing how qsearch can provide optimal or near optimal results. We compare results to the [UniversalQ Compiler](https://github.com/Q-Compiler/UniversalQCompiler).
+
+| Circuit       | # of Qubits | Ref # | CNOT Linear | CNOT Ring | UQ (CNOT Ring) | CNOT Linear Unitary Distance | CNOT Ring Unitary Distance   |
+|---------------|--------|-----|-------------|-----------|----------------|-------------------------|-------------------------|
+| QFT           | 3      | 6   | 7*          | 6*        | 15             | 1.33 * 10<sup>-14</sup> | 2.22 * 10<sup>-16</sup> |
+| Fredkin       | 3      | 8   | 8           | 7         | 9              | 1.76 * 10<sup>-14</sup> | 0.0                     |
+| Toffoli       | 3      | 6   | 8           | 6         | 9              | 1.14 * 10<sup>-14</sup> | 0.0                     |
+| Peres         | 3      | 5   | 7           | 6         | 19             | 1.13 * 10<sup>-14</sup> | 0.0                     |
+| HHL           | 3      | N/A | 3*          | 3*        | 16             | 1.25 * 10<sup>-14</sup> | 0.0                     |
+| Or            | 3      | 6   | 8           | 6         | 10             | 1.72 * 10<sup>-14</sup> | 0.0                     |
+| EntangledX    | 3      | 4   | 2,3,4       | 2,3,4     | 9              | 1.26 * 10<sup>-14</sup> | 0.0                     |
+| TFIM_3_3      | 3      | 4   | 4           | 4         | 17             | 0.0                     | 0.0                     |
+| TFIM_6_3      | 3      | 8   | 6           | 6         | 17             | 4.44 * 10<sup>-16</sup> | 0.0                     |
+| TFIM_42_3     | 3      | 56  | 6           | 6         | 17             | 8.88 * 10<sup>-16</sup> | 0.0                     |
+| TFIM_60_3     | 3      | 80  | 6           | 6         | 17             | 6.66 * 10<sup>-16</sup> | 0.0                     |
+| QFT           | 4      | N/A | 13*          |           | 89             | 6.66 * 10<sup>-16</sup> |                         |
+| TFIM_30_4     | 4      | 60  | 11          |           | 87             | 9.08 * 10<sup>-11</sup> |                         |
+| IBM Challenge | 4      | N/A | 4           |           | DNR            | 0.0                     |                         |
+
+\* Some gates occasionally resulted in circuits with different CNOT counts due to the optimizers getting stuck in local minima. The best run out of 10 is listed in these cases. The CNOT count for these circuits was occasionally 1 more than listed. The gate "EntangledX" is a parameterized gate, and for certain combinations of parameters we were able to produce solutions with fewer CNOTs than the hand-optimized general solution.
+
 # Installation
-This is a python package which can be installed using pip.  You will need a Python version of at least 3.6. The search compiler currently only runs on macOS, Linux, and [the Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10). You can install it from [PyPi](https://pypi.org) using:
+This is a python package which can be installed using pip.  You will need a Python version of at least 3.6. The qsearch compiler currently only runs on macOS, Linux (including [the Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10)) and Windows (performance is much worse on Windows). You can install it from [PyPi](https://pypi.org) using:
 ```
-pip3 install search_compiler 
+pip3 install qsearch 
 ```
-You can also install from a downloaded copy of the repository:
+You can also install from the git repository:
 ```
-git clone git@github.com:WolfLink/search_compiler.git
-pip3 install ./search_compiler
+pip3 install https://github.com/BQSKit/qsearch/archive/dev.zip
+```
+or download and install it:
+```
+git clone https://github.com/BQSKit/qsearch
+pip3 install --upgrade ./qsearch
 ```
 If you make changes to your local copy, you can reinstall the package:
 ```
-pip3 install --upgrade ./search_compiler
+pip3 install --upgrade ./qsearch
 ```
 
 
 Once installed, you can import the library like any other python package:
 ```
-import search_compiler as sc
+import qsearch
 ```
-### Native Gateset
-There is a gateset that is implemented in native code to be faster.  [See the wiki for installation instructions](https://github.com/WolfLink/search_compiler/wiki/Native-Gateset).
-# Getting Started: search_compiler Projects
-The simplest way to use the search_compiler library is by using a Project. When you create a project, you provide a path where a directory will be created to contain the project's files.
+# Getting Started: qsearch Projects
+The simplest way to use the qsearch library is by using a project. When you create a project, you provide a path where a directory will be created to contain the project's files.
 ```
-import search_compiler as sc
-myproject = sc.Project("desired/path/to/project/directory")
+import qsearch
+myproject = qsearch.Project("desired/path/to/project/directory")
 ```
 You can then add unitaries to compile, and set compiler properties. Unitary matrices should be provided as `numpy` ndarrays using `dtype="complex128"`.
 ```
@@ -45,29 +70,47 @@ Once your project is finished, you can get openqasm output:
 myproject.assemble("gate_name") # This will write the qasm to stdout
 myproject.assemble("gate_name", write_location="path/to/output/file") # This will write the qasm to the specified path.
 ```
-[See the wiki for details on compiler properties and other Project features](https://github.com/WolfLink/search_compiler/wiki/Advanced-Project-Features).
+[See the wiki for details on compiler properties and other Project features](https://github.com/BQSKit/qsearch/wiki/Advanced-Project-Features).
 
 # Compiling Without Projects
 If you would like to avoid working with Projects, you can use the `SearchCompiler` class directly.
 ```
-import search_compiler as sc
-compiler = sc.SearchCompiler()
+import qsearch
+compiler = qsearch.SearchCompiler()
 circuit, vector = compiler.compile(target_unitary)
 ```
-The `SearchCompiler` class and the `compile` function can take extra arguments to further configure the compiler.  The return values are, in order, the unitary that represents the implemented circuit, the `sc.QuantumStep` representation of the circuit structure, and the vector of parameters for the circuit structure.
+The `SearchCompiler` class and the `compile` function can take extra arguments to further configure the compiler.  The return values are, in order, the unitary that represents the implemented circuit, the `qsearch.QuantumStep` representation of the circuit structure, and the vector of parameters for the circuit structure.
 
 To export openqasm code, use the `assemble` function from `assembler.py`.
 ```
-myqasm = sc.assembler.assemble(circuit, vector, sc.assembler.ASSEMBLY_IBMOPENQASM) # to get output as a string
-sc.assembler.assemble(circuit, vector, sc.assembler.ASSEMBLY_IBMOPENQASM, write_location="myqasm.txt") # to write the output to a file
+myqasm = qsearch.assembler.assemble(circuit, vector, qsearch.assembler.ASSEMBLY_IBMOPENQASM) # to get output as a string
+qsearch.assembler.assemble(circuit, vector, qsearch.assembler.ASSEMBLY_IBMOPENQASM, write_location="myqasm.txt") # to write the output to a file
 ```
 
-[See the wiki for details on compiler properties](https://github.com/WolfLink/search_compiler/wiki/Advanced-Compiler-Features).
+[See the wiki for details on compiler properties](https://github.com/WolfLink/qsearch/wiki/Advanced-Compiler-Features).
 
 # A Note On Endianness
 We use the physics convention of using big endian when naming our qubits.  Some quantum programs, including IBM's Qiskit, use little endian.  This means you will need to reverse the endianness of a unitary designed for Qiskit in order to work with our code, or visa versa.  We provide a function that performs endian reversal on numpy matrices:
 ```
-little_endian = sc.utils.endian_reverse(big_endian) # you can use the same function to convert in the other direction as well
+little_endian = qsearch.utils.endian_reverse(big_endian) # you can use the same function to convert in the other direction as well
 ```
 
-## Find information on customizing the compiler in the [wiki](https://github.com/WolfLink/search_compiler/wiki).
+## Find information on customizing the compiler in the [wiki](https://github.com/BQSKit/qsearch/wiki).
+
+
+
+Quantum Search Compiler (Qsearch) Copyright (c) 2020, The Regents 
+of the University of California, through Lawrence Berkeley National 
+Laboratory (subject to receipt of any required approvals from the U.S. 
+Dept. of Energy). All rights reserved.
+
+If you have questions about your rights to use or distribute this software,
+please contact Berkeley Lab's Intellectual Property Office at
+IPO@lbl.gov.
+
+NOTICE.  This Software was developed under funding from the U.S. Department
+of Energy and the U.S. Government consequently retains certain rights.  As
+such, the U.S. Government has been granted for itself and others acting on
+its behalf a paid-up, nonexclusive, irrevocable, worldwide license in the
+Software to reproduce, distribute copies to the public, prepare derivative 
+works, and perform publicly and display publicly, and to permit others to do so.

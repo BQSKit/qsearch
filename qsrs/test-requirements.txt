@@ -1,0 +1,4 @@
+qsearch
+qiskit
+numpy
+pytest

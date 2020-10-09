@@ -15,11 +15,13 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6,3.7,3.8]
-        os: [macOS-latest, ubuntu-latest]
+        os: [macOS-latest, ubuntu-latest, windows-latest]
       fail-fast: false
     steps:
         - name: checkout
           uses: actions/checkout@v2
+          with:
+            submodules: true
         - name: setup python
           uses: actions/setup-python@v1
           with:
@@ -39,38 +41,81 @@ jobs:
             restore-keys: |
               ${{ runner.os }}-pip-
         - uses: actions/cache@v2
+          if: startsWith(runner.os, 'Windows')
+          with:
+            path: ~\AppData\Local\pip\Cache
+            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            restore-keys: |
+              ${{ runner.os }}-pip-
+        - uses: actions/cache@v2
           with:
             path: |
               ~/.cargo/registry
               ~/.cargo/git
-              target
+              qsrs/target
             key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        - uses: actions/cache@v2
+          if: startsWith(matrix.os, 'Windows')
+          with:
+            path: |
+              qsrs/target/vcpkg
+            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
         - name: Install nightly-2020-04-06
           uses: actions-rs/toolchain@v1
           with:
               toolchain: nightly-2020-04-06
               default: true
         - if: startsWith(matrix.os, 'ubuntu')
-          run: sudo apt install libopenblas-dev libgfortran-7-dev
-        - name: Test building & installing Rust extension
-          run: cd native && pip install .
+          run: sudo apt install libopenblas-dev libgfortran-7-dev libceres-dev
+        - if: startsWith(matrix.os, 'macOS')
+          run: brew install ceres-solver eigen
+        - if: startsWith(matrix.os, 'Windows')
+          run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
+        - name: install test dependencies
+          run: pip install -r test-requirements.txt
+        - name: Build macOS wheels
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          env:
+            RUST_BACKTRACE: 1
+          if: startsWith(matrix.os, 'macOS')
+        - name: Build Windows wheels
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,rustopt,static" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          env:
+            RUST_BACKTRACE: 1
+          if: startsWith(matrix.os, 'Windows')
+        - name: Build Linux wheel
+          run: cd qsrs && pip install .
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'ubuntu')
-        - name: Build macOS wheels
-          run: cd native && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate" --release --no-sdist && pip install --no-index --find-links=target/wheels scrs
+        - name: install qsearch
+          run: pip install . && pip install twine wheel
+        - name: run pytest
+          run: pytest
+        - name: Remove target/ to prepare for building manylinux wheels
+          run: cd qsrs && rm -rf target
+          if: startsWith(matrix.os, 'ubuntu')
+        - name: Build manylinux wheels
+          run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.5 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2010 --no-sdist
           env:
             RUST_BACKTRACE: 1
-          if: startsWith(matrix.os, 'macOS')
+          if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == 3.8
         - name: upload wheel artifacts
           uses: actions/upload-artifact@v1
           with:
-            name: scrs-wheels-${{matrix.os}}-${{matrix.python-version}}
-            path: native/target/wheels 
-          if: startsWith(matrix.os, 'macOS')
-        - name: install search_compiler
-          run: pip install .
-        - name: install test dependencies
-          run: pip install -r test-requirements.txt
-        - name: run pytest
-          run: pytest
+            name: qsrs-wheels-${{matrix.os}}-${{matrix.python-version}}
+            path: qsrs/target/wheels
+          if: startsWith(matrix.os, 'macOS') || matrix.python-version == 3.8
+        - name: Publish qsrs to PyPI
+          env:
+            TWINE_USERNAME: __token__
+            TWINE_PASSWORD: ${{ secrets.pypi_password }}
+          run: twine upload qsrs/target/wheels/*
+          if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
+        - name: Remove target/wheels to clear some space
+          run: cd qsrs && rm -rf target/wheels
+          if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.8
+        - name: Remove target/wheels to clear some space
+          run: cd qsrs && rmdir /s /q target\vcpkg
+          shell: cmd
+          if: startsWith(matrix.os, 'Windows')

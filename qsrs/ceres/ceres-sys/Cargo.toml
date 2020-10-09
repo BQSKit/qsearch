@@ -1,0 +1,20 @@
+[package]
+name = "ceres-sys"
+version = "0.1.0"
+authors = ["Ethan Smith <ethan@ethanhs.me>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cpp = "0.5"
+
+[build-dependencies]
+cpp_build = "0.5"
+cmake = "0.1"
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+vcpkg = "0.2.10"
+
+[features]
+static = []
