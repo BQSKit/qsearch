@@ -94,7 +94,7 @@ def matrix_residuals_blacklist(badrows, badcols, A, B, I):
     Im = np.reshape(Im, (1,-1))
     return np.append(Re, Im)
 
-def matrix_residuals_slice_jac(slices, A, B, J):
+def matrix_residuals_blacklist_jac(slices, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
     return JU.T
 
