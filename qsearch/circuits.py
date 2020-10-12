@@ -546,17 +546,23 @@ class NonadjacentCNOTStep(QuantumStep):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
 class UStep(QuantumStep):
-    def __init__(self, U, d=2):
+    def __init__(self, U, d=2, gatename="CUSTOM", gateparams=(), gateindices=None):
         self.d = d
         self.U = U
         self.dits = int(np.log(U.shape[0])/np.log(2))
         self.num_inputs = 0
+        self.gatename = gatename
+        self.gateparams = gateparams
+        self.gateindices = gateindices
 
     def matrix(self, v):
         return self.U
 
     def assemble(self, v, i=0):
-        return [("gate", "CUSTOM", (), (i,))]
+        gatename = self.gatename
+        gateparams = self.gateparams
+        indices = self.gateindices if self.gateindices is not None else tuple((i+j for j in range(self.dits)))
+        return [("gate", gatename, gateparams, indices)]
 
     def _draw_assemble(self, i=0):
         return [("?", "q{}".format(i))]
