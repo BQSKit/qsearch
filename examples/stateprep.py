@@ -17,3 +17,5 @@ p.add_compilation("basic_state_test", qsearch.utils.generate_stateprep_target_ma
 
 p.run()
 
+# run post-processing to improve circuits that were generated with LEAP
+p.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solvers.MultiStart_Solver(12), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
