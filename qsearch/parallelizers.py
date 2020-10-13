@@ -25,13 +25,20 @@ def single_task(opts):
     return 1
 
 class Parallelizer():
+    """Base class for all Parallelizers. Parallelizers calculate the value of multiple search nodes in parallel."""
     def solve_circuits_parallel(self, tuples):
+        """Calculate the value of search tree nodes in parallel."""
         return None
 
     def done(self):
+        """Finalize/Clean up any state needed to run the Parallelizer."""
         pass
 
 class LokyParallelizer(Parallelizer):
+    """A parallelizer based on Loky, a "deadlock-free" ProcessPoolExecutor.
+
+    For more information on Loky see https://loky.readthedocs.io/en/stable/.
+    """
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
         self.executor = get_reusable_executor(max_workers=options.num_tasks)
@@ -41,6 +48,7 @@ class LokyParallelizer(Parallelizer):
         return self.executor.map(self.process_func, tuples)
 
 class MultiprocessingParallelizer(Parallelizer):
+    """A Parallelizer based on muliprocessing. Note this cannot be used with the MultiStart_Solvers!"""
     def __init__(self, options):
         if sys.platform != 'win32':
             ctx = get_context('fork')
@@ -59,6 +67,7 @@ class MultiprocessingParallelizer(Parallelizer):
         self.pool.join()
 
 class ProcessPoolParallelizer(Parallelizer):
+    """A Parallelizer based on concurrent.futures.ProcessPoolExecutor."""
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
         if sys.version_info >= (3, 8, 0) and sys.platform != 'win32':
@@ -76,6 +85,11 @@ class ProcessPoolParallelizer(Parallelizer):
         self.pool.shutdown()
 
 class MPIParallelizer(Parallelizer):
+    """A distributed MPI based Parallelizer.
+
+    This implementation unfortunately requires some work on the part of the Project
+    API or the user.
+    """
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=self.comm.size)
         if MPI is not None:
@@ -116,6 +130,8 @@ class MPIParallelizer(Parallelizer):
         self.comm.bcast(True, root=0)
 
 class SequentialParallelizer(Parallelizer):
+    """A Paralleizer that isn't, it runs tasks one at a time (mostly for debugging).
+    """
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=single_task)
         self.process_func = partial(evaluate_step, options=options)
