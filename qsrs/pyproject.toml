@@ -9,10 +9,10 @@ build-backend = "maturin"
 
 [tool.maturin]
 manylinux = "off"
-cargo-extra-args = "--features=python,rustopt"
+#cargo-extra-args = "--features=python,rustopt"
 # To use Apple's Accelerate framework, uncomment the following line
 #cargo-extra-args = "--no-default-features --features=accelerate,python,rustopt,ceres/system"
 # To use Intel's MKL, uncomment the following line
 #cargo-extra-args = "--no-default-features --features=mkl,python,rustopt,ceres/system"
 # On Windows we statically link to ceres and other dependencies
-#cargo-extra-args="--no-default-features --features python,static,rustopt"
+cargo-extra-args="--no-default-features --features python,static,rustopt"
