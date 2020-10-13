@@ -27,7 +27,9 @@ if __name__ == '__main__':
 
     #qc1.draw(output='mpl')
     #plt.show()
-    U1, vec = solv.solve_for_unitary(qiskit_to_qsearch(qc1), opts)
+    circ = qiskit_to_qsearch(qc1)
+    print(circ.validate_structure())
+    U1, vec = solv.solve_for_unitary(circ, opts)
     qc2 = qiskit.QuantumCircuit.from_qasm_str(assemble(qiskit_to_qsearch(qc1), vec, ASSEMBLY_IBMOPENQASM))
     #qc2.draw(output='mpl')
     #plt.show()

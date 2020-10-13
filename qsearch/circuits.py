@@ -1,6 +1,7 @@
 import numpy as np
 from . import utils, graphics, unitaries
 from hashlib import md5
+from warnings import warn
 
 try:
     from qsrs import native_from_object
@@ -51,6 +52,9 @@ class QuantumStep:
 
     def __repr__(self):
         return "QuantumStep()"
+
+    def validate_structure(self):
+        return True
 
 
 class IdentityStep(QuantumStep):
@@ -545,6 +549,16 @@ class NonadjacentCNOTStep(QuantumStep):
     def __repr__(self):
         return "NonadjacentCNOTStep({}, {}, {})".format(self.dits, self.control, self.target)
 
+    def validate_structure(self):
+        if self.control >= self.dits or self.target > self.dits:
+            warn("Invalid NonadjacentCNOTStep; both control and target must be smaller than dits.  Expected {} > {} and {}".format(self.dits, self.control, self.target))
+            return False
+        if self.control == self.target:
+            warn("Invalid NonadjacentCNOTStep: control and target must be different.  Expected {} != {}".format(self.control, self.target))
+            return False
+        return True
+
+
 class UStep(QuantumStep):
     def __init__(self, U, d=2):
         self.d = d
@@ -726,6 +740,24 @@ class KroneckerStep(QuantumStep):
     def __repr__(self):
         return "KroneckerStep({})".format(repr(self._substeps)[1:-1])
 
+    def validate_structure(self):
+        valid = True
+        num_inputs = 0
+        dits = 0
+        for substep in self._substeps:
+            if not substep.validate_structure():
+                valid = False
+            num_inputs += substep.num_inputs
+            dits += substep.dits
+
+        if num_inputs != self.num_inputs:
+            warn("KroneckerStep had a num_inputs mismatch: expected {} but got {}".format(self.num_inputs, num_inputs))
+            valid = False
+        if dits != self.dits:
+            warn("KroneckerStep had a dits mismatch: expected {} but got {}".format(self.dits, dits))
+            valid = False
+        return valid
+
 class ProductStep(QuantumStep):
     def __init__(self, *substeps):
         self.num_inputs = sum([step.num_inputs for step in substeps])
@@ -817,4 +849,22 @@ class ProductStep(QuantumStep):
 
     def __repr__(self):
         return "ProductStep({})".format(repr(self._substeps)[1:-1])
+
+    def validate_structure(self):
+        valid = True
+        num_inputs = 0
+        for substep in self._substeps:
+            if substep.dits != self.dits:
+                warn("ProductStep had a size mismatch: expected {} but got {}".format(self.dits, substep.dits))
+                valid = False
+            if not substep.validate_structure():
+                valid = False
+            num_inputs += substep.num_inputs
+
+        if num_inputs != self.num_inputs:
+            warn("ProductStep had a num_inputs mismatch: expected {} but got {}".format(self.num_inputs, num_inputs))
+            valid = False
+        valid = True
+
+
 

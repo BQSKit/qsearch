@@ -49,7 +49,9 @@ standard_defaults = {
         "backend":backends.SmartDefaultBackend(),
         "parallelizer":parallelizers.MultiprocessingParallelizer,
         "log_file":None,
-        "max_quality_optimization" : False
+        "max_quality_optimization" : False,
+        "verbosity" : 1,
+        "stdout_enabled" : True
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
