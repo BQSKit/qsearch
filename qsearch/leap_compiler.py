@@ -22,6 +22,13 @@ def cut_end(circ, depth):
 
 
 class LeapCompiler(Compiler):
+    """LeapCompiler is a more scalable search based circuit compiler
+
+    LeapCompiler uses fixed structure prefixes to greatly reduce the search space
+    and speed up synthesis at the cost of optimiality. Thus it is recommended to use in conjunction
+    with reoptimizing_compiler.LeapReoptimizing_PostProcessor() to obtain the best results.
+
+    """
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
@@ -29,6 +36,8 @@ class LeapCompiler(Compiler):
         self.options.set_smart_defaults(**standard_smart_defaults)
 
     def compile(self, options=Options(), **xtraargs):
+        """Run LEAP on the compilation specified in options"""
+
         options = self.options.updated(options)
         if "U" in xtraargs:
             # allowing the old name for legacy code purposes
@@ -78,7 +87,8 @@ class LeapCompiler(Compiler):
 
 
 class SubCompiler(Compiler):
-    """A modified SearchCompiler for the LeapCompiler"""
+    """A modified SearchCompiler for the LeapCompiler to use.
+    """
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
         self.options.update(**xtraargs)
