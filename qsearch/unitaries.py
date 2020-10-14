@@ -82,7 +82,7 @@ def rot_z(theta):
     return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_z_jac(theta):
-    return np.array([[-1j/2*np.exp(-1j*theta/2), 0], [0, 1j/2*np.exp(1j*theta/2)]], dtype='complex128')
+    return np.array([[-1j/2*theta * np.exp(-1j*theta/2), 0], [0, 1j/2*theta*np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_x(theta):
     return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
@@ -128,5 +128,5 @@ def arbitrary_cnot(qudits, control, target):
         else:
             # if the control is true and matched and the target is matched, return 0
             return 0
-    return np.array(np.fromfunction(np.vectorize(f), (2**qudits,2**dits)),dtype='complex128')
+    return np.array(np.fromfunction(np.vectorize(f), (2**qudits,2**qudits)),dtype='complex128')
 

@@ -5,8 +5,6 @@ use num_complex::Complex64;
 use reduce::Reduce;
 use squaremat::SquareMatrix;
 
-use std::f64::consts::PI;
-
 #[enum_dispatch]
 pub trait QuantumGate: Clone {
     fn mat(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> SquareMatrix;
@@ -149,12 +147,12 @@ impl GateU3 {
 /// based on https://quantumexperience.ng.bluemix.net/proxy/tutorial/full-user-guide/002-The_Weird_and_Wonderful_World_of_the_Qubit/004-advanced_qubit_gates.html
 impl QuantumGate for GateU3 {
     fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        let ct = r!((v[0] * PI).cos());
-        let st = r!((v[0] * PI).sin());
-        let cp = (v[1] * PI * 2.0).cos();
-        let sp = (v[1] * PI * 2.0).sin();
-        let cl = (v[2] * PI * 2.0).cos();
-        let sl = (v[2] * PI * 2.0).sin();
+        let ct = r!((v[0] / 2.0).cos());
+        let st = r!((v[0] / 2.0).sin());
+        let cp = (v[1]).cos();
+        let sp = (v[1]).sin();
+        let cl = (v[2]).cos();
+        let sl = (v[2]).sin();
         SquareMatrix::from_vec(
             vec![
                 ct,
@@ -171,12 +169,12 @@ impl QuantumGate for GateU3 {
         v: &[f64],
         _constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        let ct = r!((v[0] * PI).cos());
-        let st = r!((v[0] * PI).sin());
-        let cp = (v[1] * PI * 2.0).cos();
-        let sp = (v[1] * PI * 2.0).sin();
-        let cl = (v[2] * PI * 2.0).cos();
-        let sl = (v[2] * PI * 2.0).sin();
+        let ct = r!((v[0] / 2.0).cos());
+        let st = r!((v[0] / 2.0).sin());
+        let cp = (v[1]).cos();
+        let sp = (v[1]).sin();
+        let cl = (v[2]).cos();
+        let sl = (v[2]).sin();
         (
             SquareMatrix::from_vec(
                 vec![
@@ -190,10 +188,10 @@ impl QuantumGate for GateU3 {
             vec![
                 SquareMatrix::from_vec(
                     vec![
-                        -PI * st,
-                        -PI * ct * (cl + i!(1.0) * sl),
-                        PI * ct * (cp + i!(1.0) * sp),
-                        -PI * st * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp),
+                        -0.5 * st,
+                        -0.5 * ct * (cl + i!(1.0) * sl),
+                        0.5 * ct * (cp + i!(1.0) * sp),
+                        -0.5 * st * (cl * cp - sl * sp + i!(1.0) * cl * sp + i!(1.0) * sl * cp),
                     ],
                     2,
                 ),
@@ -201,9 +199,8 @@ impl QuantumGate for GateU3 {
                     vec![
                         r!(0.0),
                         r!(0.0),
-                        st * r!(2.0) * PI * (-sp + i!(1.0) * cp),
-                        ct * r!(2.0)
-                            * PI
+                        st * r!(2.0) / 2.0 * (-sp + i!(1.0) * cp),
+                        ct * r!(2.0) / 2.0
                             * (cl * -sp - sl * cp + i!(1.0) * cl * cp + i!(1.0) * sl * -sp),
                     ],
                     2,
@@ -211,10 +208,9 @@ impl QuantumGate for GateU3 {
                 SquareMatrix::from_vec(
                     vec![
                         r!(0.0),
-                        -st * r!(2.0) * PI * (-sl + i!(1.0) * cl),
+                        -st * r!(2.0) / 2.0 * (-sl + i!(1.0) * cl),
                         r!(0.0),
-                        ct * r!(2.0)
-                            * PI
+                        ct * r!(2.0) / 2.0
                             * (-sl * cp - cl * sp + i!(1.0) * -sl * sp + i!(1.0) * cl * cp),
                     ],
                     2,
@@ -246,7 +242,7 @@ impl GateX {
 
 impl QuantumGate for GateX {
     fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        rot_x(v[0] * 2.0 * PI)
+        rot_x(v[0])
     }
 
     fn mat_jac(
@@ -254,7 +250,7 @@ impl QuantumGate for GateX {
         v: &[f64],
         _constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        (rot_x(v[0] * 2.0 * PI), vec![rot_x_jac(v[0] * 2.0 * PI)])
+        (rot_x(v[0]), vec![rot_x_jac(v[0])])
     }
 
     fn inputs(&self) -> usize {
@@ -280,7 +276,7 @@ impl GateY {
 
 impl QuantumGate for GateY {
     fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        rot_y(v[0] * 2.0 * PI)
+        rot_y(v[0])
     }
 
     fn mat_jac(
@@ -288,7 +284,7 @@ impl QuantumGate for GateY {
         v: &[f64],
         _constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        (rot_y(v[0] * 2.0 * PI), vec![rot_y_jac(v[0] * 2.0 * PI)])
+        (rot_y(v[0]), vec![rot_y_jac(v[0])])
     }
 
     fn inputs(&self) -> usize {
@@ -314,7 +310,7 @@ impl GateZ {
 
 impl QuantumGate for GateZ {
     fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        rot_z(v[0] * 2.0 * PI)
+        rot_z(v[0])
     }
 
     fn mat_jac(
@@ -322,7 +318,7 @@ impl QuantumGate for GateZ {
         v: &[f64],
         _constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        (rot_z(v[0] * 2.0 * PI), vec![rot_z_jac(v[0] * 2.0 * PI)])
+        (rot_z(v[0]), vec![rot_z_jac(v[0])])
     }
 
     fn inputs(&self) -> usize {
@@ -350,10 +346,10 @@ impl GateXZXZ {
 
 impl QuantumGate for GateXZXZ {
     fn mat(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        let rotz = rot_z(v[0] * PI * 2.0 + PI);
+        let rotz = rot_z(v[0]);
         let buffer = rotz.matmul(&constant_gates[self.x90_index]);
         let out = constant_gates[self.x90_index].matmul(&buffer);
-        let rotz2 = rot_z(v[1] * PI * 2.0 - PI);
+        let rotz2 = rot_z(v[1]);
         rotz2.matmul(&out)
     }
 
@@ -363,19 +359,19 @@ impl QuantumGate for GateXZXZ {
         v: &[f64],
         constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        let rotz_jac = rot_z_jac_mul(v[0] * PI * 2.0 + PI, Some(PI * 2.0));
+        let rotz_jac = rot_z_jac_mul(v[0], Some(1.0));
         let buffer = rotz_jac.matmul(&constant_gates[self.x90_index]);
         let out = constant_gates[self.x90_index].matmul(&buffer);
-        let rotz = rot_z(v[1] * PI * 2.0 - PI);
+        let rotz = rot_z(v[1]);
         let J1 = rotz.matmul(&out);
 
-        let rotz2 = rot_z(v[0] * PI * 2.0 + PI);
+        let rotz2 = rot_z(v[0]);
         let buffer2 = rotz2.matmul(&constant_gates[self.x90_index]);
         let out2 = constant_gates[self.x90_index].matmul(&buffer2);
-        let rotz_jac2 = rot_z_jac_mul(v[1] * PI * 2.0 - PI, Some(PI * 2.0));
+        let rotz_jac2 = rot_z_jac_mul(v[1], Some(1.0));
         let J2 = rotz_jac2.matmul(&out2);
 
-        let rotz3 = rot_z(v[1] * PI * 2.0 - PI);
+        let rotz3 = rot_z(v[1]);
         let u = rotz3.matmul(&out2);
 
         (u, vec![J1, J2])
@@ -610,23 +606,23 @@ impl GateSingleQutrit {
 
 impl QuantumGate for GateSingleQutrit {
     fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
-        let s1 = (v[0] * PI * 2.0).sin();
-        let c1 = (v[0] * PI * 2.0).cos();
-        let s2 = (v[1] * PI * 2.0).sin();
-        let c2 = (v[1] * PI * 2.0).cos();
-        let s3 = (v[2] * PI * 2.0).sin();
-        let c3 = (v[2] * PI * 2.0).cos();
+        let s1 = (v[0]).sin();
+        let c1 = (v[0]).cos();
+        let s2 = (v[1]).sin();
+        let c2 = (v[1]).cos();
+        let s3 = (v[2]).sin();
+        let c3 = (v[2]).cos();
 
-        let p1 = (i!(1.0) * v[3] * PI * 2.0).exp();
-        let m1 = (i!(-1.0) * v[3] * PI * 2.0).exp();
-        let p2 = (i!(1.0) * v[4] * PI * 2.0).exp();
-        let m2 = (i!(-1.0) * v[4] * PI * 2.0).exp();
-        let p3 = (i!(1.0) * v[5] * PI * 2.0).exp();
-        let m3 = (i!(-1.0) * v[5] * PI * 2.0).exp();
-        let p4 = (i!(1.0) * v[6] * PI * 2.0).exp();
-        let m4 = (i!(-1.0) * v[6] * PI * 2.0).exp();
-        let p5 = (i!(1.0) * v[7] * PI * 2.0).exp();
-        let m5 = (i!(-1.0) * v[7] * PI * 2.0).exp();
+        let p1 = (i!(1.0) * v[3]).exp();
+        let m1 = (i!(-1.0) * v[3]).exp();
+        let p2 = (i!(1.0) * v[4]).exp();
+        let m2 = (i!(-1.0) * v[4]).exp();
+        let p3 = (i!(1.0) * v[5]).exp();
+        let m3 = (i!(-1.0) * v[5]).exp();
+        let p4 = (i!(1.0) * v[6]).exp();
+        let m4 = (i!(-1.0) * v[6]).exp();
+        let p5 = (i!(1.0) * v[7]).exp();
+        let m5 = (i!(-1.0) * v[7]).exp();
 
         SquareMatrix::from_vec(
             vec![
@@ -648,23 +644,23 @@ impl QuantumGate for GateSingleQutrit {
         v: &[f64],
         _constant_gates: &[SquareMatrix],
     ) -> (SquareMatrix, Vec<SquareMatrix>) {
-        let s1 = (v[0] * PI * 2.0).sin();
-        let c1 = (v[0] * PI * 2.0).cos();
-        let s2 = (v[1] * PI * 2.0).sin();
-        let c2 = (v[1] * PI * 2.0).cos();
-        let s3 = (v[2] * PI * 2.0).sin();
-        let c3 = (v[2] * PI * 2.0).cos();
+        let s1 = (v[0]).sin();
+        let c1 = (v[0]).cos();
+        let s2 = (v[1]).sin();
+        let c2 = (v[1]).cos();
+        let s3 = (v[2]).sin();
+        let c3 = (v[2]).cos();
 
-        let p1 = (i!(1.0) * v[3] * PI * 2.0).exp();
-        let m1 = (i!(-1.0) * v[3] * PI * 2.0).exp();
-        let p2 = (i!(1.0) * v[4] * PI * 2.0).exp();
-        let m2 = (i!(-1.0) * v[4] * PI * 2.0).exp();
-        let p3 = (i!(1.0) * v[5] * PI * 2.0).exp();
-        let m3 = (i!(-1.0) * v[5] * PI * 2.0).exp();
-        let p4 = (i!(1.0) * v[6] * PI * 2.0).exp();
-        let m4 = (i!(-1.0) * v[6] * PI * 2.0).exp();
-        let p5 = (i!(1.0) * v[7] * PI * 2.0).exp();
-        let m5 = (i!(-1.0) * v[7] * PI * 2.0).exp();
+        let p1 = (i!(1.0) * v[3]).exp();
+        let m1 = (i!(-1.0) * v[3]).exp();
+        let p2 = (i!(1.0) * v[4]).exp();
+        let m2 = (i!(-1.0) * v[4]).exp();
+        let p3 = (i!(1.0) * v[5]).exp();
+        let m3 = (i!(-1.0) * v[5]).exp();
+        let p4 = (i!(1.0) * v[6]).exp();
+        let m4 = (i!(-1.0) * v[6]).exp();
+        let p5 = (i!(1.0) * v[7]).exp();
+        let m5 = (i!(-1.0) * v[7]).exp();
         let u = SquareMatrix::from_vec(
             vec![
                 c1 * c2 * p1,
@@ -692,8 +688,7 @@ impl QuantumGate for GateSingleQutrit {
                 -c1 * s2 * s3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let jt2 = SquareMatrix::from_vec(
             vec![
@@ -708,8 +703,7 @@ impl QuantumGate for GateSingleQutrit {
                 -s2 * c3 * m1 * m2 - s1 * c2 * s3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let jt3 = SquareMatrix::from_vec(
             vec![
@@ -724,8 +718,7 @@ impl QuantumGate for GateSingleQutrit {
                 -c2 * s3 * m1 * m2 - s1 * s2 * c3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let je1 = SquareMatrix::from_vec(
             vec![
@@ -740,8 +733,7 @@ impl QuantumGate for GateSingleQutrit {
                 -i!(1.0) * c2 * c3 * m1 * m2,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let je2 = SquareMatrix::from_vec(
             vec![
@@ -756,8 +748,7 @@ impl QuantumGate for GateSingleQutrit {
                 -i!(1.0) * c2 * c3 * m1 * m2,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let je3 = SquareMatrix::from_vec(
             vec![
@@ -772,8 +763,7 @@ impl QuantumGate for GateSingleQutrit {
                 i!(1.0) * s1 * s2 * s3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let je4 = SquareMatrix::from_vec(
             vec![
@@ -788,8 +778,7 @@ impl QuantumGate for GateSingleQutrit {
                 -i!(1.0) * s1 * s2 * s3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         let je5 = SquareMatrix::from_vec(
             vec![
@@ -804,8 +793,7 @@ impl QuantumGate for GateSingleQutrit {
                 -i!(1.0) * s1 * s2 * s3 * m3 * p4 * p5,
             ],
             3,
-        ) * 2.0
-            * PI;
+        );
 
         (u, vec![jt1, jt2, jt3, je1, je2, je3, je4, je5])
     }
