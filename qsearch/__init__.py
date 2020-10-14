@@ -1,5 +1,5 @@
 from .compiler import *
 from . import gatesets
-from . import circuits
+from . import gates
 from .project import Project
 

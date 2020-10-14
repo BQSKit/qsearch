@@ -9,7 +9,6 @@ ASSEMBLER_IBMOPENQASM -- Outputs Openqasm code with the IBM imports and gate nam
 ASSEMBLER_QUTRIT -- Outputs pseudocode for circuits built with single-qutrit gates and CNOTs.
 """
 
-from .circuits import *
 from .options import Options
 
 class Assembler():

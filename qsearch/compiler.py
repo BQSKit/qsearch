@@ -2,7 +2,7 @@ from functools import partial
 from timeit import default_timer as timer
 import heapq
 
-from .circuits import *
+from .gates import *
 
 from . import solvers as scsolver
 from .options import Options
@@ -40,15 +40,15 @@ class SearchCompiler(Compiler):
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-        if options.gateset.d**dits != np.shape(U)[0]:
-            raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
+        if options.gateset.d**qudits != np.shape(U)[0]:
+            raise ValueError("The target matrix of size {} is not compatible with ququdits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-        I = circuits.IdentityStep(options.gateset.d)
+        I = circuits.IdentityGate(d=options.gateset.d)
 
-        initial_layer = options.gateset.initial_layer(dits)
-        branching_factor = options.gateset.branching_factor(dits)
+        initial_layer = options.gateset.initial_layer(qudits)
+        branching_factor = options.gateset.branching_factor(qudits)
         if branching_factor <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
@@ -76,11 +76,11 @@ class SearchCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
-            if isinstance(initial_layer, ProductStep):
+            if isinstance(initial_layer, ProductGate):
                 root = initial_layer
             else:
-                root = ProductStep(initial_layer)
-            root = ProductStep(initial_layer)
+                root = ProductGate(initial_layer)
+            root = ProductGate(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])

@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import matrix, array
-from .circuits import *
 from warnings import warn
 from enum import Enum
 import os

@@ -1,4 +1,4 @@
-from .circuits import *
+from .gates import *
 from .assemblers import flatten_intermediate
 import numpy as np
 
@@ -6,17 +6,17 @@ import numpy as np
 #TODO: rename all the n's in here to "dits" as appropriate
 
 # Commonly used functions for generating gatesets
-def linear_topology(double_step, single_step, n, d, identity_step=None, single_alt=None, double_weight=1, single_weight=0, skip_index=None):
+def linear_topology(double_gate, single_gate, n, d, identity_gate=None, single_alt=None, double_weight=1, single_weight=0, skip_index=None):
     weight = double_weight + 2*single_weight
-    if not identity_step:
-        identity_step = IdentityStep(d)
+    if not identity_gate:
+        identity_gate = IdentityGate(d=d)
     if single_alt is None:
-        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_step, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
+        return [(KroneckerGate(*[identity_gate]*i, ProductGate(double_gate, KroneckerGate(single_gate, single_gate)), *[identity_gate]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
     else:
-        return [(KroneckerStep(*[identity_step]*i, ProductStep(double_step, KroneckerStep(single_alt, single_step)), *[identity_step]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
+        return [(KroneckerGate(*[identity_gate]*i, ProductGate(double_gate, KroneckerGate(single_alt, single_gate)), *[identity_gate]*(n-i-2)), weight) for i in range(0, n-1) if skip_index is None or i != skip_index]
 
-def fill_row(step, n):
-    return KroneckerStep(*[step]*n)
+def fill_row(gate, n):
+    return KroneckerGate(*[gate]*n)
 
 
 def find_last_3_cnots_linear(circuit):
@@ -24,10 +24,10 @@ def find_last_3_cnots_linear(circuit):
     # this function is written specifically for linear topology-based gatesets.  Other gatesets should use find_last_3_cnots_arbitrary.
     # do not use either of these functions with gatesets not intended specifically for it
 
-    contents = circuit._substeps
+    contents = circuit._subgates
     if len(contents) < 4:
         return None
-    indices = [[type(sub) for sub in step._substeps].index(ProductStep) for step in contents[-1:-4:-1]]
+    indices = [[type(sub) for sub in gate._subgates].index(ProductGate) for gate in contents[-1:-4:-1]]
 
     if indices[0] == indices[1] and indices[1] == indices[2]:
         return indices[0]
@@ -76,40 +76,40 @@ class Gateset():
 
 class ZXZXZCNOTLinear(Gateset):
     def __init__(self):
-        self.single_step = ZXZXZQubitStep()
-        self.cnot = CNOTStep()
+        self.single_gate = ZXZXZQubitGate()
+        self.cnot = CNOTGate()
         self.d = 2
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
     
     def search_layers(self, n):
-        return linear_topology(self.cnot, self.single_step, n, self.d)
+        return linear_topology(self.cnot, self.single_gate, n, self.d)
 
-class QiskitU3Linear(Gateset):
+class U3CNOTLinear(Gateset):
     def __init__(self):
-        self.single_step = QiskitU3QubitStep()
-        self.cnot = CNOTStep()
+        self.single_gate = U3Gate()
+        self.cnot = CNOTGate()
         self.d = 2
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
     
     def search_layers(self, n):
-        return linear_topology(self.cnot, self.single_step, n, self.d)
+        return linear_topology(self.cnot, self.single_gate, n, self.d)
 
 class QubitCNOTLinear(Gateset):
     def __init__(self):
-        self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
-        self.cnot = CNOTStep()
+        self.single_gate = U3Gate()
+        self.single_alt  = XZXZGate()
+        self.cnot = CNOTGate()
         self.d = 2
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
     
     def search_layers(self, n):
-        return linear_topology(self.cnot, self.single_step, n, self.d, single_alt=self.single_alt)
+        return linear_topology(self.cnot, self.single_gate, n, self.d, single_alt=self.single_alt)
 
     def branching_factor(self, dits):
         return dits-1
@@ -118,104 +118,72 @@ class QubitCNOTLinear(Gateset):
         if dits is None:
             dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
         skip_index = find_last_3_cnots_linear(circ)
-        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_step, dits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
-
-class QubitCRZLinear(Gateset):
-    def __init__(self):
-        self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
-        self.crz = CRZStep()
-        self.d = 2
-
-    def initial_layer(self, n):
-        return fill_row(self.single_step, n)
-
-    def search_layers(self, n):
-        return linear_topology(self.crz, self.single_step, n, self.d, single_alt=self.single_alt)
-
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_gate, dits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCNOTRing(Gateset):
     def __init__(self):
-        self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
-        self.cnot = CNOTStep()
+        self.single_gate = U3Gate()
+        self.single_alt  = XZXZGate()
+        self.cnot = CNOTGate()
         self.d = 2
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
 
     def search_layers(self, n):
-        I = IdentityStep(2)
-        steps = linear_topology(self.cnot, self.single_step, n, self.d, identity_step=I, single_alt=self.single_alt)
+        I = IdentityGate(2)
+        gates = linear_topology(self.cnot, self.single_gate, n, self.d, identity_gate=I, single_alt=self.single_alt)
         if n == 2:
-            return steps
-        finisher = (ProductStep(NonadjacentCNOTStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt)), 1)
-        return steps + [finisher]
+            return gates
+        finisher = (ProductGate(NonadjacentCNOTGate(n, n-1, 0), KroneckerGate(self.single_gate, *[I]*(n-2), self.single_alt)), 1)
+        return gates + [finisher]
 
 
 class QubitCNOTAdjacencyList(Gateset):
     def __init__(self, adjacency):
-        self.single_step = QiskitU3QubitStep()
-        self.single_alt = XZXZPartialQubitStep()
-        self.I = IdentityStep(2)
+        self.single_gate = U3Gate()
+        self.single_alt = XZXZGate()
+        self.I = IdentityGate()
         self.adjacency = adjacency # a list of tuples of control-target.  It is not recommended to add bidirectional links, because that difference can be handled more efficiently via single qubit gates.
         self.d = 2
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
 
     def search_layers(self, n):
         if n == 2:
-            return [(ProductStep(CNOTStep(), KroneckerStep(self.single_step, self.single_step)), 1)] # prevents the creation of an extra cnot placement in the 2 qubit case
+            return [(ProductGate(CNOTGate(), KroneckerGate(self.single_gate, self.single_gate)), 1)] # prevents the creation of an extra cnot placement in the 2 qubit case
 
-        steps = []
+        gates = []
         for pair in self.adjacency:
             if pair[0] >= n or pair[1] >= n:
                 continue
-            cnot = NonadjacentCNOTStep(n, pair[0], pair[1])
-            single_steps = [self.single_step if i == pair[0] else self.single_alt if i == pair[1] else self.I for i in range(0, n)]
-            steps.append((ProductStep(cnot, KroneckerStep(*single_steps)), 1)) 
-        return steps
-
-class QubitCRZRing(Gateset):
-    def __init__(self):
-        self.single_step = QiskitU3QubitStep()
-        self.single_alt  = XZXZPartialQubitStep()
-        self.crz = CRZStep()
-        self.d = 2
-
-    def initial_layer(self, n):
-        return fill_row(self.single_step, n)
-
-    def search_layers(self, n):
-        I = IdentityStep(2)
-        steps = linear_topology(self.crz, self.single_step, n, self.d, identity_step=I, single_alt=self.single_alt)
-        if n == 2:
-            return steps
-        finisher = (ProductStep(NonadjacentCRZStep(n, n-1, 0), KroneckerStep(self.single_step, *[I]*(n-2), self.single_alt)), 1)
-        return steps + [finisher]
+            cnot = NonadjacentCNOTGate(n, pair[0], pair[1])
+            single_gates = [self.single_gate if i == pair[0] else self.single_alt if i == pair[1] else self.I for i in range(0, n)]
+            gates.append((ProductGate(cnot, KroneckerGate(*single_gates)), 1)) 
+        return gates
 
 class QutritCPIPhaseLinear(Gateset):
     def __init__(self):
-        self.single_step = SingleQutritStep()
+        self.single_gate = SingleQutritGate()
         self.d = 3
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
     
     def search_layers(self, n):
-        return linear_topology(CPIPhaseStep(), self.single_step, n, self.d)
+        return linear_topology(CPIPhaseGate(), self.single_gate, n, self.d)
 
 class QutritCNOTLinear(Gateset):
     def __init__(self):
-        self.single_step = SingleQutritStep()
+        self.single_gate = SingleQutritGate()
         self.d = 3
 
     def initial_layer(self, n):
-        return fill_row(self.single_step, n)
+        return fill_row(self.single_gate, n)
     
     def search_layers(self, n):
-        return linear_topology(UpgradedConstantStep(CNOTStep()), self.single_step, n, self.d)
+        return linear_topology(UpgradedConstantGate(CNOTGate()), self.single_gate, n, self.d)
 
 
 

@@ -5,7 +5,7 @@ import heapq
 from scipy.stats import linregress
 import numpy as np
 
-from .circuits import *
+from .gates import *
 
 from . import solvers as scsolver
 from .options import Options
@@ -28,8 +28,8 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         circuit = result["structure"]
         finalx = result["parameters"]
         options = self.options.updated(options)
-        single_qubit_names = ["QiskitU3QubitStep()", "ZXZXZQubitStep()", "XZXZPartialQubitStep()"]
-        identitystr = "IdentityStep(2)"
+        single_qubit_names = ["U3Gate()", "ZXZXZGate()", "XZXZGate()"]
+        identitystr = "IdentityGate()"
         circstr = repr(circuit)
         initial_count = sum([circstr.count(sqn) for sqn in single_qubit_names])
         options.logger.logprint("Initial count: {}".format(initial_count), verbosity=2)
@@ -143,14 +143,14 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     break
                 startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
                 window_size = depth or options.reoptimize_size
-                root = ProductStep(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
+                root = ProductGate(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
                 h = options.heuristic
                 dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
                 if options.gateset.d**dits != np.shape(U)[0]:
                     raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-                I = circuits.IdentityStep(options.gateset.d)
+                I = circuits.IdentityGate(d=options.gateset.d)
 
                 initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
                 search_layers = options.gateset.search_layers(dits)

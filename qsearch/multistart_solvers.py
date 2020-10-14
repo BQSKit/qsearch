@@ -55,7 +55,7 @@ class MultiStart_Solver(Solver):
 
         _, _, rk_const, ld, mu, nu, _, H = initialize_APOSMM([],specs,None)
 
-        initial_sample = np.random.uniform(0, 1, (initial_sample_size, n))
+        initial_sample = np.random.uniform(0, 2*np.pi, (initial_sample_size, n))
 
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
