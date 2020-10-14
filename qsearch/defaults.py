@@ -1,3 +1,12 @@
+"""
+This module provides defaults for Options objects.  This includes definitions of smart_default functions, and dictionaries to be used with set_defaults and set_smart_defaults.
+
+Three default dictionaries are provided.
+standard_defaults -- A dictionary containing defaults for standard gate synthesis.
+standard_smart_defaults -- A dictionary containing smart_defaults functions for standard gate synthesis.
+stateprep_defaults -- A dictionary containing defaults for stateprep synthesis.
+"""
+
 from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
 from functools import partial
 
@@ -34,7 +43,7 @@ def default_logger(options):
     return logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
 def default_checkpoint(options):
-    return checkpoints.FileCheckpoint(opt=options)
+    return checkpoints.FileCheckpoint(options=options)
 
 def identity(U):
     return U
