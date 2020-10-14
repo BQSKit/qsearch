@@ -11,3 +11,4 @@ benchmarks/
 leapex/
 leapex-reoptimize/
 multistart/
+docs/_build/
