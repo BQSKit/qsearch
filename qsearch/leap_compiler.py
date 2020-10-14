@@ -1,3 +1,6 @@
+"""
+This module provides LeapCompiler, which is a more scalable variant of SearchCompiler, at the expense of producing somewhat longer circuits.  LeapReoptimizing_PostProcessor can be used to reduce circuit length back to levels that SearchCompiler might generate.
+"""
 from functools import partial
 from timeit import default_timer as timer
 import heapq
