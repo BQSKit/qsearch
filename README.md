@@ -76,7 +76,7 @@ If you would like to avoid working with Projects, you can use the `SearchCompile
 ```
 import qsearch
 compiler = qsearch.SearchCompiler()
-circuit, vector = compiler.compile(target_unitary)
+result = compiler.compile(target=target_unitary)
 ```
 The `SearchCompiler` class and the `compile` function can take extra arguments to further configure the compiler.  The returned value is a dictionary that contains the unitary that represents the implemented circuit, the `qsearch.gates.Gate` representation of the circuit structure, and the vector of parameters for the circuit structure.
 
