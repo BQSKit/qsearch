@@ -13,3 +13,7 @@ sphinx:
 submodules:
   exclude: all
 
+python:
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
