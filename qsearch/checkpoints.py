@@ -45,6 +45,11 @@ class FileCheckpoint(Checkpoint):
         Options:
         statefile -- A string with a filepath where the state will be stored, or None, in which case no state will be stored and None will always be returned by recover()
     """
+
+    def __init__(self, options=options.Options()):
+        super().__init__(options)
+        options.set_defaults{"statefile", None}
+
     def save(self, state):
         if self.options.statefile == None:
             return
@@ -88,9 +93,11 @@ class ChildCheckpoint(Checkpoint):
 
         ChildCheckpoint fully conforms to Checkpoint, and makes no assumptions about its parent, so it is compatible with any class that makes use ofa Checkpoint and works with any Checkpoint as a parent.  This means you can even have multiple layers of nested ChildCheckpoint.
 
-        However, the class creating the ChildCheckpoint must be sure to use the parent functions.  Also, note that calling delete_parent() also deletes the state for the child.
+        However, the class creating the ChildCheckpoint must be sure to use the parent functions.
+
+        Also, note that calling delete_parent() also deletes the state for the child.  However, this is rather uncommon because usually it is the creator of the Checkpoint that calls delete, not the class it is passed to.  For example, Project will call delete() to delete the checkpoint from a Compiler.  ParentCompiler might call delete() to delete the state of SubCompiler once SubCompiler has finished (in fact, this happens in leap_compiler).
     """
-    def __init__(self, parent, options=options.Options()):
+    def __init__(self, options=options.Options()):
         super().__init__(options)
         self.options.make_required("parent")
         self.recover()
