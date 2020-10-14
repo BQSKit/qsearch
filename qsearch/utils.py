@@ -118,7 +118,7 @@ def nearest_unitary(A):
     Thank you to Ed Younis, this is based on code from qfast
     """
 
-    if not is_square_matrix(A):
+    if len(A.shape) == 2 and A.shape[0] != A.shape[1]:
         raise TypeError("A must be a square matrix.")
 
     V, __, Wh = sp.linalg.svd(A)
