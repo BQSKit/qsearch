@@ -53,7 +53,7 @@ standard_defaults = {
         "gateset":gatesets.Default(),
         "beams":-1,
         "delta": 0,
-        "depth":None,
+        "weight_limit":None,
         "search_type":"astar",
         "statefile":None,
         "error_func":utils.matrix_distance_squared,
@@ -64,7 +64,8 @@ standard_defaults = {
         "max_quality_optimization" : False,
         "assembler" : assemblers.ASSEMBLER_QISKIT,
         "write_location" : None,
-        "unitary_preprocessor": utils.nearest_unitary
+        "unitary_preprocessor": utils.nearest_unitary,
+        "timeout" : float('inf')
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
