@@ -1,4 +1,4 @@
-from qsearch import gatesets, unitaries, advanced_unitaries
+from qsearch import gatesets, unitaries, advanced_unitaries, backends
 
 def test_qubit_cnot_linear(project, check_project):
     project['gateset'] = gatesets.QubitCNOTLinear()

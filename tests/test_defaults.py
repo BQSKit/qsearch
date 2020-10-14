@@ -1,12 +1,12 @@
 from qsearch import unitaries, gatesets, solvers, utils, compiler, backends, Options
-from qsearch.circuits import CNOTStep, QuantumStep
+from qsearch.gates import CNOTGate, Gate
 import numpy as np
 try:
     from qsrs import LeastSquares_Jac_SolverNative
 except ImportError:
     LeastSquares_Jac_SolverNative = None
 
-class NoJacQiskitU3QubitStep(QuantumStep):
+class NoJacQiskitU3QubitStep(Gate):
     def __init__(self):
         self.num_inputs = 3
         self.dits = 1
@@ -36,7 +36,7 @@ def test_smart_defaults():
     else:
         assert isinstance(c.options.solver, solvers.LeastSquares_Jac_Solver)
     assert isinstance(c.options.backend, backends.SmartDefaultBackend)
-    assert not isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), QuantumStep)
+    assert not isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), Gate)
     assert isinstance(c.options.gateset, gatesets.QubitCNOTLinear)
     assert c.options.eval_func is utils.matrix_distance_squared
     assert c.options.error_func is utils.matrix_distance_squared
@@ -53,7 +53,7 @@ def test_no_grad_gateset():
     res = c.compile()
     assert isinstance(c.options.solver, solvers.COBYLA_Solver)
     assert isinstance(c.options.backend, backends.SmartDefaultBackend)
-    assert isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), QuantumStep)
+    assert isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), Gate)
     assert isinstance(c.options.gateset, NoJacCNOTLinear)
     assert c.options.eval_func is utils.matrix_distance_squared
     assert c.options.error_func is utils.matrix_distance_squared

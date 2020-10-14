@@ -1,5 +1,5 @@
 from qsearch.assemblers import ASSEMBLER_IBMOPENQASM
-from qsearch.circuits import *
+from qsearch.gates import *
 from qsearch import utils
 import pytest
 try:
@@ -8,8 +8,8 @@ try:
 except Exception:
     qiskit = None
 
-circ = ProductStep(KroneckerStep(QiskitU3QubitStep(), QiskitU3QubitStep()), KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),), KroneckerStep(
-    ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),), KroneckerStep(ProductStep(CNOTStep(), KroneckerStep(XZXZPartialQubitStep(), QiskitU3QubitStep())),))
+circ = ProductGate(KroneckerGate(U3Gate(), U3Gate()), KroneckerGate(ProductGate(CNOTGate(), KroneckerGate(XZXZGate(), U3Gate())),), KroneckerGate(
+    ProductGate(CNOTGate(), KroneckerGate(XZXZGate(), U3Gate())),), KroneckerGate(ProductGate(CNOTGate(), KroneckerGate(XZXZGate(), U3Gate())),))
 
 parameters = np.array([5.00000000e-01, 6.68212734e-01, 6.68212734e-01, 2.25848361e+00,
                 1.68291228e+00, 2.75796050e+00, 1.25000000e+00, 1.06173194e+00,
