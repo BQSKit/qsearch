@@ -89,7 +89,7 @@ class SearchCompiler(Compiler):
                 return best_pair
 
             queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
-            #         heuristic      depth  distance tiebreaker vector structure
+            #         heuristic      depth  distance tiebreaker parameters structure
             #             0            1      2         3         4        5
             checkpoint.save((options, queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime))
         else:
@@ -134,5 +134,5 @@ class SearchCompiler(Compiler):
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))
         parallel.done()
-        return {'structure': best_pair[0], 'vector': best_pair[1]}
+        return {'structure': best_pair[0], 'parameters': best_pair[1]}
 

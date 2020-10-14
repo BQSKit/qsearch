@@ -116,7 +116,7 @@ class COBYLA_Solver(Solver):
 
 class DIY_Solver(Solver):
     def __init__(self, f):
-        self.f = f # f is a function that takes in eval_func and initial_guess and returns the vector that minimizes eval_func.  The parameters may range between 0 and 1.
+        self.f = f # f is a function that takes in eval_func and initial_guess and returns the parameters that minimizes eval_func.  The parameters may range between 0 and 1.
 
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))

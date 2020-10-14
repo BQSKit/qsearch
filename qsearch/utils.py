@@ -98,6 +98,32 @@ def matrix_residuals_blacklist_jac(slices, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
     return JU.T
 
+def nearest_unitary(A):
+    """
+    Calculate the closest unitary to a given matrix.
+
+    Calculate the unitary matrix U that is closest with respect to the
+    operator norm distance to the general matrix A.
+
+    D.M.Reich. "Characterisation and Identification of Unitary Dynamics
+    Maps in Terms of Their Action on Density Matrices"
+
+    Args:
+        A (np.ndarray): The matrix input.
+
+    Returns:
+        (np.ndarray): The unitary matrix closest to A.
+        Return U as a numpy matrix.
+
+    Thank you to Ed Younis, this is based on code from qfast
+    """
+
+    if not is_square_matrix(A):
+        raise TypeError("A must be a square matrix.")
+
+    V, __, Wh = sp.linalg.svd(A)
+    U = np.matrix(V.dot(Wh))
+    return U
 
 def index_test(i, di, df):
     if i < df:

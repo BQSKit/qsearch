@@ -63,7 +63,7 @@ def test_rust_solver_qft3():
     U = unitaries.qft(8)
     res = compile(U, BFGS_Jac_SolverNative())
     circ = res['structure']
-    v = res['vector']
+    v = res['parameters']
     assert utils.matrix_distance_squared(U, circ.matrix(v)) < 1e-10
 
 @pytest.mark.skipif(LeastSquares_Jac_SolverNative is None, reason="The rustopt feature has not been enabled")
@@ -71,5 +71,5 @@ def test_rust_solver_qft3():
     U = unitaries.qft(8)
     res = compile(U, LeastSquares_Jac_SolverNative())
     circ = res['structure']
-    v = res['vector']
+    v = res['parameters']
     assert utils.matrix_distance_squared(U, circ.matrix(v)) < 1e-10

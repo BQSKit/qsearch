@@ -1,5 +1,5 @@
 from .circuits import *
-from .assembler import flatten_intermediate
+from .assemblers import flatten_intermediate
 import numpy as np
 
 

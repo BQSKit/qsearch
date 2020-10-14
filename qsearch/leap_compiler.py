@@ -83,7 +83,7 @@ class LeapCompiler(Compiler):
             initial_layer = best_pair[0]
             checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-starttime)))
-        return {'structure': best_pair[0], 'vector': best_pair[1], 'cut_depths': depths}
+        return {'structure': best_pair[0], 'parameters': best_pair[1], 'cut_depths': depths}
 
 
 class SubCompiler(Compiler):
@@ -161,7 +161,7 @@ class SubCompiler(Compiler):
                 return (best_pair, best_value, 0)
 
             queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
-            #         heuristic      depth  distance tiebreaker vector structure
+            #         heuristic      depth  distance tiebreaker parameters structure
             #             0            1      2         3         4        5
             checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-starttime))
         else:

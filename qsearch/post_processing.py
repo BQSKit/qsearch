@@ -26,7 +26,7 @@ class PostProcessor():
 class BasicSingleQubitReduction_PostProcessor(PostProcessor):
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
-        finalx = result["vector"]
+        finalx = result["parameters"]
         options = self.options.updated(options)
         single_qubit_names = ["QiskitU3QubitStep()", "ZXZXZQubitStep()", "XZXZPartialQubitStep()"]
         identitystr = "IdentityStep(2)"
@@ -52,12 +52,12 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         final_count = sum([finalstr.count(sqn) for sqn in single_qubit_names])
         options.logger.logprint("Final count: {}".format(final_count), verbosity=2)
         options.logger.logprint("Post-processing removed {}, or {}% of the single qubit gates".format(initial_count-final_count, 100*(initial_count-final_count)/initial_count))
-        return {"structure":finalcirc, "vector":finalx}
+        return {"structure":finalcirc, "parameters":finalx}
 
 class ParameterTuning_PostProcessor(PostProcessor):
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
-        initialx = result["vector"]
+        initialx = result["parameters"]
         options = self.options.updated(options)
         options.max_quality_optimization = True
         initial_value = options.eval_func(options.target, circuit.matrix(initialx))
@@ -68,7 +68,7 @@ class ParameterTuning_PostProcessor(PostProcessor):
         final_value = options.eval_func(options.target, U)
         if np.abs(final_value) < np.abs(initial_value):
             options.logger.logprint("Improved Distance: {}".format(final_value))
-            return {"vector":x}
+            return {"parameters":x}
         else:
             options.logger.logprint("Rejected Distance: {}".format(final_value))
             return {}
@@ -90,7 +90,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         It is recommended to call like:
         project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
         """
-        best_pair = (result['structure'], result['vector'])
+        best_pair = (result['structure'], result['parameters'])
         return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
 
 
@@ -189,7 +189,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                         return best_pair
 
                     queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
-                    #         heuristic      depth  distance tiebreaker vector structure
+                    #         heuristic      depth  distance tiebreaker parameters structure
                     #             0            1      2         3         4        5
                     checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
                 else:
@@ -257,4 +257,4 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 break
         parallel.done()
         logger.logprint("Finished all compilations at depth {} with score {} after {} seconds.".format(best_circuit_depth, overall_best_value, rectime+(timer()-overall_startime)))
-        return {'structure': overall_best_pair[0], 'vector': overall_best_pair[1]}
+        return {'structure': overall_best_pair[0], 'parameters': overall_best_pair[1]}
