@@ -58,7 +58,7 @@ def test_roundtrip(project):
         U1 = project.get_target(compilation)
 
         # generate and run Qiskit code to create a Qiskit version of the circuit
-        qiskit_code = project.assemble(compilation, qsearch.assembler.ASSEMBLY_QISKIT)
+        qiskit_code = project.assemble(compilation, assembler=qsearch.assemblers.ASSEMBLER_QISKIT)
         locals = {}
         exec(qiskit_code, globals(), locals)
         qc = locals['qc']

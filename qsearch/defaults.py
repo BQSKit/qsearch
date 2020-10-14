@@ -1,4 +1,4 @@
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoint
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoint, assemblers
 from functools import partial
 
 
@@ -49,7 +49,9 @@ standard_defaults = {
         "backend":backends.SmartDefaultBackend(),
         "parallelizer":parallelizers.MultiprocessingParallelizer,
         "log_file":None,
-        "max_quality_optimization" : False
+        "max_quality_optimization" : False,
+        "assembler" : assemblers.ASSEMBLER_QISKIT,
+        "write_location" : None
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,

@@ -12,7 +12,7 @@ from .compiler import SearchCompiler
 from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
-from . import logging, checkpoint, utils, gatesets, heuristics, assembler
+from . import logging, checkpoint, utils, gatesets, heuristics, assemblers
 from time import time
 
 
@@ -254,7 +254,7 @@ class Project:
         cdict = self._compilations[name]
         if os.path.exists(self._checkpoint_path(name)):
             return Project_Status.PROGRESS
-        elif "structure" in cdict and "vector" in cdict:
+        elif "structure" in cdict and "parameters" in cdict:
             return Project_Status.COMPLETE
         else:
             return Project_Status.NOTBEGUN
@@ -279,7 +279,7 @@ class Project:
 
     def get_result(self, name):
         cdict = self._compilations[name]
-        if not "structure" in cdict or not "vector" in cdict:
+        if not "structure" in cdict or not "parameters" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
         return cdict
 
@@ -302,23 +302,28 @@ class Project:
 
     def verify_result(self, name):
         cdict = self._compilations[name]
-        if not "structure" in cdict or not "vector" in cdict:
+        if not "structure" in cdict or not "parameters" in cdict:
             print("The compilation {} has not been completed.  Please run the project to finish the compilation.")
             return
         original = cdict["options"].target
-        final = cdict["structure"].matrix["vector"]
+        final = cdict["structure"].matrix["parameters"]
         print("Comparison of target and implemented unitaries:")
         if "error_func" in self._compiler_config:
             print("error_func: {}".format(self._compiler_config["error_func"](original, final)))
         print("matrix_distance_squared: {}".format(utils.matrix_distance_squared(original, final)))
 
-    def assemble(self, name, language=assembler.ASSEMBLY_IBMOPENQASM, write_location=None):
+    def assemble(self, name, options=None, **xtraargs):
+        options = self.options.updated(options, **xtraargs)
         cdict = self._compilations[name]
-        if not "structure" in cdict or not "vector" in cdict:
-            print("this compilation has not been completed.  please run the project to complete the compilation.")
-            return None, None
+        if not "structure" in cdict or not "parameters" in cdict:
+            #TODO change this to a logprint
+            print("This compilation has not been completed.  please run the project to complete the compilation.")
+            return None
 
-        out = assembler.assemble(cdict["structure"], cdict["vector"], language, write_location)
-        if write_location == None:
+        out = options.assembler.assemble(cdict, options)
+        if options.write_location is not None:
+            with open(options.write_location, "w") as wfile:
+                wfile.write(out)
+        else:
             return out
 
