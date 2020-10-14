@@ -4,13 +4,11 @@ import heapq
 from scipy.stats import linregress
 import numpy as np
 
-from .gates import *
-
 from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizers, backends
-from . import utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, gates, logging, gatesets
 from .compiler import Compiler, SearchCompiler
 from .checkpoints import ChildCheckpoint
 
@@ -18,7 +16,7 @@ from .checkpoints import ChildCheckpoint
 def cut_end(circ, depth):
     if isinstance(circ._substeps[0], ProductGate):
         return cut_end(circ._substeps[0], depth)
-    return circuits.ProductGate(*circ._substeps[:-depth])
+    return gates.ProductGate(*circ._substeps[:-depth])
 
 
 class LeapCompiler(Compiler):
@@ -55,7 +53,7 @@ class LeapCompiler(Compiler):
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         rectime = 0
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
         sc = sub_compiler(options)
@@ -64,7 +62,7 @@ class LeapCompiler(Compiler):
             total_depth = 0
             best_value = 1.0
             depths = [total_depth]
-            initial_layer = options.gateset.initial_layer(dits)
+            initial_layer = options.gateset.initial_layer(qudits)
         else:
             total_depth = recovered_state[0]
             best_value = recovered_state[1]
@@ -114,15 +112,15 @@ class SubCompiler(Compiler):
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-        if options.gateset.d**dits != np.shape(U)[0]:
-            raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
+        if options.gateset.d**qudits != np.shape(U)[0]:
+            raise ValueError("The target matrix of size {} is not compatible with ququdits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-        I = circuits.IdentityGate(d=options.gateset.d)
+        I = gates.IdentityGate(d=options.gateset.d)
 
-        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
-        search_layers = options.gateset.search_layers(dits)
+        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
+        search_layers = options.gateset.search_layers(qudits)
 
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")

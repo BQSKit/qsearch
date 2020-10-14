@@ -8,7 +8,7 @@ from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizers, backends
-from . import utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, gates, logging, gatesets
 
 class Compiler():
     def __init__(self, *args, **kwargs):
@@ -46,7 +46,7 @@ class SearchCompiler(Compiler):
         if options.gateset.d**qudits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with ququdits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-        I = circuits.IdentityGate(d=options.gateset.d)
+        I = gates.IdentityGate(d=options.gateset.d)
 
         initial_layer = options.gateset.initial_layer(qudits)
         branching_factor = options.gateset.branching_factor(qudits)

@@ -133,20 +133,20 @@ def index_test(i, di, df):
     else:
         return index_test(i//di)
 
-def downgrade_dits_residuals(di, df, A, B, I):
+def downgrade_qudits_residuals(di, df, A, B, I):
     M = (B - A)
-    dits = int(np.log(U.shape[0])/np.log(di))
-    M = np.delete(M, [i for i in range(di**dits) if index_test(i, di, df)], axis=0)
-    M = np.delete(M, [i for i in range(di**dits) if index_test(i, di, df)], axis=1)
+    qudits = int(np.log(U.shape[0])/np.log(di))
+    M = np.delete(M, [i for i in range(di**qudits) if index_test(i, di, df)], axis=0)
+    M = np.delete(M, [i for i in range(di**qudits) if index_test(i, di, df)], axis=1)
     #M *= np.abs(M[0][0])/M[0][0]
     Re, Im = np.real(M), np.imag(M)
     Re = np.reshape(Re, (1,-1))
     Im = np.reshape(Im, (1,-1))
     return np.append(Re, Im)
 
-def downgrade_dits_residuals_jac(di, df, A, B, J):
-    JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=0) for K in J]
-    JU = [np.delete(K, [i for i in range(di**dits) if index_test(i, di, df)], axis=1) for K in JU]
+def downgrade_qudits_residuals_jac(di, df, A, B, J):
+    JU = [np.delete(K, [i for i in range(di**qudits) if index_test(i, di, df)], axis=0) for K in J]
+    JU = [np.delete(K, [i for i in range(di**qudits) if index_test(i, di, df)], axis=1) for K in JU]
     JU = np.array([np.append(np.reshape(np.real(K), (1,-1)), np.reshape(np.imag(K), (1,-1))) for K in JU])
     return JU.T
 
@@ -230,30 +230,30 @@ def remap(U, order, d=2):
     U = np.array(U, dtype='complex128')
 
     swap = unitaries.general_swap(d)
-    dits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
+    qudits = int(np.round(np.log(np.shape(U)[0]) / np.log(d)))
     beforemat = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
     aftermat  = np.array(np.eye(np.shape(U)[0]), dtype='complex128')
     I = np.array(np.eye(d), dtype = 'complex128')
-    if dits == 1:
+    if qudits == 1:
         return U
-    current_order = [i for i in range(0, dits)]
-    for i in range(0, dits):
+    current_order = [i for i in range(0, qudits)]
+    for i in range(0, qudits):
         if not order[i] == current_order[i]:
             target_loc = i
             current_loc = current_order.index(order[i])
             while not target_loc == current_loc:
                 if current_loc > target_loc:
                     # perform the swap current_loc and current_loc - 1
-                    swapmat = matrix_kron(*[I]*(current_loc-1), swap, *[I]*(dits - current_loc - 1))
-#                    print("I"*(current_loc-1) + "SS" + "I" *(dits - current_loc - 1))
+                    swapmat = matrix_kron(*[I]*(current_loc-1), swap, *[I]*(qudits - current_loc - 1))
+#                    print("I"*(current_loc-1) + "SS" + "I" *(qudits - current_loc - 1))
                     current_order[current_loc], current_order[current_loc - 1] = current_order[current_loc - 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
                     aftermat  = np.dot(swapmat, aftermat)
                     current_loc = current_loc - 1
                 else:
                     # perform the swap current_loc and current_loc + 1
-                    swapmat = matrix_kron(*[I]*(current_loc), swap, *[I]*(dits - current_loc - 2))
- #                   print("I"*(current_loc) + "SS" + "I" *(dits - current_loc - 2))
+                    swapmat = matrix_kron(*[I]*(current_loc), swap, *[I]*(qudits - current_loc - 2))
+ #                   print("I"*(current_loc) + "SS" + "I" *(qudits - current_loc - 2))
                     current_order[current_loc], current_order[current_loc + 1] = current_order[current_loc + 1], current_order[current_loc]
                     beforemat = np.dot(beforemat, swapmat)
                     aftermat  = np.dot(swapmat, aftermat)
@@ -261,14 +261,14 @@ def remap(U, order, d=2):
 
     return matrix_product(beforemat, U, aftermat)
 
-def upgrade_dits(U, di=2, df=3):
-    dits = int(np.log(U.shape[0])/np.log(di))
-    new_unitary = np.array(np.eye(df**dits), dtype='complex128')
-    for i in range(df**dits):
+def upgrade_qudits(U, di=2, df=3):
+    qudits = int(np.log(U.shape[0])/np.log(di))
+    new_unitary = np.array(np.eye(df**qudits), dtype='complex128')
+    for i in range(df**qudits):
         skip = False
         testi = i
         oi = 0
-        for dit in range(dits):
+        for dit in range(qudits):
             if testi % df >= di:
                 skip = True
                 break
@@ -277,11 +277,11 @@ def upgrade_dits(U, di=2, df=3):
             testi //= df
 
         if not skip:
-            for j in range(df**dits):
+            for j in range(df**qudits):
                 skip = False
                 testj = j
                 oj = 0
-                for dit in range(dits):
+                for dit in range(qudits):
                     if testj % df >= di:
                         skip = True
                         break

@@ -3,8 +3,6 @@ from .assemblers import flatten_intermediate
 import numpy as np
 
 
-#TODO: rename all the n's in here to "dits" as appropriate
-
 # Commonly used functions for generating gatesets
 def linear_topology(double_gate, single_gate, n, d, identity_gate=None, single_alt=None, double_weight=1, single_weight=0, skip_index=None):
     weight = double_weight + 2*single_weight
@@ -37,33 +35,33 @@ def find_last_3_cnots_linear(circuit):
 class Gateset():
     def __init__(self):
         self.d = 0
-        raise NotImplementedError("Gatesets must implemented their own initializers and must set self.d to reflect the size of the qudits implemented in the gateset")
+        raise NotImplementedError("Gatesets must implemented their own initializers and must set self.d to reflect the size of the ququdits implemented in the gateset")
     # The compiler takes a gateset class as one of its arguments.  The gateset class represents what the hardware can do.
-    # All gatesets must set the property d, which represents the size of the qudits represented (eg 2 for qubits, 3 for qutrits)
+    # All gatesets must set the property d, which represents the size of the ququdits represented (eg 2 for qubits, 3 for qutrits)
 
-    # dits is the number of qudits used in a circuit (usually calculated in the compiler as log(n) / log(d)
+    # qudits is the number of qudits used in a circuit (usually calculated in the compiler as log(n) / log(d)
 
     # The first layer in the compilation.  Generally a layer of parameterized single-qubit gates
-    def initial_layer(self, dits):
+    def initial_layer(self, qudits):
         return None # NOTE: Returns A SINGLE gate
 
     # the set of possible multi-qubit gates for searching.  Generally a two-qubit gate with single qubit gates after it.
-    def search_layers(self, dits):
+    def search_layers(self, qudits):
         return [] # NOTES: Returns a LIST of tuples of (gate, weight)
 
-    def branching_factor(self, dits):
+    def branching_factor(self, qudits):
         # returns an integer indicating the expected branching factor
 
         # this implemenation is a backwards compatibility implementation and should not be relied on
-        return len(self.search_layers(dits))
+        return len(self.search_layers(qudits))
 
-    def successors(self, circ, dits=None):
+    def successors(self, circ, qudits=None):
         # NOTE: Returns a LIST of tuples of (gate, weight)
         # NOTE: it is safe to assume that the circuit passed in here was produced by the functions of this class
         
         # this implementation is a backwards compatibility implementation and should not be relied on
-        dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
-        return [(circ.appending(t[0]), t[1]) for t in self.search_layers(dits)]
+        qudits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        return [(circ.appending(t[0]), t[1]) for t in self.search_layers(qudits)]
 
     def __eq__(self, other):
         if self is other:
@@ -111,14 +109,14 @@ class QubitCNOTLinear(Gateset):
     def search_layers(self, n):
         return linear_topology(self.cnot, self.single_gate, n, self.d, single_alt=self.single_alt)
 
-    def branching_factor(self, dits):
-        return dits-1
+    def branching_factor(self, qudits):
+        return qudits-1
 
-    def successors(self, circ, dits=None):
-        if dits is None:
-            dits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+    def successors(self, circ, qudits=None):
+        if qudits is None:
+            qudits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
         skip_index = find_last_3_cnots_linear(circ)
-        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_gate, dits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCNOTRing(Gateset):
     def __init__(self):

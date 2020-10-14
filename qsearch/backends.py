@@ -47,4 +47,5 @@ class PythonBackend(Backend):
 class NativeBackend(Backend):
     """This Backend will use the native Rust implementation of Qsearch circuits for faster matrix computation."""
     def prepare_circuit(self, circuit, options=None):
-        return native_from_object(circuit)
+        return circuit
+        #return native_from_object(circuit)
