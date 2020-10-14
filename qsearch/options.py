@@ -8,13 +8,17 @@ import os
 _options_actual_parameters = ["defaults", "smart_defaults", "required", "cache", "load_error"]
 
 class Options():
-    def __init__(self, **defaults):
+    def __init__(self, defaults={}, smart_defaults={}, **xtraargs):
         self.defaults = dict()
-        self.defaults.update(defaults)
         self.smart_defaults = dict()
         self.required = set()
         self.cache = dict()
         self.load_error = None
+        self.update(**xtraargs)
+        self.set_defaults(**defaults)
+        self.set_smart_defaults(**smart_defaults)
+        
+
 
     def filtered(self, *names):
         new_dict = {name:self.__dict__[name] for name in names if name in self.__dict__ and not name in _options_actual_parameters}
