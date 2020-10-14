@@ -22,7 +22,7 @@ def compare_gradient(gate):
             totaldiff[i] += diffs
 
     for i in range(gate.num_inputs):
-        assert totaldiff[i] < 1e-5
+        assert totaldiff[i] < eps
 
 
 def test_gradients_U3():
