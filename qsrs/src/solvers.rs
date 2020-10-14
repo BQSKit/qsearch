@@ -59,7 +59,7 @@ impl Solver for BfgsJacSolver {
             (0..i).map(|_| rng.gen_range(0.0, 2.0 * PI)).collect()
         };
         let mut fmin = Nlopt::new(Algorithm::Lbfgs, i, &f, Target::Minimize, ());
-        fmin.set_upper_bound(1.0).unwrap();
+        fmin.set_upper_bound(2.0 * PI).unwrap();
         fmin.set_lower_bound(0.0).unwrap();
         fmin.set_stopval(1e-16).unwrap();
         fmin.set_maxeval(15000).unwrap();
