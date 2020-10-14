@@ -54,8 +54,8 @@ standard_defaults = {
         "log_file":None,
         "max_quality_optimization" : False,
         "assembler" : assemblers.ASSEMBLER_QISKIT,
-        "write_location" : None
-        "unitary_preprocessor": utils.nearest_unitary,
+        "write_location" : None,
+        "unitary_preprocessor": utils.nearest_unitary
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
