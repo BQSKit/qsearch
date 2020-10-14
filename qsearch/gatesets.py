@@ -129,7 +129,7 @@ class QubitCNOTRing(Gateset):
         return fill_row(self.single_gate, n)
 
     def search_layers(self, n):
-        I = IdentityGate(2)
+        I = IdentityGate()
         gates = linear_topology(self.cnot, self.single_gate, n, self.d, identity_gate=I, single_alt=self.single_alt)
         if n == 2:
             return gates
