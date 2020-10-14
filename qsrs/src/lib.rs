@@ -75,15 +75,15 @@ fn gate_to_object(
     gate: &Gate,
     py: Python,
     constant_gates: &[SquareMatrix],
-    circuits: &PyModule,
+    gates: &PyModule,
 ) -> PyResult<PyObject> {
     Ok(match gate {
         Gate::CNOT(..) => {
-            let gate: PyObject = circuits.get("CNOTGate")?.extract()?;
+            let gate: PyObject = gates.get("CNOTGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Identity(id) => {
-            let gate: PyObject = circuits.get("IdentityGate")?.extract()?;
+            let gate: PyObject = gates.get("IdentityGate")?.extract()?;
             let args = PyTuple::new(
                 py,
                 vec![constant_gates[id.index].size, id.data.dits as usize],
@@ -91,52 +91,52 @@ fn gate_to_object(
             gate.call1(py, args)?
         }
         Gate::U3(..) => {
-            let gate: PyObject = circuits.get("U3QubitGate")?.extract()?;
+            let gate: PyObject = gates.get("U3QubitGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::X(..) => {
-            let gate: PyObject = circuits.get("XGate")?.extract()?;
+            let gate: PyObject = gates.get("XGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Y(..) => {
-            let gate: PyObject = circuits.get("YGate")?.extract()?;
+            let gate: PyObject = gates.get("YGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Z(..) => {
-            let gate: PyObject = circuits.get("ZGate")?.extract()?;
+            let gate: PyObject = gates.get("ZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::XZXZ(..) => {
-            let gate: PyObject = circuits.get("XZXZGate")?.extract()?;
+            let gate: PyObject = gates.get("XZXZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Kronecker(kron) => {
-            let gate: PyObject = circuits.get("KroneckerGate")?.extract()?;
+            let gate: PyObject = gates.get("KroneckerGate")?.extract()?;
             let steps: Vec<PyObject> = kron
                 .substeps
                 .iter()
-                .map(|i| gate_to_object(i, py, &constant_gates, circuits).unwrap())
+                .map(|i| gate_to_object(i, py, &constant_gates, gates).unwrap())
                 .collect();
             let substeps = PyTuple::new(py, steps);
             gate.call1(py, substeps)?
         }
         Gate::Product(prod) => {
-            let gate: PyObject = circuits.get("ProductGate")?.extract()?;
+            let gate: PyObject = gates.get("ProductGate")?.extract()?;
             let steps: Vec<PyObject> = prod
                 .substeps
                 .iter()
-                .map(|i| gate_to_object(i, py, &constant_gates, circuits).unwrap())
+                .map(|i| gate_to_object(i, py, &constant_gates, gates).unwrap())
                 .collect();
             let substeps = PyTuple::new(py, steps);
             gate.call1(py, substeps)?
         }
         Gate::SingleQutrit(..) => {
-            let gate: PyObject = circuits.get("SingleQutritGate")?.extract()?;
+            let gate: PyObject = gates.get("SingleQutritGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::ConstantUnitary(u) => {
             let mat = constant_gates[u.index].clone();
-            let gate: PyObject = circuits.get("UGate")?.extract()?;
+            let gate: PyObject = gates.get("UGate")?.extract()?;
             let tup = PyTuple::new(
                 py,
                 [PySquareMatrix::from_array(py, &mat.into_ndarray()).to_owned()].iter(),
@@ -306,8 +306,8 @@ impl PyGateWrapper {
     }
 
     pub fn as_python(&self, py: Python) -> PyResult<PyObject> {
-        let circuits = py.import("qsearch.circuits")?;
-        gate_to_object(&self.gate, py, &self.constant_gates, circuits)
+        let gates = py.import("qsearch.gates")?;
+        gate_to_object(&self.gate, py, &self.constant_gates, gates)
     }
 }
 
