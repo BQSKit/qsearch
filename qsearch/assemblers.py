@@ -9,7 +9,6 @@ ASSEMBLER_IBMOPENQASM -- Outputs Openqasm code with the IBM imports and gate nam
 ASSEMBLER_QUTRIT -- Outputs pseudocode for circuits built with single-qutrit gates and CNOTs.
 """
 
-from .circuits import *
 from .options import Options
 
 class Assembler():
@@ -29,10 +28,15 @@ class Assembler():
         raise NotImplementedError()
 
 class DictionaryAssembler(Assembler):
-    """This subclass of Assembler uses a dictionary that specifies mappings from gate names to output code, as well as an output code initial line."""
+    """This subclass of Assembler uses a dictionary that specifies mappings from gate names to output code, as well as an output code initial line.
+
+        Options:
+        assemblydict (required) -- A dictionary that specifies mappings from gate names to output code.
+    """
 
     def assemble(self, resultdict, options=None):
         options = self.options.updated(options)
+        options.make_required("assemblydict")
 
         circuit, v = resultdict["structure"], resultdict["parameters"]
         il = flatten_intermediate(circuit.assemble(v))

@@ -4,7 +4,7 @@ import heapq
 from scipy.stats import linregress
 import numpy as np
 
-from .circuits import *
+from .gates import *
 
 from . import solvers as scsolver
 from .options import Options
@@ -16,9 +16,9 @@ from .checkpoints import ChildCheckpoint
 
 
 def cut_end(circ, depth):
-    if isinstance(circ._substeps[0], ProductStep):
+    if isinstance(circ._substeps[0], ProductGate):
         return cut_end(circ._substeps[0], depth)
-    return circuits.ProductStep(*circ._substeps[:-depth])
+    return circuits.ProductGate(*circ._substeps[:-depth])
 
 
 class LeapCompiler(Compiler):
@@ -119,7 +119,7 @@ class SubCompiler(Compiler):
         if options.gateset.d**dits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-        I = circuits.IdentityStep(options.gateset.d)
+        I = circuits.IdentityGate(d=options.gateset.d)
 
         initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
         search_layers = options.gateset.search_layers(dits)
@@ -151,10 +151,10 @@ class SubCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
-            if isinstance(initial_layer, ProductStep):
+            if isinstance(initial_layer, ProductGate):
                 root = initial_layer
             else:
-                root = ProductStep(initial_layer)
+                root = ProductGate(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])
