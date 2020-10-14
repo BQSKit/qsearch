@@ -74,7 +74,7 @@ class Gateset():
 
 class ZXZXZCNOTLinear(Gateset):
     def __init__(self):
-        self.single_gate = ZXZXZQubitGate()
+        self.single_gate = ZXZXZGate()
         self.cnot = CNOTGate()
         self.d = 2
 
