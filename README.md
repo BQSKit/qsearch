@@ -86,9 +86,11 @@ We use the physics convention of using big endian when naming our qubits.  Some 
 little_endian = qsearch.utils.endian_reverse(big_endian) # you can use the same function to convert in the other direction as well
 ```
 
-# Documentation
+# Documentation and Examples
 
 The documentation and API reference can be found [on readthedocs](https://qsearch.readthedocs.io/en/latest/).
+
+Also check out the [examples](https://github.com/BQSKit/qsearch/tree/master/examples)!
 
 # Legal/Copyright information
 
