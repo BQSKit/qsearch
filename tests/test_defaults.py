@@ -6,6 +6,8 @@ try:
 except ImportError:
     LeastSquares_Jac_SolverNative = None
 
+import pytest
+
 class NoJacQiskitU3QubitStep(Gate):
     def __init__(self):
         self.num_inputs = 3
@@ -44,6 +46,7 @@ def test_smart_defaults():
     assert c.options.error_residuals is utils.matrix_residuals
     assert c.options.error_residuals_jac is utils.matrix_residuals_jac
 
+@pytest.mark.skip()
 def test_no_grad_gateset():
     options = Options()
     options.target = unitaries.qft(4)

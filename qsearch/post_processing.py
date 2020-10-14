@@ -106,7 +106,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     def compile(self, options=Options(), **xtraargs):
         """Backwards compatible interface since this is technically a Compiler.
 
-        You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the post_processing API.
+        You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the Project post_processing API.
         """
         options = self.options.updated(options)
         if "U" in xtraargs:
@@ -118,7 +118,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)
-        depth = options.depth
+        depth = options.weight_limit
         child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
@@ -130,11 +130,11 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         recovered_outer = child_checkpoint.recover_parent()
         if recovered_outer is None:
             overall_best_pair = options.best_pair
-            start_depth = len(overall_best_pair[0]._substeps) - 1
+            start_depth = len(overall_best_pair[0]._subgates) - 1
             if 'cut_depths' in options:
                 # these are the "ideal" starting points, but we may need to modify them as we optimize
                 midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
-                print(f'midpoints initialized as {midpoints}')
+                logger.logprint(f'Midpoints initialized as {midpoints}', verbosity=2)
             start_point = 1
             overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
         else:
@@ -143,7 +143,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
             if 'timeout' in options and timer() - overall_startime > options.timeout:
                 break
             best_circuit = overall_best_pair[0]
-            best_circuit_depth = len(best_circuit._substeps) - 1
+            best_circuit_depth = len(best_circuit._subgates) - 1
             if 'cut_depths' in options:
                 insertion_points = midpoints
             else:
@@ -153,7 +153,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     break
                 startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
                 window_size = depth or options.reoptimize_size
-                root = ProductGate(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
+                root = ProductGate(*best_circuit._subgates[:point], *best_circuit._subgates[point + window_size:])
                 h = options.heuristic
                 qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
@@ -236,13 +236,13 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                             heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
                             tiebreaker+=1
                     logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-                    if (options.depth is not None and best_depth >= options.depth - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
+                    if (options.weight_limit is not None and best_depth >= options.weight_limit - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
                         break
                     child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
                 logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
-                new_circuit_depth = len(best_pair[0]._substeps) - 1
+                new_circuit_depth = len(best_pair[0]._subgates) - 1
                 if best_value < options.threshold and new_circuit_depth < best_circuit_depth:
                     logger.logprint(f"With starting point {point} re-optimized from depth {best_circuit_depth} to depth {new_circuit_depth}")
                     overall_best_pair = best_pair

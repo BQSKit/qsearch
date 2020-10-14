@@ -122,7 +122,7 @@ def nearest_unitary(A):
         raise TypeError("A must be a square matrix.")
 
     V, __, Wh = sp.linalg.svd(A)
-    U = np.matrix(V.dot(Wh))
+    U = np.array(V.dot(Wh))
     return U
 
 def index_test(i, di, df):

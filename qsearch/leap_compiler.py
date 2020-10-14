@@ -17,7 +17,7 @@ from .checkpoints import ChildCheckpoint
 
 
 def cut_end(circ, depth):
-    if isinstance(circ._substeps[0], ProductGate):
+    if isinstance(circ._substeps[0], gates.ProductGate):
         return cut_end(circ._substeps[0], depth)
     return gates.ProductGate(*circ._substeps[:-depth])
 
@@ -28,7 +28,6 @@ class LeapCompiler(Compiler):
     LeapCompiler uses fixed structure prefixes to greatly reduce the search space
     and speed up synthesis at the cost of optimiality. Thus it is recommended to use in conjunction
     with reoptimizing_compiler.LeapReoptimizing_PostProcessor() to obtain the best results.
-
     """
     def __init__(self, options=Options(), **xtraargs):
         self.options = options.copy()
@@ -47,8 +46,8 @@ class LeapCompiler(Compiler):
         options.make_required("target")
         options.update(**xtraargs)
 
-        U = options.target
-        depth = options.depth
+        U = options.unitary_preprocessor(options.target)
+        depth = options.weight_limit
 
         child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
@@ -108,7 +107,7 @@ class SubCompiler(Compiler):
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)
-        depth = options.depth
+        depth = options.weight_limit
         checkpoint = options.checkpoint
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
@@ -152,10 +151,10 @@ class SubCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
-            if isinstance(initial_layer, ProductGate):
+            if isinstance(initial_layer, gates.ProductGate):
                 root = initial_layer
             else:
-                root = ProductGate(initial_layer)
+                root = gates.ProductGate(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])
