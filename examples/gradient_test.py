@@ -1,6 +1,6 @@
 import qsearch
 import numpy as np
-from qsearch.circuits import *
+from qsearch.gates import *
 
 gate = SingleQutritStep()
 totaldiff = [0] * gate.num_inputs
