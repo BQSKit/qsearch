@@ -103,14 +103,14 @@ class CMA_Solver(Solver):
             sys.exit(1)
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         initial_guess = 'np.random.rand({})*2*np.pi'.format(circuit.num_inputs) if x0 is None else x0
-        xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2)
+        xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
 class COBYLA_Solver(Solver):
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
-        x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,1))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
+        x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,2*np.pi))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
         return (circuit.matrix(x), x)
 
 class DIY_Solver(Solver):
@@ -139,7 +139,7 @@ class CMA_Jac_Solver(Solver):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         jac_func  = lambda v: options.error_jac(options.target, circuit.mat_jac(v))
         initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)*2*np.pi if x0 is None else x0
-        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2, gradf=jac_func)
+        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2, gradf=jac_func)
         if circuit.num_inputs > 18:
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
