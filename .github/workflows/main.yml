@@ -92,6 +92,7 @@ jobs:
           run: pip install . && pip install twine wheel
         - name: run pytest
           run: pytest
+          if: "!contains(github.event.head_commit.message, '[qsrs pypi]')"
         - name: Remove target/ to prepare for building manylinux wheels
           run: cd qsrs && rm -rf target
           if: startsWith(matrix.os, 'ubuntu')
