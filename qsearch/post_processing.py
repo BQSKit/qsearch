@@ -1,3 +1,11 @@
+"""
+This module defines PostProcessor, a class used to modify circuits after they have been synthesized.
+
+Several implementations are provided.
+BasicSingleQubitReduction_PostProcessor -- Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
+ParameterTuning_PostProcessor -- Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
+LEAPReoptimizing_PostProcessor -- Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
+"""
 from . import options as opt
 from functools import partial
 from timeit import default_timer as timer
@@ -16,14 +24,23 @@ from .compiler import Compiler, SearchCompiler
 from .checkpoints import ChildCheckpoint
 
 class PostProcessor():
+    """This class is used to modify circuits that have already been synthesized."""
     def __init__(self, options = opt.Options()):
         self.options=options
 
     def post_process_circuit(self, result, options=None):
+        """
+        Processes the circuit dictionary and returns a new one.
+
+        result -- A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
+
+        expected return value -- A dictionary containing any updates that should be made to the circuit dictionary, such as new values for "structure" or "parameters" or arbitrary other data.    
+        """
         return result
 
 
 class BasicSingleQubitReduction_PostProcessor(PostProcessor):
+    """Attempts to reduce the number of single-qubit gates in a circuit by sequentially removing a gate, attempting to use a Solver on it, and keeping that gate removed if successful."""
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
         finalx = result["parameters"]
@@ -60,6 +77,7 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         return {"structure":finalcirc, "parameters":finalx}
 
 class ParameterTuning_PostProcessor(PostProcessor):
+    """Attempts to reduce the eval_func value of the circuit simply by tuning the parameters better using stronger Solver parameters."""
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
         initialx = result["parameters"]
@@ -88,9 +106,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     This PostProcessor puts "holes" in the circuit where LEAP fixed prefixes and runs
     qsearch on those holes to reduce the total number of gates.
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
 
@@ -103,18 +120,13 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
 
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         """Backwards compatible interface since this is technically a Compiler.
 
         You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the Project post_processing API.
         """
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)
