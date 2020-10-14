@@ -607,16 +607,16 @@ class UpgradedConstantGate(Gate):
         self.qudits = other.dits
         self.U = utils.upgrade_qudits(OU, di, df)
         self.num_inputs = 0
-        self.substep = other
+        self.subgate = other
 
     def matrix(self, v):
         return self.U
 
     def assemble(self, v, i=0):
-        return self.substep.assemble(v, i)
+        return self.subgate.assemble(v, i)
 
     def __repr__(self):
-        return "UpgradedConstantGate({}, df={})".format(repr(self.substep), self.df)
+        return "UpgradedConstantGate({}, df={})".format(repr(self.subgate), self.df)
 
 
 class CUGate(Gate):
@@ -674,37 +674,37 @@ class CNOTRootGate(Gate):
 
 class KroneckerGate(Gate):
     """Represents the Kronecker product of a list of gates.  This is equivalent to performing those gate in parallel in a quantum circuit."""
-    def __init__(self, *substeps):
+    def __init__(self, *subgates):
         """
-        substeps -- An array of Gates.  KroneckerGate will return the kronecker product of the unitaries returned by those Gates.
+        subgates -- An array of Gates.  KroneckerGate will return the kronecker product of the unitaries returned by those Gates.
         """
-        self.num_inputs = sum([step.num_inputs for step in substeps])
-        self._substeps = substeps
-        self.qudits = sum([step.dits for step in substeps])
+        self.num_inputs = sum([gate.num_inputs for gate in subgates])
+        self._subgates = subgates
+        self.qudits = sum([gate.qudits for gate in subgates])
 
     def matrix(self, v):
-        if len(self._substeps) < 2:
-            return self._substeps[0].matrix(v)
+        if len(self._subgates) < 2:
+            return self._subgates[0].matrix(v)
         matrices = []
         index = 0
-        for step in self._substeps:
-            U = step.matrix(v[index:index+step.num_inputs])
+        for gate in self._subgates:
+            U = gate.matrix(v[index:index+gate.num_inputs])
             matrices.append(U)
-            index += step.num_inputs
+            index += gate.num_inputs
         U = matrices[0]
         for matrix in matrices[1:]:
             U = np.kron(U, matrix)
         return U
 
     def mat_jac(self, v):
-        if len(self._substeps) < 2:
-            return self._substeps[0].mat_jac(v)
+        if len(self._subgates) < 2:
+            return self._subgates[0].mat_jac(v)
         matjacs = []
         index = 0
-        for step in self._substeps:
-            MJ = step.mat_jac(v[index:index+step.num_inputs])
+        for gate in self._subgates:
+            MJ = gate.mat_jac(v[index:index+gate.num_inputs])
             matjacs.append(MJ)
-            index += step.num_inputs
+            index += gate.num_inputs
 
         U = None
         jacs = []
@@ -719,51 +719,51 @@ class KroneckerGate(Gate):
     def assemble(self, v, i=0):
         out = []
         index = 0
-        for step in self._substeps:
-            out += step.assemble(v[index:index+step.num_inputs], i)
-            index += step.num_inputs
-            i += step.qudits
+        for gate in self._subgates:
+            out += gate.assemble(v[index:index+gate.num_inputs], i)
+            index += gate.num_inputs
+            i += gate.qudits
         return [("block", out)]
 
-    def appending(self, step):
+    def appending(self, gate):
         """Returns a new KroneckerGate with the new gate added to the list.
-        step --- A Gate to be added to the end of the list of gates in the new KroneckerGate.
+        gate --- A Gate to be added to the end of the list of gates in the new KroneckerGate.
         """
-        return KroneckerGate(*self._substeps, step)
+        return KroneckerGate(*self._subgates, gate)
 
     def _parts(self):
-        return self._substeps
+        return self._subgates
 
     def __deepcopy__(self, memo):
-        return KroneckerGate(self._substeps.__deepcopy__(memo))
+        return KroneckerGate(self._subgates.__deepcopy__(memo))
 
     def __repr__(self):
-        return "KroneckerGate({})".format(repr(self._substeps)[1:-1])
+        return "KroneckerGate({})".format(repr(self._subgates)[1:-1])
 
 class ProductGate(Gate):
     """Represents a matrix product of Gates.  This is equivalent to performing those gates sequentially in a quantum circuit."""
-    def __init__(self, *substeps):
+    def __init__(self, *subgates):
         """
-        substeps -- A list of Gates to be multiplied together.  ProductGate returns the matrix product of the unitaries returned by those Gates.
+        subgates -- A list of Gates to be multiplied together.  ProductGate returns the matrix product of the unitaries returned by those Gates.
         """
-        self.num_inputs = sum([step.num_inputs for step in substeps])
-        self._substeps = []
-        for substep in substeps:
-            if type(substep) is ProductGate:
-                self._substeps.extend(substep._substeps)
+        self.num_inputs = sum([gate.num_inputs for gate in subgates])
+        self._subgates = []
+        for subgate in subgates:
+            if type(subgate) is ProductGate:
+                self._subgates.extend(subgate._subgates)
             else:
-                substep.append(substep)
-        self.qudits = 0 if len(substeps) == 0 else substeps[0].dits
+                self._subgates.append(subgate)
+        self.qudits = 0 if len(subgates) == 0 else subgates[0].qudits
 
     def matrix(self, v):
-        if len(self._substeps) < 2:
-            return self._substeps[0].matrix(v)
+        if len(self._subgates) < 2:
+            return self._subgates[0].matrix(v)
         matrices = []
         index = 0
-        for step in self._substeps:
-            U = step.matrix(v[index:index+step.num_inputs])
+        for gate in self._subgates:
+            U = gate.matrix(v[index:index+gate.num_inputs])
             matrices.append(U)
-            index += step.num_inputs
+            index += gate.num_inputs
         U = matrices[0]
         buffer1 = U.copy()
         buffer2 = U.copy()
@@ -775,16 +775,16 @@ class ProductGate(Gate):
         return U
 
     def mat_jac(self, v):
-        if len(self._substeps) < 2:
-            return self._substeps[0].mat_jac(v)
+        if len(self._subgates) < 2:
+            return self._subgates[0].mat_jac(v)
         submats = []
         subjacs = []
         index = 0
-        for step in self._substeps:
-            U, Js = step.mat_jac(v[index:index+step.num_inputs])
+        for gate in self._subgates:
+            U, Js = gate.mat_jac(v[index:index+gate.num_inputs])
             submats.append(U)
             subjacs.append(Js)
-            index += step.num_inputs
+            index += gate.num_inputs
         
         B = np.eye(submats[0].shape[0], dtype='complex128')
         A = submats[0]
@@ -818,27 +818,27 @@ class ProductGate(Gate):
     def assemble(self, v, i=0):
         out = []
         index = 0
-        for step in self._substeps:
-            out += step.assemble(v[index:index+step.num_inputs], i)
-            index += step.num_inputs
+        for gate in self._subgates:
+            out += gate.assemble(v[index:index+gate.num_inputs], i)
+            index += gate.num_inputs
         return out
 
-    def appending(self, *steps):
-        """Returns a new ProductGate with the new steps appended to the end.
-        steps -- A list of Gates to be appended.
+    def appending(self, *gates):
+        """Returns a new ProductGate with the new gates appended to the end.
+        gates -- A list of Gates to be appended.
         """
-        return ProductGate(*self._substeps, *steps)
+        return ProductGate(*self._subgates, *gates)
 
-    def inserting(self, *steps, depth=-1):
-        """Returns a new ProductGate with new steps inserted at some point.
-        steps -- A list of Gates to be inserted.
-        depth -- An index in the substeps of the ProductGate after which the new gates will be inserted.  The default value of -1 will insert these gates at the begining of the ProductGate.
+    def inserting(self, *gates, depth=-1):
+        """Returns a new ProductGate with new gates inserted at some point.
+        gates -- A list of Gates to be inserted.
+        depth -- An index in the subgates of the ProductGate after which the new gates will be inserted.  The default value of -1 will insert these gates at the begining of the ProductGate.
         """
-        return ProductGate(*self._substeps[:depth], *steps, *self._substeps[depth:])
+        return ProductGate(*self._subgates[:depth], *gates, *self._subgates[depth:])
 
     def __deepcopy__(self, memo):
-        return ProductGate(self._substeps.__deepcopy__(memo))
+        return ProductGate(self._subgates.__deepcopy__(memo))
 
     def __repr__(self):
-        return "ProductGate({})".format(repr(self._substeps)[1:-1])
+        return "ProductGate({})".format(repr(self._subgates)[1:-1])
 

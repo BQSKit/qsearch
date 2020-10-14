@@ -46,7 +46,7 @@ def generate_HHL():
     CSH = CUGate(np.array([[1,0],[0,-1j]]), "CSH")
 
     X = UGate(np.array([[0,1],[1,0]]), "X")
-    I = IdentityGate(2)
+    I = IdentityGate()
 
     circuit = ProductGate()
     circuit = circuit.appending(KroneckerGate(I,I,H))

@@ -27,7 +27,7 @@ def default_solver(options, x0=None):
 
     rs_failed = True
     if native_from_object is not None:
-        layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(dits)
+        layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
         for layer in layers:
             try:
                 native_from_object(layer[0])
