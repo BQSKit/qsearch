@@ -13,7 +13,7 @@ from .defaults import standard_defaults as defaults, standard_smart_defaults as 
 from . import parallelizers, backends
 from . import utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
-from .checkpoint import ChildCheckpoint
+from .checkpoints import ChildCheckpoint
 
 class PostProcessor():
     def __init__(self, options = opt.Options()):

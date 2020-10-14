@@ -1,4 +1,4 @@
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoint, assemblers
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
 from functools import partial
 
 
@@ -34,7 +34,7 @@ def default_logger(options):
     return logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
 def default_checkpoint(options):
-    return checkpoint.FileCheckpoint(opt=options)
+    return checkpoints.FileCheckpoint(opt=options)
 
 def identity(U):
     return U
@@ -55,7 +55,7 @@ standard_defaults = {
         "max_quality_optimization" : False,
         "assembler" : assemblers.ASSEMBLER_QISKIT,
         "write_location" : None,
-        "unitary_preprocessor": utils.nearest_unitary,
+        "unitary_preprocessor": utils.nearest_unitary
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
@@ -71,6 +71,6 @@ stateprep_defaults = {
         "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
         "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
         "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None)))),
-        "unitary_preprocessor": identity,
+        "unitary_preprocessor": identity
         }
 

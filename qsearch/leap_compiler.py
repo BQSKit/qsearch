@@ -12,7 +12,7 @@ from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizers, backends
 from . import utils, heuristics, circuits, logging, gatesets
 from .compiler import Compiler, SearchCompiler
-from .checkpoint import ChildCheckpoint
+from .checkpoints import ChildCheckpoint
 
 
 def cut_end(circ, depth):

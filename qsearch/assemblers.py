@@ -23,7 +23,6 @@ class Assembler():
         The assemble function is used to convert the circuit described in resultdict.  See DictionaryAssembler for an example implementation.
         
         resultdict -- The dictionary representing the desired circuit.  It is expected to contain the entries "stucture" and "parameters".  It may contain other entries.
-        options -- A qsearch.options.Options object.  It is expected to contai any options needed by the specified Assembler.
 
         expected return value -- A string representing the converted circuit code.
         """
