@@ -1,3 +1,6 @@
+"""
+This module provides a wrapper that makes it easier to interface with the rest of Qsearch.
+"""
 import numpy as np
 from numpy import matrix, array
 from warnings import warn
@@ -27,6 +30,7 @@ class Project_Status(Enum):
     NOTBEGUN = 3
 
 class Project:
+    """The project class wraps most of the functionality of Qsearch as intended to help manage working with Qsearch."""
     def __init__(self, path, use_mpi=False):
         if MPI is not None and use_mpi:
             self.comm = MPI.COMM_WORLD
@@ -62,6 +66,15 @@ class Project:
         return os.path.join(self.folder, "{}.checkpoint".format(name))
 
     def add_compilation(self, name, U, options=None, handle_existing=None, **extraargs):
+        """
+        Adds a unitary to be compiled.
+
+        name -- A name for this unitary.  Must be unique in this Project.
+        U -- The unitary to be compiled, in the form of a numpy ndarray with dtype="complex128"
+        handle_existing -- A variable which defines how to behave if a compilation with the given name already exists.  If it is set to "ignore", it will simply return without doing anything.  If it is set to "overwrite", it will overwrite the previous entry.  If it is set to the default of None, it will offer a warning asking the user to remove and re-add the compilation.
+
+        The options and extraargs passed to this function will be used only when this compilation is run.
+        """
         if name in self._compilations:
             s = self._compilation_status(name)
             if handle_existing == "ignore" or np.array_equal(U, self._compilations[name]["options"].target): # handle the case where this is an attempt to re-enter the same compilation
@@ -106,6 +119,7 @@ class Project:
             self.logger.std_enabled = value
 
     def configure_compiler_override(self, keyword, value):
+        """An unsafe method that allows the user to set global Project Options even if there is existing work."""
         warn("Using this method could result in crashes, infinite loops, or other undefined behavior.  It is safer to reset the project and configure using project[\"keyword\"]=value.  Only use this method if the risk of error is worse than losing intermediate progress.")
         self.options.update(**{keyword:value})
         self._save()
@@ -122,9 +136,11 @@ class Project:
             self.logger.std_enabled = options.std_enabled
 
     def configure(self, **dictionary):
+        """Adds multiple options to the global Project Options at once."""
         self.options.update(**dictionary)
  
     def reset(self, name=None):
+        """Resets a Project, removing any work done but not the initial configurations."""
         if name is None:
             [self.reset(n) for n in self._compilations]
         else:
@@ -134,12 +150,14 @@ class Project:
         self._save()
 
     def remove_compilation(self, name):
+        """Removes a compilation from a Project."""
         warn("remove_compilation(name) is deprecated and will be removed in a future release.  Use clear(name) instead.", DeprecationWarning, stacklevel=2)
         self.get_options(name).checkpoint.delete()
         cdict = self._compilations.pop(name)
         self._save()
 
     def clear(self, name=None):
+        """Clears a Project, reverting it to a state similar to a newly created Project."""
         if name is None:
             for name in self._compilations:
                 self.get_options(name).checkpoint.delete()
@@ -165,10 +183,12 @@ class Project:
             sys.exit(0)
 
     def set_defaults(self):
+        """Updates the Project Options with the standard defaults from defaults.py"""
         self.options.set_defaults(verbosity=1,stdout_enabled=True,blas_threads=None,compiler_class=SearchCompiler,**standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
     def run(self, target=None):
+        """Runs all of the compilations in the Project."""
         freeze_support()
 
         self.logger.logprint("Started running project {}".format(self.name))
@@ -209,6 +229,7 @@ class Project:
         self.logger.logprint("Finished running project {}".format(self.name))
 
     def post_process(self, postprocessor, name=None, options=None, **xtraargs):
+        """Post-processes the specified compilation, or all compilations if name is None, using the specified postprocessor."""
         names = [name] if name else self._compilations
         for name in names:
             self.logger.logprint("Started postprocessing of {}".format(name))
@@ -221,13 +242,16 @@ class Project:
         self._save()
             
     def complete(self):
+        """Returns a True if all compilations in the Project have finished and False otherwise."""
         return self._overall_status() == Project_Status.COMPLETE
 
     def finish(self):
+        """Called when done running compilations in order to end MPI tasks."""
         if MPI is not None and self.comm is not None:
             self.comm.bcast(True, root=0)
 
     def status(self, name=None, logger=None):
+        """{rints a status update on how much of a Project has finished running."""
         namelist = [name] if name else self._compilations
         for n in namelist:
             s = self._compilation_status(n)
@@ -247,6 +271,7 @@ class Project:
 
     @property
     def compilations(self):
+        """The list of names corresponding to compilations on this Project."""
         return list(self._compilations.keys())
 
     def _compilation_status(self, name):
@@ -277,16 +302,19 @@ class Project:
             return Project_Status.NOTBEGUN
 
     def get_result(self, name):
+        """Returns the result dictionary for a finished compilation.  Usually this contains the entries "structure", a Gate, and "parameters", an array of real number parameters."""
         cdict = self._compilations[name]
         if not "structure" in cdict or not "parameters" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
         return cdict
 
     def get_target(self, name):
+        """Returns the target unitary that was specified for a compilation."""
         cdict = self._compilations[name]
         return cdict["options"].target
 
     def get_time(self, name):
+        """Returns the runtime that it took to run a compilation."""
         cdict = self._compilations[name]
         if "time" in cdict:
             return cdict["time"]
@@ -294,24 +322,14 @@ class Project:
             return None
 
     def get_options(self, name=None):
+        """Returns the Options object specifying compilation-specific configurations."""
         if name is None:
             return self.options
         else:
             return self.options.updated(self._compilations[name]["options"])
 
-    def verify_result(self, name):
-        cdict = self._compilations[name]
-        if not "structure" in cdict or not "parameters" in cdict:
-            print("The compilation {} has not been completed.  Please run the project to finish the compilation.")
-            return
-        original = cdict["options"].target
-        final = cdict["structure"].matrix["parameters"]
-        print("Comparison of target and implemented unitaries:")
-        if "error_func" in self._compiler_config:
-            print("error_func: {}".format(self._compiler_config["error_func"](original, final)))
-        print("matrix_distance_squared: {}".format(utils.matrix_distance_squared(original, final)))
-
     def assemble(self, name, options=None, **xtraargs):
+        """Assembles a compilation using the Assembler specified as assembler in the Options."""
         options = self.options.updated(options, **xtraargs)
         cdict = self._compilations[name]
         if not "structure" in cdict or not "parameters" in cdict:
