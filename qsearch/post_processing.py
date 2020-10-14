@@ -1,3 +1,11 @@
+"""
+This module defines PostProcessor, a class used to modify circuits after they have been synthesized.
+
+Several implementations are provided.
+BasicSingleQubitReduction_PostProcessor -- Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
+ParameterTuning_PostProcessor -- Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
+LEAPReoptimizing_PostProcessor -- Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
+"""
 from . import options as opt
 from functools import partial
 from timeit import default_timer as timer
@@ -5,31 +13,45 @@ import heapq
 from scipy.stats import linregress
 import numpy as np
 
-from .circuits import *
+from .gates import *
 
 from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults as defaults, standard_smart_defaults as smart_defaults
 from . import parallelizers, backends
-from . import utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, gates, logging, gatesets
 from .compiler import Compiler, SearchCompiler
-from .checkpoint import ChildCheckpoint
+from .checkpoints import ChildCheckpoint
 
 class PostProcessor():
+    """This class is used to modify circuits that have already been synthesized."""
     def __init__(self, options = opt.Options()):
         self.options=options
 
     def post_process_circuit(self, result, options=None):
+        """
+        Processes the circuit dictionary and returns a new one.
+
+        result -- A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
+
+        expected return value -- A dictionary containing any updates that should be made to the circuit dictionary, such as new values for "structure" or "parameters" or arbitrary other data.    
+        """
         return result
 
 
 class BasicSingleQubitReduction_PostProcessor(PostProcessor):
+    """Attempts to reduce the number of single-qubit gates in a circuit by sequentially removing a gate, attempting to use a Solver on it, and keeping that gate removed if successful."""
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
         finalx = result["parameters"]
         options = self.options.updated(options)
-        single_qubit_names = ["QiskitU3QubitStep()", "ZXZXZQubitStep()", "XZXZPartialQubitStep()"]
-        identitystr = "IdentityStep(2)"
+        if "unitary_preprocessor" in options:
+            target = options.unitary_preprocessor(options.target)
+        else:
+            target = options.target
+        single_qubit_names = ["U3Gate()", "ZXZXZGate()", "XZXZGate()"]
+        identitystr = "IdentityGate()"
+
         circstr = repr(circuit)
         initial_count = sum([circstr.count(sqn) for sqn in single_qubit_names])
         options.logger.logprint("Initial count: {}".format(initial_count), verbosity=2)
@@ -40,7 +62,7 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
                 newstr = components[0] + identitystr + "".join([component + gate for component in components[1:-1]]) + components[-1]
                 newcirc = eval(newstr)
                 mat, xopt = options.solver.solve_for_unitary(newcirc, options)
-                if options.eval_func(options.target, mat) < options.threshold:
+                if options.eval_func(target, mat) < options.threshold:
                     components = [components[0] + identitystr + components[1]] + components[2:]
                     finalx = xopt
                     finalcirc = newcirc
@@ -55,17 +77,22 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         return {"structure":finalcirc, "parameters":finalx}
 
 class ParameterTuning_PostProcessor(PostProcessor):
+    """Attempts to reduce the eval_func value of the circuit simply by tuning the parameters better using stronger Solver parameters."""
     def post_process_circuit(self, result, options=None):
         circuit = result["structure"]
         initialx = result["parameters"]
         options = self.options.updated(options)
         options.max_quality_optimization = True
-        initial_value = options.eval_func(options.target, circuit.matrix(initialx))
+        if "unitary_preprocessor" in options:
+            target = options.unitary_preprocessor(options.target)
+        else:
+            target = options.target
+        initial_value = options.eval_func(target, circuit.matrix(initialx))
         options.logger.logprint("Initial Distance: {}".format(initial_value))
 
         U, x = options.solver.solve_for_unitary(circuit, options)
 
-        final_value = options.eval_func(options.target, U)
+        final_value = options.eval_func(target, U)
         if np.abs(final_value) < np.abs(initial_value):
             options.logger.logprint("Improved Distance: {}".format(final_value))
             return {"parameters":x}
@@ -79,9 +106,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     This PostProcessor puts "holes" in the circuit where LEAP fixed prefixes and runs
     qsearch on those holes to reduce the total number of gates.
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
 
@@ -91,40 +117,37 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
         """
         best_pair = (result['structure'], result['parameters'])
-        return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
+        opts = options.updated(best_pair=best_pair, cut_depths=result['cut_depths'])
+        return self.compile(opts)
 
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         """Backwards compatible interface since this is technically a Compiler.
 
-        You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the post_processing API.
+        You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the Project post_processing API.
         """
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
-        U = options.target
-        depth = options.depth
-        checkpoint = ChildCheckpoint(options.checkpoint)
+        if "unitary_preprocessor" in options:
+            U = options.unitary_preprocessor(options.target)
+        depth = options.weight_limit
+        child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         overall_startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         parallel = options.parallelizer(options)
-        recovered_outer = checkpoint.recover_parent()
+        recovered_outer = child_checkpoint.recover_parent()
         if recovered_outer is None:
             overall_best_pair = options.best_pair
-            start_depth = len(overall_best_pair[0]._substeps) - 1
+            start_depth = len(overall_best_pair[0]._subgates) - 1
             if 'cut_depths' in options:
                 # these are the "ideal" starting points, but we may need to modify them as we optimize
                 midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
-                print(f'midpoints initialized as {midpoints}')
+                logger.logprint(f'Midpoints initialized as {midpoints}', verbosity=2)
             start_point = 1
             overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
         else:
@@ -133,7 +156,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
             if 'timeout' in options and timer() - overall_startime > options.timeout:
                 break
             best_circuit = overall_best_pair[0]
-            best_circuit_depth = len(best_circuit._substeps) - 1
+            best_circuit_depth = len(best_circuit._subgates) - 1
             if 'cut_depths' in options:
                 insertion_points = midpoints
             else:
@@ -143,17 +166,17 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     break
                 startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
                 window_size = depth or options.reoptimize_size
-                root = ProductStep(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
+                root = ProductGate(*best_circuit._subgates[:point], *best_circuit._subgates[point + window_size:])
                 h = options.heuristic
-                dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+                qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-                if options.gateset.d**dits != np.shape(U)[0]:
+                if options.gateset.d**qudits != np.shape(U)[0]:
                     raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-                I = circuits.IdentityStep(options.gateset.d)
+                I = gates.IdentityGate(d=options.gateset.d)
 
-                initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
-                search_layers = options.gateset.search_layers(dits)
+                initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
+                search_layers = options.gateset.search_layers(qudits)
 
                 if len(search_layers) <= 0:
                     logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
@@ -173,7 +196,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 if beams > 1:
                     logger.logprint("The beam factor is {}.".format(beams))
 
-                recovered_state = checkpoint.recover()
+                recovered_state = child_checkpoint.recover()
                 queue = []
                 best_depth = 0
                 best_value = 0
@@ -191,7 +214,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
                     #         heuristic      depth  distance tiebreaker parameters structure
                     #             0            1      2         3         4        5
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
+                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
                 else:
                     queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
                     logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -226,13 +249,13 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                             heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
                             tiebreaker+=1
                     logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-                    if (options.depth is not None and best_depth >= options.depth - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
+                    if (options.weight_limit is not None and best_depth >= options.weight_limit - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
                         break
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
+                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
                 logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
-                new_circuit_depth = len(best_pair[0]._substeps) - 1
+                new_circuit_depth = len(best_pair[0]._subgates) - 1
                 if best_value < options.threshold and new_circuit_depth < best_circuit_depth:
                     logger.logprint(f"With starting point {point} re-optimized from depth {best_circuit_depth} to depth {new_circuit_depth}")
                     overall_best_pair = best_pair
@@ -241,8 +264,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     print(f'old midpoinst: {midpoints}')
                     midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
-                    checkpoint.save(None)
-                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                    child_checkpoint.save(None)
+                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     break # break out so we can re-run optimization on the better circuit
                 else:
                     logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
@@ -250,8 +273,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
                     start_point = point
-                    checkpoint.save(None)
-                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                    child_checkpoint.save(None)
+                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     continue
             if new_circuit_depth >= best_circuit_depth:
                 break

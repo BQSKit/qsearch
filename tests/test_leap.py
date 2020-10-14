@@ -17,5 +17,5 @@ def test_reoptimize(project, check_project):
     project["min_depth"] = 4
     project["compiler_class"] = leap_compiler.LeapCompiler
     project.run()
-    project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=5)
+    project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, weight_limit=5)
     check_project(project)

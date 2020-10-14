@@ -1,3 +1,14 @@
+"""
+This module defines Parallelizer, which is a class that defines how to perform multiple circuits in parallel.
+
+Several implementations are provided.
+LokyParallelizer -- A Parallelizer based on Loky, a "deadlock-free" ProcessPoolExecutor
+MultiprocessingParallelizer -- A Parallelizer based on multiprocessing
+ProcessPoolParallelizer -- A Parallelizer based on concurrent.futures.ProcessPoolExecutor
+MPIParallelizer -- A distributed MPI based Parallelizer
+SequentialParallelizer -- Mostly for debugging purposes, a Parallelizer that runs tasks one at a time.
+"""
+
 from multiprocessing import get_context, cpu_count
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial

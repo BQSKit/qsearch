@@ -17,7 +17,7 @@ def test_matrix_distance_squared_jac(tmpdir):
     p.run()
     res = p.get_result('qft2')
     c = res['structure']
-    v = res['vector']
+    v = res['parameters']
     u, jacs = c.mat_jac(v)
     f_rs, jacs_rs = qsrs.matrix_distance_squared_jac(qft_py, u, jacs)
     assert f_rs < 1e-14
@@ -35,7 +35,7 @@ def test_matrix_residuals_jac(tmpdir):
     p.run()
     res = p.get_result('qft2')
     c = res['structure']
-    v = res['vector']
+    v = res['parameters']
     u, jacs = c.mat_jac(v)
     j_rs = qsrs.matrix_residuals_jac(qft_py, u, jacs)
     j_py = utils.matrix_residuals_jac(qft_py, u, jacs)

@@ -1,10 +1,12 @@
+"""
+Defines Solver, a class used to wrap various numerical optimizers for finding parameters such that an ansatz circuit is a solution to a target unitary.
+"""
 import sys
 
 import numpy as np
 import scipy as sp
 import scipy.optimize
 
-from . import circuits
 from . import utils
 from .gatesets import *
 from .logging import Logger
@@ -14,6 +16,7 @@ except ImportError:
     LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = matrix_residuals= matrix_residuals_jac = None
 
 def default_solver(options, x0=None):
+    """Runs a complex list of tests to determine the best Solver for a specific situation."""
     options = options.copy()
     # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
     options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None, target=None)
@@ -24,11 +27,11 @@ def default_solver(options, x0=None):
 
     # check if Rust works on the layers
     gateset = options.gateset
-    dits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    qudits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
 
     rs_failed = True
     if native_from_object is not None:
-        layers = [(gateset.initial_layer(dits), 0)] + gateset.search_layers(dits)
+        layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
         for layer in layers:
             try:
                 native_from_object(layer[0])
@@ -56,7 +59,7 @@ def default_solver(options, x0=None):
             logger.logprint("Smart default chose LeastSquares_Jac_SolverNative", verbosity=3)
             return LeastSquares_Jac_SolverNative()
 
-    if dits < 1:
+    if qudits < 1:
         logger.logprint("Smart default fell back to COBYLA_Solver.  Pass a different Solver to SearchCompiler for better results.", verbosity=1)
         return COBYLA_Solver() # handling this case for manually created SearchCompiler instances.  Better support for manual usage is unlikely to be implemented because Projects are generally recommended.
 
@@ -80,7 +83,9 @@ def default_solver(options, x0=None):
     # the default will have been chosen from LeastSquares, BFGS, or COBYLA
 
 class Solver():
+    """This class is used to wrap numerical optimizers for circuit solving."""
     def solve_for_unitary(self, circuit, options, x0=None):
+        """Finds the best parameters that minimize error_func or error_residuals between the unitary from the circuit and options.target."""
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -96,6 +101,7 @@ class Solver():
         return "Frobenius"
 
 class CMA_Solver(Solver):
+    """Uses cmaes gradient-free optimization from the cma package."""
     def solve_for_unitary(self, circuit, options, x0=None):
         try:
             import cma
@@ -103,34 +109,39 @@ class CMA_Solver(Solver):
             print("ERROR: Could not find cma, try running pip install quantum_synthesis[cma]", file=sys.stderr)
             sys.exit(1)
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        initial_guess = 'np.random.rand({})'.format(circuit.num_inputs) if x0 is None else x0
-        xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2)
+        initial_guess = 'np.random.rand({})*2*np.pi'.format(circuit.num_inputs) if x0 is None else x0
+        xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
 class COBYLA_Solver(Solver):
+    """Uses cobyla gradient-free optimization from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        initial_guess = np.array(np.random.rand(circuit.num_inputs)) if x0 is None else x0
-        x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,1))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
+        initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
+        x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,2*np.pi))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
         return (circuit.matrix(x), x)
 
 class DIY_Solver(Solver):
+    """An easier way to wrap a numerical optimizer than writing your own Solver class."""
     def __init__(self, f):
-        self.f = f # f is a function that takes in eval_func and initial_guess and returns the parameters that minimizes eval_func.  The parameters may range between 0 and 1.
+        """Uses the function f that takes in eval_func and initial_guess and returns the parameters that minimizes eval_func."""
+        self.f = f
 
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        initial_guess = np.array(np.random.rand(circuit.num_inputs)) if x0 is None else x0
+        initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
         x = f(eval_func, initial_guess)
 
 class NM_Solver(Solver):
+    """A solver based on the Nelder-Mead gradient free optimizer from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*np.pi if x0 is None else x0, method='Nelder-Mead', options={"ftol":1e-14})
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='Nelder-Mead', options={"ftol":1e-14})
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
 class CMA_Jac_Solver(Solver):
+    """A solver based on the cmaes optimizer from the cma package, but using gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
         try:
             import cma
@@ -139,22 +150,24 @@ class CMA_Jac_Solver(Solver):
             sys.exit(1)
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         jac_func  = lambda v: options.error_jac(options.target, circuit.mat_jac(v))
-        initial_guess = 'np.random.rand({})'.format(circuit.num_inputs) if x0 is None else x0
-        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,1]}, restarts=2, gradf=jac_func)
+        initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)*2*np.pi if x0 is None else x0
+        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2, gradf=jac_func)
         if circuit.num_inputs > 18:
             raise Warning("Finished with {} evaluations".format(es.result[3]))
         return (circuit.matrix(xopt), xopt)
 
 class BFGS_Jac_Solver(Solver):
+    """A solver based on the BFGS implementation in scipy.  It requires gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
             return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs) if x0 is None else x0, method='BFGS', jac=True)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
 class LeastSquares_Jac_Solver(Solver):
+    """Uses the Leavenberg-Marquardt least-squares optimizer in scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
@@ -163,9 +176,9 @@ class LeastSquares_Jac_Solver(Solver):
         eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
         jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
         if options.max_quality_optimization:
-            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs) if x0 is None else x0, jac_func, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
+            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, jac_func, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
         else:
-            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs) if x0 is None else x0, jac_func, method="lm")
+            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, jac_func, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 

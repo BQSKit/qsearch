@@ -1,24 +1,25 @@
+"""
+This module provides LeapCompiler, which is a more scalable variant of SearchCompiler, at the expense of producing somewhat longer circuits.  LeapReoptimizing_PostProcessor can be used to reduce circuit length back to levels that SearchCompiler might generate.
+"""
 from functools import partial
 from timeit import default_timer as timer
 import heapq
 from scipy.stats import linregress
 import numpy as np
 
-from .circuits import *
-
 from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizers, backends
-from . import utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, gates, logging, gatesets
 from .compiler import Compiler, SearchCompiler
-from .checkpoint import ChildCheckpoint
+from .checkpoints import ChildCheckpoint
 
 
 def cut_end(circ, depth):
-    if isinstance(circ._substeps[0], ProductStep):
+    if isinstance(circ._substeps[0], gates.ProductGate):
         return cut_end(circ._substeps[0], depth)
-    return circuits.ProductStep(*circ._substeps[:-depth])
+    return gates.ProductGate(*circ._substeps[:-depth])
 
 
 class LeapCompiler(Compiler):
@@ -27,43 +28,37 @@ class LeapCompiler(Compiler):
     LeapCompiler uses fixed structure prefixes to greatly reduce the search space
     and speed up synthesis at the cost of optimiality. Thus it is recommended to use in conjunction
     with reoptimizing_compiler.LeapReoptimizing_PostProcessor() to obtain the best results.
-
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         """Run LEAP on the compilation specified in options"""
 
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
-        U = options.target
-        depth = options.depth
-        checkpoint = ChildCheckpoint(options.checkpoint)
+        U = options.unitary_preprocessor(options.target)
+        depth = options.weight_limit
+
+        child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         rectime = 0
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
         sc = sub_compiler(options)
-        recovered_state = checkpoint.recover_parent()
+        recovered_state = child_checkpoint.recover_parent()
         if recovered_state is None:
             total_depth = 0
             best_value = 1.0
             depths = [total_depth]
-            initial_layer = options.gateset.initial_layer(dits)
+            initial_layer = options.gateset.initial_layer(qudits)
         else:
             total_depth = recovered_state[0]
             best_value = recovered_state[1]
@@ -73,15 +68,16 @@ class LeapCompiler(Compiler):
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=checkpoint)
+            opts = options.updated(initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=child_checkpoint)
+            best_pair, best_value, best_depth = sc.compile(opts)
             # clear child checkpoint for next run
-            checkpoint.save(None)
+            child_checkpoint.delete()
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
                 break
             initial_layer = best_pair[0]
-            checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
+            child_checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-starttime)))
         return {'structure': best_pair[0], 'parameters': best_pair[1], 'cut_depths': depths}
 
@@ -89,38 +85,33 @@ class LeapCompiler(Compiler):
 class SubCompiler(Compiler):
     """A modified SearchCompiler for the LeapCompiler to use.
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
-        U = options.target
-        depth = options.depth
+        if "unitary_preprocessor" in options:
+            U = options.unitary_preprocessor(options.target)
+        depth = options.weight_limit
         checkpoint = options.checkpoint
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         starttime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
         h = options.heuristic
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-        if options.gateset.d**dits != np.shape(U)[0]:
+        if options.gateset.d**qudits != np.shape(U)[0]:
             raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-        I = circuits.IdentityStep(options.gateset.d)
+        I = gates.IdentityGate(d=options.gateset.d)
 
-        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
-        search_layers = options.gateset.search_layers(dits)
+        initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
+        search_layers = options.gateset.search_layers(qudits)
 
         if len(search_layers) <= 0:
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
@@ -149,10 +140,10 @@ class SubCompiler(Compiler):
         tiebreaker = 0
         rectime = 0
         if recovered_state == None:
-            if isinstance(initial_layer, ProductStep):
+            if isinstance(initial_layer, gates.ProductGate):
                 root = initial_layer
             else:
-                root = ProductStep(initial_layer)
+                root = gates.ProductGate(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
             best_value = options.eval_func(U, result[0])
             best_pair = (root, result[1])

@@ -1,3 +1,6 @@
+"""
+This module defines solvers that use multiple starting points in order to have a higher chance at finding the global minimum.
+"""
 from . import utils, logging
 from .solvers import Solver, default_solver
 import numpy as np
@@ -60,7 +63,7 @@ class MultiStart_Solver(Solver):
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
         for i, x in enumerate(initial_sample):
-            H['f'][i] = distance_for_x(x, options, circuit)
+            H['f'][i] = distance_for_x(2*np.pi*x, options, circuit)
 
         H[['returned']] = True
 
@@ -74,7 +77,7 @@ class MultiStart_Solver(Solver):
         processes = []
         rets = []
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(circuit, options, q, x0))
+            p = Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0))
             processes.append(p)
             p.start()
         for p in processes:
@@ -91,10 +94,10 @@ class MultiStart_Solver(Solver):
 
         return (circuit.matrix(xopt), xopt)
 
-class DumbMultiStart_Solver(Solver):
-    """A dumb but effective multi-start solver which tries to cover as much of the optimization space at once"""
+class NaiveMultiStart_Solver(Solver):
+    """A naive but effective multi-start solver which tries to cover as much of the optimization space at once"""
     def __init__(self, num_threads):
-        """Create a DumbMultiStart_Solver instance. Pass num_threads to set how many threads to use in parallel optimization runs"""
+        """Create a NaiveMultiStart_Solver instance. Pass num_threads to set how many threads to use in parallel optimization runs"""
         self.threads = num_threads if num_threads else 1
 
     def solve_for_unitary(self, circuit, options, x0=None):

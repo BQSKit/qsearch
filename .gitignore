@@ -11,3 +11,5 @@ benchmarks/
 leapex/
 leapex-reoptimize/
 multistart/
+docs/_build/
+qft5-yorktown/

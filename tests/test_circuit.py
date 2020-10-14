@@ -8,7 +8,7 @@ def check_circuit(c):
     nmat = nc.matrix(v)
     mat = c.matrix(v)
     assert np.allclose(mat, nmat), print(mat) or print(nmat)
-    assert 1e-13 > qs.utils.matrix_distance_squared(mat, nmat), print(mat) or print(nmat)
+    assert 1e-10 > qs.utils.matrix_distance_squared(mat, nmat), print(mat) or print(nmat)
     nmat, njs = nc.mat_jac(v)
     mat, js = c.mat_jac(v)
     assert np.allclose(mat, nmat), print(mat) or print(nmat)
@@ -16,26 +16,26 @@ def check_circuit(c):
         assert np.allclose(j, nj), print(f'failed on {i}') or print(j) or print(nj)
 
 def test_XZXZ():
-    check_circuit(qs.circuits.XZXZPartialQubitStep())
+    check_circuit(qs.gates.XZXZGate())
 
 def test_U3():
-    check_circuit(qs.circuits.QiskitU3QubitStep())
+    check_circuit(qs.gates.U3Gate())
 
 def test_Id():
-    check_circuit(qs.circuits.IdentityStep(1))
+    check_circuit(qs.gates.IdentityGate(1))
 
 def test_CNOT():
-    check_circuit(qs.circuits.CNOTStep())
+    check_circuit(qs.gates.CNOTGate())
 
 def test_Product():
-    h = qs.circuits.QiskitU3QubitStep()
-    g = qs.circuits.XZXZPartialQubitStep()
-    check_circuit(qs.circuits.ProductStep(g,h,g))
+    h = qs.gates.U3Gate()
+    g = qs.gates.XZXZGate()
+    check_circuit(qs.gates.ProductGate(g,h,g))
 
 def test_Kronecker():
-    h = qs.circuits.QiskitU3QubitStep()
-    g = qs.circuits.XZXZPartialQubitStep()
-    check_circuit(qs.circuits.KroneckerStep(g,h, g))
+    h = qs.gates.U3Gate()
+    g = qs.gates.XZXZGate()
+    check_circuit(qs.gates.KroneckerGate(g,h, g))
 
 def test_CNOT_Linear():
     g = qs.gatesets.QubitCNOTLinear()
@@ -50,23 +50,23 @@ def test_CNOT_Ring():
         check_circuit(layer[0])
 
 def test_native_from_object_double():
-    n = native(qs.circuits.QiskitU3QubitStep())
+    n = native(qs.gates.U3Gate())
     check_circuit(n)
 
 def test_constant_unitary():
-    check_circuit(qs.circuits.CPIStep())
+    check_circuit(qs.gates.CPIGate())
 
 def test_singlequtrit():
-    check_circuit(qs.circuits.SingleQutritStep())
+    check_circuit(qs.gates.SingleQutritGate())
 
 def test_x():
-    check_circuit(qs.circuits.XStep())
+    check_circuit(qs.gates.XGate())
 
 def test_y():
-    check_circuit(qs.circuits.YStep())
+    check_circuit(qs.gates.YGate())
 
 def test_z():
-    check_circuit(qs.circuits.ZStep())
+    check_circuit(qs.gates.ZGate())
 
 if __name__ == '__main__':
     test_XZXZ()

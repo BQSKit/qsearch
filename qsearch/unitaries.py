@@ -1,3 +1,28 @@
+"""
+This module contains a list of predefined commonly used constant unitaries, and functions for generating commonly used unitaries.
+
+Predefined constant unitaries
+cnot
+sqrt_cnot
+swap
+toffoli
+fredkin
+peres
+logical_or
+full_adder
+
+Functions for generating unitaries
+rot_x
+rot_x_jac -- returns the jacobian of rot_x
+rot_y
+rot_y_jac -- returns the jacobian of rot_y
+rot_z
+rot_z_jac -- returns the jacobian of rot_z
+qft -- Returns a nxn qft matrix.
+identity -- Returns a nxn identity matrix
+general_swap -- Returns the swap matrix for qudits of the specified size.
+arbitrary_cnot -- Returns a CNOT between any two qubits within the specified number of qubits
+"""
 import numpy as np
 
 cnot = np.array([[1,0,0,0],
@@ -82,7 +107,7 @@ def rot_z(theta):
     return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_z_jac(theta):
-    return np.array([[-1j/2*theta * np.exp(-1j*theta/2), 0], [0, 1j/2*theta*np.exp(1j*theta/2)]], dtype='complex128')
+    return np.array([[-1j/2*np.exp(-1j*theta/2), 0], [0, 1j/2*np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_x(theta):
     return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
@@ -104,22 +129,22 @@ def qft(n):
 def identity(n): # not super necessary but saves a little code length
     return np.array(np.eye(n), dtype='complex128')
 
-def general_swap(d=2): # generates the swap matrix for qu-dits
+def general_swap(d=2): # generates the swap matrix for qu-qudits
     f = lambda i, j: (i % d == j//d) and (i // d == j % d)
     return np.array(np.fromfunction(np.vectorize(f), (d**2, d**2)), dtype='complex128')
 
 # generates an arbitrary cnot gate by classical logic and brute force
 # it may be a good idea to write a better version of this at some point, but this should be good enough for use with the search compiler on 2-4 qubits.
-def arbitrary_cnot(dits, control, target):
+def arbitrary_cnot(qudits, control, target):
     # this test returns if the given matrix index correspond to a "true" value of the bit at selected qubit index
-    test = lambda x, value: (x // 2**(dits-value-1)) % 2 != 0
+    test = lambda x, value: (x // 2**(qudits-value-1)) % 2 != 0
     def f(i,j):
         # unless the control is true in both columns, just return part of the identity
         if not (test(i, control) and test(j, control)):
             return i==j
         elif test(i, target) != test(j, target):
             # if the control is true in both columns and the target is mismatched, verify everything else is matched
-            for k in range(0, dits):
+            for k in range(0, qudits):
                 if k == target or k == control:
                     continue
                 elif test(i, k) != test(j, k):
@@ -128,5 +153,5 @@ def arbitrary_cnot(dits, control, target):
         else:
             # if the control is true and matched and the target is matched, return 0
             return 0
-    return np.array(np.fromfunction(np.vectorize(f), (2**dits,2**dits)),dtype='complex128')
+    return np.array(np.fromfunction(np.vectorize(f), (2**qudits,2**qudits)),dtype='complex128')
 
