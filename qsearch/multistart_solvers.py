@@ -55,12 +55,12 @@ class MultiStart_Solver(Solver):
 
         _, _, rk_const, ld, mu, nu, _, H = initialize_APOSMM([],specs,None)
 
-        initial_sample = np.random.uniform(0, 2*np.pi, (initial_sample_size, n))
+        initial_sample = np.random.uniform(0, 1, (initial_sample_size, n))
 
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
         for i, x in enumerate(initial_sample):
-            H['f'][i] = distance_for_x(x, options, circuit)
+            H['f'][i] = distance_for_x(2*np.pi*x, options, circuit)
 
         H[['returned']] = True
 
@@ -74,7 +74,7 @@ class MultiStart_Solver(Solver):
         processes = []
         rets = []
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(circuit, options, q, x0))
+            p = Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0))
             processes.append(p)
             p.start()
         for p in processes:
