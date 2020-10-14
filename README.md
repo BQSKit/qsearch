@@ -1,6 +1,5 @@
 ![run tests](https://github.com/BQSKit/qsearch/workflows/run%20tests/badge.svg?branch=master)
 
-
 # qsearch
 An implementation of a quantum gate synthesis algorithm based on A* and numerical optimization.  It relies on [NumPy](https://numpy.org) and [SciPy](https://www.scipy.org).  It can export code for [Qiskit](https://qiskit.org) and [OpenQASM](https://github.com/Qiskit/OpenQASM).
 
