@@ -42,7 +42,7 @@ class DictionaryAssembler(Assembler):
         il = flatten_intermediate(circuit.assemble(v))
         assemblydict = options.assemblydict
 
-        out = assemblydict["initial"].format(circuit.dits)
+        out = assemblydict["initial"].format(circuit.qudits)
 
         for segment in il:
             if not segment[0] == "gate":

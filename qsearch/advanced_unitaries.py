@@ -1,7 +1,7 @@
 """
 A collection of constant gates and gate generators that are unusual or more complicated than those found in unitaries.py.
 """
-from qsearch.circuits import *
+from qsearch.gates import *
 import scipy as sp
 
 def generate_miro():
@@ -24,15 +24,15 @@ mirogate = generate_miro()
 def generate_HHL():
     def hadamard(theta=0):
         return np.array([[np.cos(2*theta), np.sin(2*theta)],[np.sin(2*theta), -np.cos(2*theta)]])
-    H = UStep(hadamard(), "H")
-    RCH8 = CUStep(hadamard(np.pi/8), "H8", flipped=True)
-    RCH16 = CUStep(hadamard(np.pi/16), "H16", flipped=True)
-    RCY = CUStep(np.array([[0,-1j],[1j,0]]), "CY", flipped=True)
-    RCNOT = UStep(np.array([[0,1,0,0],
+    H = UGate(hadamard(), "H")
+    RCH8 = CUGate(hadamard(np.pi/8), "H8", flipped=True)
+    RCH16 = CUGate(hadamard(np.pi/16), "H16", flipped=True)
+    RCY = CUGate(np.array([[0,-1j],[1j,0]]), "CY", flipped=True)
+    RCNOT = UGate(np.array([[0,1,0,0],
                             [1,0,0,0],
                             [0,0,1,0],
                             [0,0,0,1]]), "RCNOT")
-    SWAP = UStep(np.array([[1,0,0,0],
+    SWAP = UGate(np.array([[1,0,0,0],
                             [0,0,1,0],
                             [0,1,0,0],
                             [0,0,0,1]]))
@@ -42,21 +42,21 @@ def generate_HHL():
     A = np.array([[1.5, 0.5],[0.5, 1.5]])
     AU = sp.linalg.expm(1j * t0 * A / 2)
 
-    CAU = CUStep(AU, "CA")
-    CSH = CUStep(np.array([[1,0],[0,-1j]]), "CSH")
+    CAU = CUGate(AU, "CA")
+    CSH = CUGate(np.array([[1,0],[0,-1j]]), "CSH")
 
-    X = UStep(np.array([[0,1],[1,0]]), "X")
-    I = IdentityStep(2)
+    X = UGate(np.array([[0,1],[1,0]]), "X")
+    I = IdentityGate(2)
 
-    circuit = ProductStep()
-    circuit = circuit.appending(KroneckerStep(I,I,H))
-    circuit = circuit.appending(KroneckerStep(I,CSH))
-    circuit = circuit.appending(KroneckerStep(I,H,I))
-    circuit = circuit.appending(KroneckerStep(I,I,H))
-    circuit = circuit.appending(KroneckerStep(RCY, I))
-    circuit = circuit.appending(KroneckerStep(SWAP,I))
-    circuit = circuit.appending(KroneckerStep(I,RCY))
-    circuit = circuit.appending(KroneckerStep(SWAP,I))
+    circuit = ProductGate()
+    circuit = circuit.appending(KroneckerGate(I,I,H))
+    circuit = circuit.appending(KroneckerGate(I,CSH))
+    circuit = circuit.appending(KroneckerGate(I,H,I))
+    circuit = circuit.appending(KroneckerGate(I,I,H))
+    circuit = circuit.appending(KroneckerGate(RCY, I))
+    circuit = circuit.appending(KroneckerGate(SWAP,I))
+    circuit = circuit.appending(KroneckerGate(I,RCY))
+    circuit = circuit.appending(KroneckerGate(SWAP,I))
     return circuit.matrix([])
 HHL = generate_HHL()
 

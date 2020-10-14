@@ -11,7 +11,7 @@ from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults as defaults, standard_smart_defaults as smart_defaults
 from . import parallelizers, backends
-from . import utils, heuristics, circuits, logging, gatesets
+from . import utils, heuristics, gates, logging, gatesets
 from .compiler import Compiler, SearchCompiler
 from .checkpoints import ChildCheckpoint
 
@@ -124,7 +124,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         overall_startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
-        dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+        qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         parallel = options.parallelizer(options)
         recovered_outer = child_checkpoint.recover_parent()
@@ -155,15 +155,15 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 window_size = depth or options.reoptimize_size
                 root = ProductGate(*best_circuit._substeps[:point], *best_circuit._substeps[point + window_size:])
                 h = options.heuristic
-                dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+                qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
-                if options.gateset.d**dits != np.shape(U)[0]:
+                if options.gateset.d**qudits != np.shape(U)[0]:
                     raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
-                I = circuits.IdentityGate(d=options.gateset.d)
+                I = gates.IdentityGate(d=options.gateset.d)
 
-                initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(dits)
-                search_layers = options.gateset.search_layers(dits)
+                initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
+                search_layers = options.gateset.search_layers(qudits)
 
                 if len(search_layers) <= 0:
                     logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
