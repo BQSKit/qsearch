@@ -48,7 +48,7 @@ class FileCheckpoint(Checkpoint):
 
     def __init__(self, options=options.Options()):
         super().__init__(options)
-        options.set_defaults{"statefile", None}
+        options.set_defaults(statefile=None)
 
     def save(self, state):
         if self.options.statefile == None:

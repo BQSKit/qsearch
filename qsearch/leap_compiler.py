@@ -48,7 +48,8 @@ class LeapCompiler(Compiler):
 
         U = options.target
         depth = options.depth
-        checkpoint = ChildCheckpoint(options.checkpoint)
+
+        child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
@@ -58,7 +59,7 @@ class LeapCompiler(Compiler):
 
         sub_compiler = options.sub_compiler_class if 'sub_compiler_class' in options else SubCompiler
         sc = sub_compiler(options)
-        recovered_state = checkpoint.recover_parent()
+        recovered_state = child_checkpoint.recover_parent()
         if recovered_state is None:
             total_depth = 0
             best_value = 1.0
@@ -73,15 +74,15 @@ class LeapCompiler(Compiler):
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=checkpoint)
+            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=child_checkpoint)
             # clear child checkpoint for next run
-            checkpoint.save(None)
+            child_checkpoint.delete()
             total_depth += best_depth
             depths.append(total_depth)
             if best_value < options.threshold:
                 break
             initial_layer = best_pair[0]
-            checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
+            child_checkpoint.save_parent((total_depth, best_value, depths, timer()-starttime, initial_layer))
         logger.logprint("Finished all sub-compilations at depth {} with score {} after {} seconds.".format(total_depth, best_value, (timer()-starttime)))
         return {'structure': best_pair[0], 'parameters': best_pair[1], 'cut_depths': depths}
 

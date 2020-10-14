@@ -109,7 +109,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
 
         U = options.target
         depth = options.depth
-        checkpoint = ChildCheckpoint(options.checkpoint)
+        child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
@@ -117,7 +117,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         dits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
         parallel = options.parallelizer(options)
-        recovered_outer = checkpoint.recover_parent()
+        recovered_outer = child_checkpoint.recover_parent()
         if recovered_outer is None:
             overall_best_pair = options.best_pair
             start_depth = len(overall_best_pair[0]._substeps) - 1
@@ -173,7 +173,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 if beams > 1:
                     logger.logprint("The beam factor is {}.".format(beams))
 
-                recovered_state = checkpoint.recover()
+                recovered_state = child_checkpoint.recover()
                 queue = []
                 best_depth = 0
                 best_value = 0
@@ -191,7 +191,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
                     #         heuristic      depth  distance tiebreaker parameters structure
                     #             0            1      2         3         4        5
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
+                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
                 else:
                     queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
                     logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
@@ -228,7 +228,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
                     if (options.depth is not None and best_depth >= options.depth - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
                         break
-                    checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
+                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
                 logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
@@ -241,8 +241,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     print(f'old midpoinst: {midpoints}')
                     midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
-                    checkpoint.save(None)
-                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                    child_checkpoint.save(None)
+                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     break # break out so we can re-run optimization on the better circuit
                 else:
                     logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
@@ -250,8 +250,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
                     print(f'new midpoints: {midpoints}')
                     start_point = point
-                    checkpoint.save(None)
-                    checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                    child_checkpoint.save(None)
+                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     continue
             if new_circuit_depth >= best_circuit_depth:
                 break
