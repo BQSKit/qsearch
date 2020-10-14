@@ -604,7 +604,7 @@ class UpgradedConstantGate(Gate):
         if df <= di:
             raise AttributeError("Gate cannot be upgraded because it is already of an equal or higher dit level")
         self.df = df
-        self.qudits = other.dits
+        self.qudits = other.qudits
         self.U = utils.upgrade_qudits(OU, di, df)
         self.num_inputs = 0
         self.subgate = other
