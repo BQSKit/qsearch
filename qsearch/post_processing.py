@@ -106,9 +106,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     This PostProcessor puts "holes" in the circuit where LEAP fixed prefixes and runs
     qsearch on those holes to reduce the total number of gates.
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
         self.options.set_smart_defaults(**smart_defaults)
 
@@ -121,18 +120,13 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
 
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         """Backwards compatible interface since this is technically a Compiler.
 
         You should use LEAPReoptimizing_PostProcessor.post_process_circuit with the post_processing API.
         """
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)

@@ -30,22 +30,16 @@ class LeapCompiler(Compiler):
     with reoptimizing_compiler.LeapReoptimizing_PostProcessor() to obtain the best results.
 
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         """Run LEAP on the compilation specified in options"""
 
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
         U = options.target
         depth = options.depth
@@ -91,20 +85,14 @@ class LeapCompiler(Compiler):
 class SubCompiler(Compiler):
     """A modified SearchCompiler for the LeapCompiler to use.
     """
-    def __init__(self, options=Options(), **xtraargs):
+    def __init__(self, options=Options()):
         self.options = options.copy()
-        self.options.update(**xtraargs)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
-    def compile(self, options=Options(), **xtraargs):
+    def compile(self, options=Options()):
         options = self.options.updated(options)
-        if "U" in xtraargs:
-            # allowing the old name for legacy code purposes
-            # maybe remove this at some point
-            options.target = U
         options.make_required("target")
-        options.update(**xtraargs)
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)
