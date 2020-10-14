@@ -3,3 +3,4 @@ pytest
 qiskit
 sphinx
 recommonmark
+sphinx-autoapi
