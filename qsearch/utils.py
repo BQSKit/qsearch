@@ -1,3 +1,15 @@
+"""
+This module contains miscellaneus helper functions and tools.
+
+The functions you may want to be aware of
+endian_reverse -- Reverses the endianness of the specified unitary.  Necessary for working with unitaries from Qiskit.
+matrix_distance_squared -- The default error_func.  Returns the Hilbert-Schmidt norm between two matrices.
+matrix_distance_squared_jac -- Returns the value that matrix_distance_squared would return, as well as the jacobian.
+matrix_residuals -- The default error_residuals.  Returns residuals based on difference between the poduct of the implemented matrix and the hermitian conjugate of the target and the identitiy.
+matrix_residuals_jac -- Returns the jacobian of matrix_residuals.  Does not return the value of matrix_residuals as well.
+remap -- Remaps a unitary for acting on qudits in a different order.
+upgrade_qudits -- Upgrades a unitary from a lower qudit size to a larger qudit size.
+"""
 import numpy as np
 import scipy as sp
 import scipy.linalg
