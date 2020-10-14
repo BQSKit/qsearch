@@ -14,6 +14,7 @@ except ImportError:
     RUST_ENABLED = False
     def native_from_object(o):
         raise Exception("Native code not installed.")
+from .options import Options
 
 class Backend():
     """This class prepares a circuit for solving, replacing a Python circuit with another implementation."""
