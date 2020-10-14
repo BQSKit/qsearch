@@ -82,7 +82,7 @@ def rot_z(theta):
     return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_z_jac(theta):
-    return np.array([[-1j/2*theta * np.exp(-1j*theta/2), 0], [0, 1j/2*theta*np.exp(1j*theta/2)]], dtype='complex128')
+    return np.array([[-1j/2*np.exp(-1j*theta/2), 0], [0, 1j/2*np.exp(1j*theta/2)]], dtype='complex128')
 
 def rot_x(theta):
     return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')

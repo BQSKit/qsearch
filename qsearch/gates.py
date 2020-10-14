@@ -190,7 +190,7 @@ class ZXZXZGate(Gate):
         return np.dot(self._rot_z, self._out)
 
     def mat_jac(self, v):
-        utils.re_rot_z_jac(v[0], self._rot_z, multiplier=np.pi*2)
+        utils.re_rot_z_jac(v[0], self._rot_z)
         self._out = np.dot(self._x90, self._rot_z, out=self._out)
         utils.re_rot_z(v[1], self._rot_z)
         self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
@@ -200,7 +200,7 @@ class ZXZXZGate(Gate):
 
         utils.re_rot_z(v[0], self._rot_z)
         self._out = np.dot(self._x90, self._rot_z, out=self._out)
-        utils.re_rot_z_jac(v[1], self._rot_z, multiplier=np.pi*2)
+        utils.re_rot_z_jac(v[1], self._rot_z)
         self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
         self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[2], self._rot_z)
@@ -211,7 +211,7 @@ class ZXZXZGate(Gate):
         utils.re_rot_z(v[1], self._rot_z)
         self._buffer = np.dot(self._rot_z, self._out, out=self._buffer)
         self._out = np.dot(self._x90, self._buffer, out=self._out)
-        utils.re_rot_z_jac(v[2], self._rot_z, multiplier=np.pi*2)
+        utils.re_rot_z_jac(v[2], self._rot_z)
         J3 = np.dot(self._rot_z, self._out)
         
         utils.re_rot_z(v[2], self._rot_z)
@@ -251,7 +251,7 @@ class XZXZGate(Gate):
         return np.dot(self._rot_z, self._out)
 
     def mat_jac(self, v):
-        utils.re_rot_z_jac(v[0], self._rot_z, multiplier=np.pi*2)
+        utils.re_rot_z_jac(v[0], self._rot_z)
         self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
         self._out = np.dot(self._x90, self._buffer, out=self._out)
         utils.re_rot_z(v[1], self._rot_z)
@@ -260,7 +260,7 @@ class XZXZGate(Gate):
         utils.re_rot_z(v[0], self._rot_z)
         self._buffer = np.dot(self._rot_z, self._x90, out=self._buffer)
         self._out = np.dot(self._x90, self._buffer, out=self._out)
-        utils.re_rot_z_jac(v[1], self._rot_z, multiplier=2*np.pi)
+        utils.re_rot_z_jac(v[1], self._rot_z)
         J2 = np.dot(self._rot_z, self._out)
 
         utils.re_rot_z(v[1], self._rot_z)
