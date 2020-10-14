@@ -12,7 +12,7 @@ from .compiler import SearchCompiler
 from . import solvers as scsolver
 from .options import Options
 from .defaults import standard_defaults, standard_smart_defaults
-from . import logging, checkpoints, utils, gatesets, heuristics, assemblers
+from . import logging, utils, gatesets, heuristics, assemblers
 from time import time
 
 
