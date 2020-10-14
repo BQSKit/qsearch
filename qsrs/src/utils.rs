@@ -88,10 +88,10 @@ pub fn rot_z_jac(theta: f64) -> SquareMatrix {
     let half = Complex64::new(0.5, 0.0);
     SquareMatrix::from_vec(
         vec![
-            negi * theta * half * (negi * half_theta).exp(),
+            negi * half * (negi * half_theta).exp(),
             zero,
             zero,
-            posi * half * theta * (posi * half_theta).exp(),
+            posi * half * (posi * half_theta).exp(),
         ],
         2,
     )
