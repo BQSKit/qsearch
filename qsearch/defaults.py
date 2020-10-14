@@ -64,13 +64,13 @@ standard_smart_defaults = {
         "solver":solvers.default_solver,
         "heuristic":default_heuristic,
         "logger" :default_logger,
-        "checkpoint":default_checkpoint
+        "checkpoint":default_checkpoint,
         }
 
 stateprep_defaults = {
         "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
         "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
-        "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None))))
+        "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None)))),
         "unitary_preprocessor": identity,
         }
 
