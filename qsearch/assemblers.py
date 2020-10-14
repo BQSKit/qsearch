@@ -15,8 +15,8 @@ from .options import Options
 class Assembler():
     """This class is used to translate Qsearch-style circuits to other formats."""
 
-    def __init__(self, options=Options(), **xtraargs):
-        self.options = options.updated(**xtraargs)
+    def __init__(self, options=Options()):
+        self.options = options
 
     def assemble(self, resultdict, options=None):
         """
@@ -113,7 +113,7 @@ assemblydict_qutrit = {
 
 
 # Some constants for the most common use cases.  These are instances of Assembler subclasses, and can be passed unmodified to Project or used on a Qsearch-style circuit.
-ASSEMBLER_QISKIT = DictionaryAssembler(assemblydict=assemblydict_qiskit)
-ASSEMBLER_OPENQASM = DictionaryAssembler(assemblydict=assemblydict_openqasm)
-ASSEMBLER_IBMOPENQASM = DictionaryAssembler(assemblydict=assemblydict_ibmopenqasm)
-ASSEMBLER_QUTRIT = DictionaryAssembler(assemblydict=assemblydict_qutrit)
+ASSEMBLER_QISKIT = DictionaryAssembler(Options(assemblydict=assemblydict_qiskit))
+ASSEMBLER_OPENQASM = DictionaryAssembler(Options(assemblydict=assemblydict_openqasm))
+ASSEMBLER_IBMOPENQASM = DictionaryAssembler(Options(assemblydict=assemblydict_ibmopenqasm))
+ASSEMBLER_QUTRIT = DictionaryAssembler(Options(assemblydict=assemblydict_qutrit))
