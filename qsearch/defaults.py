@@ -36,6 +36,9 @@ def default_logger(options):
 def default_checkpoint(options):
     return checkpoint.FileCheckpoint(opt=options)
 
+def identity(U):
+    return U
+
 standard_defaults = {
         "threshold":1e-10,
         "gateset":gatesets.Default(),
@@ -52,6 +55,7 @@ standard_defaults = {
         "max_quality_optimization" : False,
         "assembler" : assemblers.ASSEMBLER_QISKIT,
         "write_location" : None
+        "unitary_preprocessor": utils.nearest_unitary,
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
@@ -67,5 +71,6 @@ stateprep_defaults = {
         "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
         "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
         "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None))))
+        "unitary_preprocessor": identity,
         }
 
