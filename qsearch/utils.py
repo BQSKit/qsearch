@@ -105,8 +105,8 @@ def nearest_unitary(A):
     Calculate the unitary matrix U that is closest with respect to the
     operator norm distance to the general matrix A.
 
-    D.M.Reich. “Characterisation and Identification of Unitary Dynamics
-    Maps in Terms of Their Action on Density Matrices”
+    D.M.Reich. "Characterisation and Identification of Unitary Dynamics
+    Maps in Terms of Their Action on Density Matrices"
 
     Args:
         A (np.ndarray): The matrix input.
