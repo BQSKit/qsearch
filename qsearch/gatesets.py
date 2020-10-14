@@ -35,9 +35,9 @@ def find_last_3_cnots_linear(circuit):
 class Gateset():
     def __init__(self):
         self.d = 0
-        raise NotImplementedError("Gatesets must implemented their own initializers and must set self.d to reflect the size of the ququdits implemented in the gateset")
+        raise NotImplementedError("Gatesets must implemented their own initializers and must set self.d to reflect the size of the qudits implemented in the gateset")
     # The compiler takes a gateset class as one of its arguments.  The gateset class represents what the hardware can do.
-    # All gatesets must set the property d, which represents the size of the ququdits represented (eg 2 for qubits, 3 for qutrits)
+    # All gatesets must set the property d, which represents the size of the qudits represented (eg 2 for qubits, 3 for qutrits)
 
     # qudits is the number of qudits used in a circuit (usually calculated in the compiler as log(n) / log(d)
 

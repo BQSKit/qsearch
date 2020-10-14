@@ -158,7 +158,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
 
                 if options.gateset.d**qudits != np.shape(U)[0]:
-                    raise ValueError("The target matrix of size {} is not compatible with ququdits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
+                    raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
 
                 I = gates.IdentityGate(d=options.gateset.d)
 
