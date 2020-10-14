@@ -1,3 +1,28 @@
+"""
+This module contains a list of predefined commonly used constant unitaries, and functions for generating commonly used unitaries.
+
+Predefined constant unitaries
+cnot
+sqrt_cnot
+swap
+toffoli
+fredkin
+peres
+logical_or
+full_adder
+
+Functions for generating unitaries
+rot_x
+rot_x_jac -- returns the jacobian of rot_x
+rot_y
+rot_y_jac -- returns the jacobian of rot_y
+rot_z
+rot_z_jac -- returns the jacobian of rot_z
+qft -- Returns a nxn qft matrix.
+identity -- Returns a nxn identity matrix
+general_swap -- Returns the swap matrix for qudits of the specified size.
+arbitrary_cnot -- Returns a CNOT between any two qubits within the specified number of qubits
+"""
 import numpy as np
 
 cnot = np.array([[1,0,0,0],
