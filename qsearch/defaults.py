@@ -1,4 +1,4 @@
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoint, assemblers
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
 from functools import partial
 
 
@@ -34,7 +34,7 @@ def default_logger(options):
     return logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
 def default_checkpoint(options):
-    return checkpoint.FileCheckpoint(opt=options)
+    return checkpoints.FileCheckpoint(opt=options)
 
 def identity(U):
     return U
