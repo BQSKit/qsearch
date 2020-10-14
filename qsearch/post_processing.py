@@ -28,6 +28,10 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
         circuit = result["structure"]
         finalx = result["parameters"]
         options = self.options.updated(options)
+        if "unitary_preprocessor" in options:
+            target = options.unitary_preprocessor(options.target)
+        else:
+            target = options.target
         single_qubit_names = ["QiskitU3QubitStep()", "ZXZXZQubitStep()", "XZXZPartialQubitStep()"]
         identitystr = "IdentityStep(2)"
         circstr = repr(circuit)
@@ -40,7 +44,7 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
                 newstr = components[0] + identitystr + "".join([component + gate for component in components[1:-1]]) + components[-1]
                 newcirc = eval(newstr)
                 mat, xopt = options.solver.solve_for_unitary(newcirc, options)
-                if options.eval_func(options.target, mat) < options.threshold:
+                if options.eval_func(target, mat) < options.threshold:
                     components = [components[0] + identitystr + components[1]] + components[2:]
                     finalx = xopt
                     finalcirc = newcirc
@@ -60,12 +64,16 @@ class ParameterTuning_PostProcessor(PostProcessor):
         initialx = result["parameters"]
         options = self.options.updated(options)
         options.max_quality_optimization = True
-        initial_value = options.eval_func(options.target, circuit.matrix(initialx))
+        if "unitary_preprocessor" in options:
+            target = options.unitary_preprocessor(options.target)
+        else:
+            target = options.target
+        initial_value = options.eval_func(target, circuit.matrix(initialx))
         options.logger.logprint("Initial Distance: {}".format(initial_value))
 
         U, x = options.solver.solve_for_unitary(circuit, options)
 
-        final_value = options.eval_func(options.target, U)
+        final_value = options.eval_func(target, U)
         if np.abs(final_value) < np.abs(initial_value):
             options.logger.logprint("Improved Distance: {}".format(final_value))
             return {"parameters":x}
@@ -107,7 +115,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         options.make_required("target")
         options.update(**xtraargs)
 
-        U = options.target
+        if "unitary_preprocessor" in options:
+            U = options.unitary_preprocessor(options.target)
         depth = options.depth
         child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 

@@ -105,7 +105,8 @@ class SubCompiler(Compiler):
         options.make_required("target")
         options.update(**xtraargs)
 
-        U = options.target
+        if "unitary_preprocessor" in options:
+            U = options.unitary_preprocessor(options.target)
         depth = options.depth
         checkpoint = options.checkpoint
 
