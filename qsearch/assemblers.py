@@ -3,10 +3,10 @@ This module defines the Assembler class, which is used to convert a Qsearch-styl
 
 The DictionaryAssembler subclass is provided as the default implementation of an Assembler.  Use it as-is or as an example for writing your own Assembler.
 Some constants are also defined as DictionaryAssembler instances preloaded with the most common assembly dictionaries.
-ASSEMBLER_QISKIT = DictionaryAssembler(assemblydict=assemblydict_qiskit)
-ASSEMBLER_OPENQASM = DictionaryAssembler(assemblydict=assemblydict_openqasm)
-ASSEMBLER_IBMOPENQASM = DictionaryAssembler(assemblydict=assemblydict_ibmopenqasm)
-ASSEMBLER_QUTRIT = DictionaryAssembler(assemblydict=assemblydict_qutrit)
+ASSEMBLER_QISKIT -- Outputs Python code that generates a Qiskit circuit object.
+ASSEMBLER_OPENQASM -- Outputs generic Openqasm code.  This may not be compatible with IBM Qiskit.
+ASSEMBLER_IBMOPENQASM -- Outputs Openqasm code with the IBM imports and gate names.  This flavor of Openqasm is compatible with IBM Qiskit.
+ASSEMBLER_QUTRIT -- Outputs pseudocode for circuits built with single-qutrit gates and CNOTs.
 """
 
 from .circuits import *
@@ -22,10 +22,10 @@ class Assembler():
         """
         The assemble function is used to convert the circuit described in resultdict.  See DictionaryAssembler for an example implementation.
         
-        resultdict: The dictionary representing the desired circuit.  It is expected to contain the entries "stucture" and "parameters".  It may contain other entries.
-        options: A qsearch.options.Options object.  It is expected to contai any options needed by the specified Assembler.
+        resultdict -- The dictionary representing the desired circuit.  It is expected to contain the entries "stucture" and "parameters".  It may contain other entries.
+        options -- A qsearch.options.Options object.  It is expected to contai any options needed by the specified Assembler.
 
-        expected return value: A string representing the converted circuit code.
+        expected return value -- A string representing the converted circuit code.
         """
         raise NotImplementedError()
 
