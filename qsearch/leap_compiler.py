@@ -68,7 +68,8 @@ class LeapCompiler(Compiler):
         while True:
             if 'timeout' in options and timer() - starttime > options.timeout:
                 break
-            best_pair, best_value, best_depth = sc.compile(options, initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=child_checkpoint)
+            opts = options.updated(initial_layer=initial_layer, local_threshold=options.delta * best_value, overall_starttime=starttime, overall_best_value=best_value, checkpoint=child_checkpoint)
+            best_pair, best_value, best_depth = sc.compile(opts)
             # clear child checkpoint for next run
             child_checkpoint.delete()
             total_depth += best_depth

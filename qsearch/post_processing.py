@@ -117,7 +117,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
         """
         best_pair = (result['structure'], result['parameters'])
-        return self.compile(options=options, best_pair=best_pair, cut_depths=result['cut_depths'])
+        opts = options.updated(best_pair=best_pair, cut_depths=result['cut_depths'])
+        return self.compile(opts)
 
 
     def compile(self, options=Options()):
