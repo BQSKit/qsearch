@@ -13,7 +13,7 @@ def test_zxzxzcnotlinear(project, check_project):
     check_project(project)
 
 def test_qiskitu3linear(project, check_project):
-    project['gateset'] = gatesets.QiskitU3Linear()
+    project['gateset'] = gatesets.U3CNOTLinear()
     project.add_compilation('hhl', advanced_unitaries.HHL)
     project.run()
     check_project(project)
