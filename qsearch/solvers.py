@@ -1,3 +1,6 @@
+"""
+Defines Solver, a class used to wrap various numerical optimizers for finding parameters such that an ansatz circuit is a solution to a target unitary.
+"""
 import sys
 
 import numpy as np
@@ -13,6 +16,7 @@ except ImportError:
     LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = matrix_residuals= matrix_residuals_jac = None
 
 def default_solver(options, x0=None):
+    """Runs a complex list of tests to determine the best Solver for a specific situation."""
     options = options.copy()
     # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
     options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None, target=None)
@@ -79,7 +83,9 @@ def default_solver(options, x0=None):
     # the default will have been chosen from LeastSquares, BFGS, or COBYLA
 
 class Solver():
+    """This class is used to wrap numerical optimizers for circuit solving."""
     def solve_for_unitary(self, circuit, options, x0=None):
+        """Finds the best parameters that minimize error_func or error_residuals between the unitary from the circuit and options.target."""
         raise NotImplementedError
 
     def __eq__(self, other):
@@ -95,6 +101,7 @@ class Solver():
         return "Frobenius"
 
 class CMA_Solver(Solver):
+    """Uses cmaes gradient-free optimization from the cma package."""
     def solve_for_unitary(self, circuit, options, x0=None):
         try:
             import cma
@@ -107,6 +114,7 @@ class CMA_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class COBYLA_Solver(Solver):
+    """Uses cobyla gradient-free optimization from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
@@ -114,8 +122,10 @@ class COBYLA_Solver(Solver):
         return (circuit.matrix(x), x)
 
 class DIY_Solver(Solver):
+    """An easier way to wrap a numerical optimizer than writing your own Solver class."""
     def __init__(self, f):
-        self.f = f # f is a function that takes in eval_func and initial_guess and returns the parameters that minimizes eval_func.  The parameters may range between 0 and 1.
+        """Uses the function f that takes in eval_func and initial_guess and returns the parameters that minimizes eval_func."""
+        self.f = f
 
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
@@ -123,6 +133,7 @@ class DIY_Solver(Solver):
         x = f(eval_func, initial_guess)
 
 class NM_Solver(Solver):
+    """A solver based on the Nelder-Mead gradient free optimizer from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
         result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='Nelder-Mead', options={"ftol":1e-14})
@@ -130,6 +141,7 @@ class NM_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class CMA_Jac_Solver(Solver):
+    """A solver based on the cmaes optimizer from the cma package, but using gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
         try:
             import cma
@@ -145,6 +157,7 @@ class CMA_Jac_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class BFGS_Jac_Solver(Solver):
+    """A solver based on the BFGS implementation in scipy.  It requires gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
@@ -154,6 +167,7 @@ class BFGS_Jac_Solver(Solver):
         return (circuit.matrix(xopt), xopt)
 
 class LeastSquares_Jac_Solver(Solver):
+    """Uses the Leavenberg-Marquardt least-squares optimizer in scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
