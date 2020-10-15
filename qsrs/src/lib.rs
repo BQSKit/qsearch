@@ -91,7 +91,7 @@ fn gate_to_object(
             gate.call1(py, args)?
         }
         Gate::U3(..) => {
-            let gate: PyObject = gates.get("U3QubitGate")?.extract()?;
+            let gate: PyObject = gates.get("U3Gate")?.extract()?;
             gate.call0(py)?
         }
         Gate::X(..) => {
