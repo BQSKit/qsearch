@@ -35,6 +35,8 @@ extensions = [
 ]
 extensions.append('autoapi.extension')
 
+autoapi_python_class_content = 'both'
+
 autoapi_type = 'python'
 autoapi_dirs = ['../qsearch']
 # Add any paths that contain templates here, relative to this directory.
