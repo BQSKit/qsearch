@@ -1,6 +1,6 @@
 [package]
 name = "qsrs"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "LGPL-2.1 AND BSD-3-Clause"
 edition = "2018"
