@@ -61,10 +61,7 @@ class LokyParallelizer(Parallelizer):
 class MultiprocessingParallelizer(Parallelizer):
     """A Parallelizer based on muliprocessing. Note this cannot be used with the MultiStart_Solvers!"""
     def __init__(self, options):
-        if sys.platform != 'win32':
-            ctx = get_context('fork')
-        else:
-            ctx = get_context()
+        ctx = get_context('spawn')
         options.set_smart_defaults(num_tasks=default_num_tasks)
         self.pool = ctx.Pool(options.num_tasks)
         self.process_func = partial(evaluate_step, options=options)
@@ -81,12 +78,8 @@ class ProcessPoolParallelizer(Parallelizer):
     """A Parallelizer based on concurrent.futures.ProcessPoolExecutor."""
     def __init__(self, options):
         options.set_smart_defaults(num_tasks=default_num_tasks)
-        if sys.version_info >= (3, 8, 0) and sys.platform != 'win32':
-            ctx = get_context('fork')
-            self.pool = ProcessPoolExecutor(options.num_tasks, mp_context=ctx)
-        else:
-            self.pool = ProcessPoolExecutor(options.num_tasks)
-
+        ctx = get_context('spawn')
+        self.pool = ProcessPoolExecutor(options.num_tasks, mp_context=ctx)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
