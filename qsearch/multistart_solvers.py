@@ -10,7 +10,8 @@ from qsrs import native_from_object
 import time
 from math import pi, gamma, sqrt
 
-from multiprocessing import Queue, Process
+import multiprocessing as mp
+import sys
 from .persistent_aposmm import initialize_APOSMM, decide_where_to_start_localopt, update_history_dist, add_to_local_H
 
 def distance_for_x(x, options, circuit):
@@ -35,6 +36,7 @@ class MultiStart_Solver(Solver):
     def __init__(self, num_threads):
         """Create a MultiStart_Solver instance. Pass num_threads to set how many threads to use in parallel optimization runs"""
         self.num_threads = num_threads
+        self.ctx = mp.get_context('fork') if sys.platform != 'win32' else mp.get_context()
 
     def solve_for_unitary(self, circuit, options, x0=None):
         """Optimize the given circuit based on the provided options with initial point x0 (optional).
@@ -73,11 +75,11 @@ class MultiStart_Solver(Solver):
         starting_points = H['x'][starting_inds[:num_localopt_runs]]
 
         start = time.time()
-        q = Queue()
+        q = self.ctx.Queue()
         processes = []
         rets = []
         for x0 in starting_points:
-            p = Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0))
+            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0))
             processes.append(p)
             p.start()
         for p in processes:
@@ -99,6 +101,7 @@ class NaiveMultiStart_Solver(Solver):
     def __init__(self, num_threads):
         """Create a NaiveMultiStart_Solver instance. Pass num_threads to set how many threads to use in parallel optimization runs"""
         self.threads = num_threads if num_threads else 1
+        self.ctx = mp.get_context('fork') if sys.platform != 'win32' else mp.get_context()
 
     def solve_for_unitary(self, circuit, options, x0=None):
         if 'inner_solver' not in options:
@@ -107,11 +110,11 @@ class NaiveMultiStart_Solver(Solver):
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
         n = circuit.num_inputs
         initial_samples = [np.random.uniform((i - 1)/self.threads, i/self.threads, (circuit.num_inputs,)) for i in range(1, self.threads+1)]
-        q = Queue()
+        q = self.ctx.Queue()
         processes = []
         rets = []
         for x0 in initial_samples:
-            p = Process(target=optimize_worker, args=(circuit, options, q, x0))
+            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, x0))
             processes.append(p)
             p.start()
         for p in processes:

@@ -35,7 +35,9 @@ The current list of "gates" supported is:
 
 5. Product
 
-6. Any constant, unparameterized gate such as CNOT
+6. X, Y, Z
+
+7. Any constant, unparameterized gate such as CNOT
 
 This list will likely grow as needed.
 
@@ -43,37 +45,152 @@ This list will likely grow as needed.
 
 If you are on a 64 bit macOS, Windows, or Linux, you can install via `pip3 install qsrs`.
 
-On Linux or MacOS, you can also build and install qsrs from source using a system installation of `blas` or staticly link one in.
+You can also install from source.
 
-1. Install the blas library if needed. If you want to use Apple Accelerate, it should come with macOS. For openblas,
-   on Debian based Linux distros you will need to install `libopenblas-dev`. You will also need
-   the `libgfortran-<version>-dev` and `gfortran`  packages (for whatever version your distro supplies). For openblas on macOS, you
-   can install these via Homebrew as `brew install openblas gcc`.
-2. (Optional) Install ceres-solver for the native LeastSquares optimizer. Experiments have shown it to be 3-20x faster. On
-   Debian based Linux, you can install the `libceres-dev` package. On macOS, you can install it via homebrew:
-   `brew install ceres-solver`.
-3. Install rustup via https://rustup.rs. The defaults for platform should be fine.
-4. Switch to the nightly toolchain using `rustup default nightly`. You may need to do `source ~/.cargo/env` first.
-5. If you are not using openblas, uncomment the corresponding line in the `pyproject.toml` file for Accelerate or MKL.
-   You should then be able to run `pip install .` Make sure the version of pip you have is at least 20.0.2.
-   You can check via `pip -V`.
-6. Verify your install is working by running `python3 -c 'import qsearch_rs'`
-   Done! You should now be able to use the `Native` backend in `qsearch`.
+### Linux
+
+Make sure the version of pip you have is at least 20.0.2.
+You can check via `pip -V` and upgrade via `python3 -m pip install -U pip`.
+
+First, install the dependencies. On modern Debian based machines you should be able to install the dependencies like the following,
+note that the version of libgfortran-10-dev may be different.
+
+```
+sudo apt install libopenblas-dev libceres-dev libgfortran-10-dev
+```
+
+Once that is complete you should then install Rust like as follows:
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Accept all of the default prompts. You probably want to `source ~/.cargo/env`, then switch to the nightly toolchain:
+
+```
+rustup default nightly
+```
+
+Then you can enter the `qsrs` directory and run
+
+```
+pip install .
+```
+
+This will take a while. Once it is done, verify that the installation succeeded by running
+
+```
+python3 -c 'import qsrs'
+```
+
+It should not print anything out nor give any error.
+
 
 On Linux, you can also build wheels with Docker, staticly linking a custom built `openblas`.
 Incidently, this is how the packages on PyPi are built.
 
 1. Install docker https://docs.docker.com/install/
-3. Run the container to build wheels: `docker run --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.5 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2010 --no-sdist`
-4. Install the correct wheel for your Python version in `target/wheels` (e.g. `qsrs-0.13.0-cp37-cp37m-manylinux2010_x86_64.whl` for Python 3.7)
+2. Run the container to build wheels: `docker run --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.6 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2010 --no-sdist`
+3. Install the correct wheel for your Python version in `target/wheels` (e.g. `qsrs-0.13.0-cp37-cp37m-manylinux2010_x86_64.whl` for Python 3.7)
 
-On Windows, you can build from source and statically link to openblas:
-1. Install rustup via https://rustup.rs. The defaults for platform `should be fine.
-2. Switch to the nightly toolchain using `rustup default nightly`. You should close your shell and open a new one.
-3. Install `cargo-vcpkg`, via `cargo install cargo-vcpkg` which will install the native dependencies for us.
-4. Run `cargo vcpkg build`, which will build and make the native dependencies available for us to use.
-5. Build a wheel via `maturin build -i python --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist`
-6. Install the correct wheel for your Python version in `target/wheels` (e.g. `qsrs-0.13.0-cp37-none-win_amd64.whl` for Python 3.7)
+
+### MacOS
+
+
+Make sure the version of pip you have is at least 20.0.2.
+You can check via `pip -V` and upgrade via `python3 -m pip install -U pip`.
+
+First, install the dependencies. We use homebrew here, which is what we build the official package against.
+
+```
+brew install gcc ceres-solver
+```
+
+Once that is complete you should then install Rust like as follows:
+
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Accept all of the default prompts. You probably want to `source ~/.cargo/env`, then switch to the nightly toolchain:
+
+```
+rustup default nightly
+```
+
+Then you can enter the `qsrs` directory and run the following to build a wheel linking to Apple's Accelerate
+
+```
+maturin build -i python --cargo-extra-args="--no-default-features --features=accelerate,python,rustopt,ceres/system" --release --no-sdist
+```
+
+This will take a while. Once it is done, install the wheel like
+
+```
+pip3 install target/wheels/qsrs-0.15.1-cp38-cp38-macosx_10_7_x86_64.whl
+```
+
+Note the name of the wheel may be slightly different depending on your Python version, but it should be the only wheel in the `target/wheels/` folder.
+
+Verify that the installation succeeded by running
+
+```
+python3 -c 'import qsrs'
+```
+
+It should not print anything out nor give any error.
+
+### Windows
+
+
+Make sure the version of pip you have is at least 20.0.2.
+You can check via `pip -V` and upgrade via `python3 -m pip install -U pip`.
+
+Download and install rust via the installer found at https://rustup.rs/. Accept all of the defaults.
+
+Close your shell and open a new one (this updates the enviroment). Then run
+
+```
+rustup default nightly
+```
+
+Then install `cargo-vcpkg`, which will help install dependencies for us. You can install it via
+
+```
+cargo install varg-vcpkg
+```
+
+`cargo` is installed with Rust so this should work.
+
+Then in the qsrs folder, run
+
+```
+cargo vcpkg build
+```
+
+This will likely take a while.
+
+Once it is done, build a wheel via 
+
+```
+maturin build -i python --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist
+```
+
+Then you should be able to install the generated wheel package like
+
+```
+pip install -U target\wheels\qsrs-0.15.1-cp37-none-win_amd64.whl
+```
+
+Note the name of the wheel may be slightly different depending on your Python version, but it should be the only wheel in the `target/wheels/` folder.
+
+Verify that the installation succeeded by running
+
+```
+python3 -c 'import qsrs'
+```
+
+It should not print anything out nor give any error.
 
 ## Usage
 
@@ -87,8 +204,8 @@ To run the tests, clone the repo then run:
 
 ```
 $ pip install .
-$ pip install -r test-requirements.txt
-$ pytest
+$ pip install -r ../test-requirements.txt
+$ cd .. && pytest
 ```
 
 ## License
