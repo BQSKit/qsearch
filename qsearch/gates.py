@@ -560,12 +560,13 @@ class NonadjacentCNOTGate(Gate):
 class UGate(Gate):
     """Represents an arbitrary constant gate, defined by the unitary passed to the initializer."""
     def __init__(self, U, d=2, gatename="CUSTOM", gateparams=(), gateindices=None):
-        """
-        U -- The unitary for the operation that this gate represents, as a numpy ndarray with datatype="complex128".
-        d -- The size of qudits for the operation that this gate represents.  The default is 2, for qubits.
-        gatename -- A name for this gate, which will get passed to the Assembler at assembly time.
-        gateparams -- A tuple of parameters that will get passed to the Assembler at assembly time.
-        gateindices -- A tuple of indices for the qubits that this gate acts on, which will get passed to the Assembler at assembly time.  This overrides the default behavior, which is to return a tuple of all the indices starting with the one passed in assemble(v, i), and ending at i+self.qudits  
+        """        
+        Args:
+            U : The unitary for the operation that this gate represents, as a numpy ndarray with datatype="complex128".
+            d : The size of qudits for the operation that this gate represents.  The default is 2, for qubits.
+            gatename : A name for this gate, which will get passed to the Assembler at assembly time.
+            gateparams : A tuple of parameters that will get passed to the Assembler at assembly time.
+            gateindices : A tuple of indices for the qubits that this gate acts on, which will get passed to the Assembler at assembly time.  This overrides the default behavior, which is to return a tuple of all the indices starting with the one passed in assemble(v, i), and ending at i+self.qudits 
         """
         self.d = d
         self.U = U
