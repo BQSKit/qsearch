@@ -2,9 +2,11 @@
 This module defines PostProcessor, a class used to modify circuits after they have been synthesized.
 
 Several implementations are provided.
-BasicSingleQubitReduction_PostProcessor -- Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
-ParameterTuning_PostProcessor -- Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
-LEAPReoptimizing_PostProcessor -- Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
+
+Attributes:
+    BasicSingleQubitReduction_PostProcessor : Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
+    ParameterTuning_PostProcessor : Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
+    LEAPReoptimizing_PostProcessor : Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
 """
 from . import options as opt
 from functools import partial
@@ -32,9 +34,11 @@ class PostProcessor():
         """
         Processes the circuit dictionary and returns a new one.
 
-        result -- A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
+        Args:
+            result : A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
 
-        expected return value -- A dictionary containing any updates that should be made to the circuit dictionary, such as new values for "structure" or "parameters" or arbitrary other data.    
+        Returns:
+            dict : A dictionary containing any updates that should be made to the circuit dictionary, such as new values for "structure" or "parameters" or arbitrary other data.    
         """
         return result
 
@@ -114,7 +118,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     def post_process_circuit(self, result, options=None):
         """Re-optimize a LEAP circuit. Pass "depth" to indicate the size to re-synthesize.
         It is recommended to call like:
-        project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)
+        `project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)`
         """
         best_pair = (result['structure'], result['parameters'])
         opts = options.updated(best_pair=best_pair, cut_depths=result['cut_depths'])

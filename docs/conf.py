@@ -10,10 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
+""" import os
+import sys
+sys.path.insert(0, os.path.abspath('.'))
+ """
 
 # -- Project information -----------------------------------------------------
 
@@ -31,14 +31,43 @@ release = '2.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'recommonmark'
+    'recommonmark',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autodoc.typehints',
+    'sphinx.ext.napoleon',
+    'autoapi.extension',
 ]
-extensions.append('autoapi.extension')
+
+from autoapi.mappers.python import objects
+import inspect
+
+
+@property
+def constructor_docstring(self):
+    docstring = ""
+
+    constructor = self.constructor
+    if constructor and constructor.docstring:
+        docstring = constructor.docstring
+    else:
+        for child in self.children:
+            if child.short_name == "__new__":
+                docstring = child.docstring
+                break
+
+    return docstring.replace(inspect.getdoc(object.__init__), '')
+
+
+objects.PythonClass.constructor_docstring = constructor_docstring
+
+autoapi_python_class_content = 'both'
 
 autoapi_python_class_content = 'both'
 
 autoapi_type = 'python'
 autoapi_dirs = ['../qsearch']
+
+autodoc_typehints = 'description'
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

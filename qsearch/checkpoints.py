@@ -2,8 +2,10 @@
 This module defines the Checkpoint class, which is used for storing intermediate state while compiling, to allow an interrupted compilation to resume at a later time.
 
 Two default implementations are provided.  It is recommended that you look at FileCheckpoint as an example if you are interested in writing your own implementation.
-FileCheckpoint -- Saves and recovers the intermediate state from a file, specified as "statefile" in the options.
-ChildCheckpoint -- Allows for hierarchial checkpointing, which is useful in cases where there are sub-compilers, such as with LEAP.
+
+Attributes:
+    FileCheckpoint : Saves and recovers the intermediate state from a file, specified as "statefile" in the options.
+    ChildCheckpoint : Allows for hierarchial checkpointing, which is useful in cases where there are sub-compilers, such as with LEAP.
 """
 
 import pickle
@@ -19,8 +21,8 @@ class Checkpoint():
     def save(self, state):
         """
         Save the passed state to be recovered later.
-
-        state -- A Python object representing the intermediate state of the compilation.  Usually a dictionary, but it could be anything.
+        Args:
+            state (object): A Python object representing the intermediate state of the compilation.  Usually a dictionary, but it could be anything.
         """
         raise NotImplementedError
 
@@ -28,7 +30,8 @@ class Checkpoint():
         """
         Return the state previously stored with save(state).
 
-        expected return value -- A Python object equivalent to the object originally stored via save(state), or None if no state is saved.
+        Returns:
+            object : A Python object equivalent to the object originally stored via save(state), or None if no state is saved.
         """
         raise NotImplementedError
 
@@ -43,7 +46,7 @@ class FileCheckpoint(Checkpoint):
     """This Checkpoint will store the state in the file specified in the options as statefile.
 
         Options:
-        statefile -- A string with a filepath where the state will be stored, or None, in which case no state will be stored and None will always be returned by recover()
+            statefile : A string with a filepath where the state will be stored, or None, in which case no state will be stored and None will always be returned by recover()
     """
 
     def __init__(self, options=options.Options()):
@@ -77,7 +80,7 @@ class ChildCheckpoint(Checkpoint):
     """This Checkpoint is used for hierarchial checkpointing for when there is a sub-compiler, such as in LEAP.
 
         Options:
-        parent (required) -- The Checkpoint class that the creator of the ChildCheckpoint was passed.
+            parent (required) : The Checkpoint class that the creator of the ChildCheckpoint was passed.
 
         Below is an explanation of how ChildCheckpoint works.  See leap_compiler for an example.
 

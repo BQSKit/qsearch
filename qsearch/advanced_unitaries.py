@@ -22,7 +22,7 @@ def generate_miro():
 mirogate = generate_miro()
 
 def generate_HHL():
-    def hadamard(theta=0):
+    def hadamard(theta: int = 0):
         return np.array([[np.cos(2*theta), np.sin(2*theta)],[np.sin(2*theta), -np.cos(2*theta)]])
     H = UGate(hadamard(), "H")
     RCH8 = CUGate(hadamard(np.pi/8), "H8", flipped=True)
