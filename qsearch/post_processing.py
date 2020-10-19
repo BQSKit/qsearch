@@ -2,9 +2,11 @@
 This module defines PostProcessor, a class used to modify circuits after they have been synthesized.
 
 Several implementations are provided.
-BasicSingleQubitReduction_PostProcessor -- Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
-ParameterTuning_PostProcessor -- Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
-LEAPReoptimizing_PostProcessor -- Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
+
+Attributes:
+    BasicSingleQubitReduction_PostProcessor : Attempts to remove single-qubit gates without sacrificing the quality of the solution in terms of eval_func
+    ParameterTuning_PostProcessor : Attempts to reduce eval_func simply by re-running the solver with stronger parameters.
+    LEAPReoptimizing_PostProcessor : Reduces the length of circuits produced using LEAP by re-running segments of the circuit.
 """
 from . import options as opt
 from functools import partial
@@ -33,7 +35,7 @@ class PostProcessor():
         Processes the circuit dictionary and returns a new one.
 
         Args:
-            result -- A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
+            result : A dictionary containing a synthesized circuit.  Expect it to contain "structure" and "parameters", but it may contain more, depending on what previous PostProcessors were run and on the compiler.
 
         Returns:
             dict : A dictionary containing any updates that should be made to the circuit dictionary, such as new values for "structure" or "parameters" or arbitrary other data.    
