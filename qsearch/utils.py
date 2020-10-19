@@ -318,7 +318,7 @@ def mpi_rank():
 
 def mpi_do_work(comm):
     """Do the work of a single compilation.
-    
+
     Arguments:
         comm: An MPI communication object
     """
