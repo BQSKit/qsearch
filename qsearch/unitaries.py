@@ -1,27 +1,27 @@
 """
 This module contains a list of predefined commonly used constant unitaries, and functions for generating commonly used unitaries.
 
-Predefined constant unitaries
-cnot
-sqrt_cnot
-swap
-toffoli
-fredkin
-peres
-logical_or
-full_adder
+Attributes:
 
-Functions for generating unitaries
-rot_x
-rot_x_jac -- returns the jacobian of rot_x
-rot_y
-rot_y_jac -- returns the jacobian of rot_y
-rot_z
-rot_z_jac -- returns the jacobian of rot_z
-qft -- Returns a nxn qft matrix.
-identity -- Returns a nxn identity matrix
-general_swap -- Returns the swap matrix for qudits of the specified size.
-arbitrary_cnot -- Returns a CNOT between any two qubits within the specified number of qubits
+    cnot : Constant `CNOT` unitary
+    sqrt_cnot : Constant square root of `CNOT` unitary
+    swap : Constant 2 qubit swap unitary
+    toffoli : Constant toffoli unitary
+    fredkin : Constant fredkin unitary
+    peres : Constant peres unitary
+    logical_or : Constant logical or unitary
+    full_adder : Constant adder unitary
+
+    rot_x : Function to generate an `X` rotation by `theta`
+    rot_x_jac : Function that returns the jacobian of rot_x()
+    rot_y : Function to generate an `Y` rotation by `theta`
+    rot_y_jac : Function that returns the jacobian of rot_y()
+    rot_z : Function to generate an `Z` rotation by `theta`
+    rot_z_jac : Function that returns the jacobian of rot_z()
+    qft : Returns a `n`x`n` qft matrix.
+    identity : Returns a `n`x`n` identity matrix
+    general_swap : Returns the swap matrix for qudits of the specified size.
+    arbitrary_cnot : Returns a CNOT between any two qubits within the specified number of qubits
 """
 import numpy as np
 
@@ -103,39 +103,39 @@ full_adder = np.array([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         dtype='complex128')
 # Full adder that converts ABC0 to ABCS.  Behavior is not well defined when the last input bit is a 1.
 
-def rot_z(theta):
+def rot_z(theta: float):
     return np.array([[np.exp(-1j*theta/2), 0],[0, np.exp(1j*theta/2)]], dtype='complex128')
 
-def rot_z_jac(theta):
+def rot_z_jac(theta: float):
     return np.array([[-1j/2*np.exp(-1j*theta/2), 0], [0, 1j/2*np.exp(1j*theta/2)]], dtype='complex128')
 
-def rot_x(theta):
+def rot_x(theta: float):
     return np.array([[np.cos(theta/2), -1j*np.sin(theta/2)],[-1j*np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
-def rot_x_jac(theta):
+def rot_x_jac(theta: float):
     return np.array([[-1/2*np.sin(theta/2), -1j/2*np.cos(theta/2)], [-1j/2*np.cos(theta/2), -1/2*np.sin(theta/2)]], dtype='complex128')
 
-def rot_y(theta):
+def rot_y(theta: float):
     return np.array([[np.cos(theta/2), -np.sin(theta/2)],[np.sin(theta/2), np.cos(theta/2)]], dtype='complex128')
 
-def rot_y_jac(theta):
+def rot_y_jac(theta: float):
     return np.array([[-1/2*np.sin(theta/2), -1/2*np.cos(theta/2)], [1/2*np.cos(theta/2), -1/2*np.sin(theta/2)]], dtype='complex128')
 
-def qft(n):
+def qft(n: int):
     root = np.e ** (2j * np.pi / n)
     Q = np.array(np.fromfunction(lambda x,y: root**(x*y), (n,n))) / np.sqrt(n)
     return Q
 
-def identity(n): # not super necessary but saves a little code length
+def identity(n: int): # not super necessary but saves a little code length
     return np.array(np.eye(n), dtype='complex128')
 
-def general_swap(d=2): # generates the swap matrix for qu-qudits
+def general_swap(d: int = 2): # generates the swap matrix for qu-qudits
     f = lambda i, j: (i % d == j//d) and (i // d == j % d)
     return np.array(np.fromfunction(np.vectorize(f), (d**2, d**2)), dtype='complex128')
 
 # generates an arbitrary cnot gate by classical logic and brute force
 # it may be a good idea to write a better version of this at some point, but this should be good enough for use with the search compiler on 2-4 qubits.
-def arbitrary_cnot(qudits, control, target):
+def arbitrary_cnot(qudits: int, control: int, target: int):
     # this test returns if the given matrix index correspond to a "true" value of the bit at selected qubit index
     test = lambda x, value: (x // 2**(qudits-value-1)) % 2 != 0
     def f(i,j):

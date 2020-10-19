@@ -69,11 +69,12 @@ class Project:
         """
         Adds a unitary to be compiled.
 
-        name -- A name for this unitary.  Must be unique in this Project.
-        U -- The unitary to be compiled, in the form of a numpy ndarray with dtype="complex128"
-        handle_existing -- A variable which defines how to behave if a compilation with the given name already exists.  If it is set to "ignore", it will simply return without doing anything.  If it is set to "overwrite", it will overwrite the previous entry.  If it is set to the default of None, it will offer a warning asking the user to remove and re-add the compilation.
-
-        The options and extraargs passed to this function will be used only when this compilation is run.
+        Args:
+            name : A name for this unitary.  Must be unique in this Project.
+            U : The unitary to be compiled, in the form of a numpy ndarray with dtype="complex128"
+            handle_existing : A variable which defines how to behave if a compilation with the given name already exists.  If it is set to "ignore", it will simply return without doing anything.  If it is set to "overwrite", it will overwrite the previous entry.  If it is set to the default of None, it will offer a warning asking the user to remove and re-add the compilation.
+            options : The options passed to this function will be used only when this compilation is run.
+            extraargs : The extraargs passed to this function will be used only when this compilation is run.
         """
         if name in self._compilations:
             s = self._compilation_status(name)
@@ -140,7 +141,11 @@ class Project:
         self.options.update(**dictionary)
  
     def reset(self, name=None):
-        """Resets a Project, removing any work done but not the initial configurations."""
+        """Resets a Project, removing any work done but not the initial configurations.
+
+        Args:
+            name: Optionally specify a particular compilation by name to reset
+        """
         if name is None:
             [self.reset(n) for n in self._compilations]
         else:
@@ -150,14 +155,22 @@ class Project:
         self._save()
 
     def remove_compilation(self, name):
-        """Removes a compilation from a Project."""
+        """Removes a compilation from a Project.
+
+        Args:
+            name: The name of the compilation to remove
+        """
         warn("remove_compilation(name) is deprecated and will be removed in a future release.  Use clear(name) instead.", DeprecationWarning, stacklevel=2)
         self.get_options(name).checkpoint.delete()
         cdict = self._compilations.pop(name)
         self._save()
 
     def clear(self, name=None):
-        """Clears a Project, reverting it to a state similar to a newly created Project."""
+        """Clears a Project, reverting it to a state similar to a newly created Project.
+
+        Args:
+            name: Optionally specify a particular compilation by name to clear
+        """
         if name is None:
             for name in self._compilations:
                 self.get_options(name).checkpoint.delete()
@@ -187,7 +200,7 @@ class Project:
         self.options.set_defaults(verbosity=1,stdout_enabled=True,blas_threads=None,compiler_class=SearchCompiler,**standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
 
-    def run(self, target=None):
+    def run(self):
         """Runs all of the compilations in the Project."""
         freeze_support()
 
@@ -229,7 +242,14 @@ class Project:
         self.logger.logprint("Finished running project {}".format(self.name))
 
     def post_process(self, postprocessor, name=None, options=None, **xtraargs):
-        """Post-processes the specified compilation, or all compilations if name is None, using the specified postprocessor."""
+        """Post-processes the specified compilation, or all compilations if name is None, using the specified postprocessor.
+
+        Args:
+            postprocessor: The qsearch.post_processing.PostProcessor to run on the compilation or project
+            name : Optionally specify a particular compilation by name to reset
+            options : Options to pass to the qsearch.post_processing.PostProcessor passed in `postprocessor`
+            extraargs : Extra arguments passed as options to the qsearch.post_processing.PostProcessor passed in `postprocessor`
+        """
         names = [name] if name else self._compilations
         for name in names:
             self.logger.logprint("Started postprocessing of {}".format(name))
@@ -251,7 +271,11 @@ class Project:
             self.comm.bcast(True, root=0)
 
     def status(self, name=None, logger=None):
-        """{rints a status update on how much of a Project has finished running."""
+        """Prints a status update on how much of a Project has finished running.
+
+        Args:
+            name: Optionally specify which compilation to check the status of
+        """
         namelist = [name] if name else self._compilations
         for n in namelist:
             s = self._compilation_status(n)
@@ -302,19 +326,40 @@ class Project:
             return Project_Status.NOTBEGUN
 
     def get_result(self, name):
-        """Returns the result dictionary for a finished compilation.  Usually this contains the entries "structure", a Gate, and "parameters", an array of real number parameters."""
+        """Get the result of a compilation.
+
+        Args:
+            name: The name of the compilation to get the result dictionary from
+
+        Returns:
+            dict: The result dictionary for a finished compilation.  Usually this contains the entries "structure", a Gate, and "parameters", an array of real number parameters.
+        """
         cdict = self._compilations[name]
         if not "structure" in cdict or not "parameters" in cdict:
             print("this compilation has not been completed.  please run the project to complete the compilation.")
         return cdict
 
     def get_target(self, name):
-        """Returns the target unitary that was specified for a compilation."""
+        """Get the target unitary of a compilation.
+
+        Args:
+            name: The name of the compilation to get the target from
+
+        Returns:
+            np.ndarray: The target unitary of the compilation
+        """
         cdict = self._compilations[name]
         return cdict["options"].target
 
     def get_time(self, name):
-        """Returns the runtime that it took to run a compilation."""
+        """Get the runtime that it took to run a compilation.
+
+        Args:
+            name: The name of the compilation to get the runtime of
+
+        Returns:
+            float: The number of seconds the compilation took
+        """
         cdict = self._compilations[name]
         if "time" in cdict:
             return cdict["time"]
@@ -322,14 +367,28 @@ class Project:
             return None
 
     def get_options(self, name=None):
-        """Returns the Options object specifying compilation-specific configurations."""
+        """Get the qsearch.options.Options object from a compilation of project
+
+        Args:
+            name: Optionally pass the name of the compilation to get the qsearch.options.Options object from
+
+        Returns:
+            qsearch.options.Options: the requested options object
+        """
         if name is None:
             return self.options
         else:
             return self.options.updated(self._compilations[name]["options"])
 
     def assemble(self, name, options=None, **xtraargs):
-        """Assembles a compilation using the Assembler specified as assembler in the Options."""
+        """Assembles a compilation using the Assembler specified as assembler in the Options.
+        Args:
+            name: The compilation to assemble
+            options: Contains the qsearch.assemblers.Assembler to use in assembly
+
+        Returns:
+            str: The resulting assembled code
+        """
         options = self.options.updated(options, **xtraargs)
         cdict = self._compilations[name]
         if not "structure" in cdict or not "parameters" in cdict:

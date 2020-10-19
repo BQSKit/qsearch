@@ -40,8 +40,17 @@ class MultiStart_Solver(Solver):
 
     def solve_for_unitary(self, circuit, options, x0=None):
         """Optimize the given circuit based on the provided options with initial point x0 (optional).
-        
-        This uses the "inner_solver" options attribute to set which optimizer to use for local optimization runs.
+      
+        Args:
+            circuit: A qsearch.gates.Gate describing the circuit to optimize
+            options: This uses the following options:
+                    - inner_solver : which optimizer to use for local optimization runs
+                    - target : the target unitary of synthesis
+                    - logger : A qsearch.logging.Logger that will be used for logging the synthesis process.
+                    - error_func : The function that the Solver will attempt to minimize.
+                    - error_residuals : A function that returns an array of real-valued residuals to be used by a least-squares-based Solver.
+
+            x0: the starting point for the optimzier
         """
         if 'inner_solver' not in options:
             options.inner_solver = default_solver(options)

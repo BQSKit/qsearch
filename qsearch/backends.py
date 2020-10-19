@@ -2,9 +2,11 @@
 This module describes Backend, a class which is called before the Solver is run in order to replace a Python Qsearch circuit with a Qsearch circuit based on another implementation, such as Rust or GPU.
 
 There are three provided Backend implementations:
-PythonBackend -- This simply returns the Python circuit, such that Python and Numpy are used for computation.
-NativeBackend -- This returns the converted circuit from native_from_object, which uses the Rust implementation of Qsearch circuits provided in the qsrs module.
-SmartDefaultBackend -- This backend tries to use the native Rust backend, but if it fails to convert the circuit (such as if there are unsupported gates), it will fallback to Python rather than throwing an error.
+
+Attributes:
+    PythonBackend : This simply returns the Python circuit, such that Python and Numpy are used for computation.
+    NativeBackend : This returns the converted circuit from native_from_object, which uses the Rust implementation of Qsearch circuits provided in the qsrs module.
+    SmartDefaultBackend : This backend tries to use the native Rust backend, but if it fails to convert the circuit (such as if there are unsupported gates), it will fallback to Python rather than throwing an error.
 """
 
 try:
@@ -24,8 +26,8 @@ class Backend():
 
     def prepare_circuit(self, circ, options=None):
         """This function accepts a Python Qsearch circuit and returns a Qsearch circuit with a different implementation.
-
-        circ -- The Python Qsearch circuit to be converted.
+        Args:
+            circ : The Python Qsearch circuit to be converted.
         """
         raise NotImplementedError("Subclasses of Backend must implpement prepare_circuit")
 

@@ -2,18 +2,20 @@
 This module defines the Gateset class, which represents the allowed gates and topology for a specific quantum computer.
 
 Several Implementations of Gateset are also defined here.
-ZXZXZCNOTLinear -- A Gateset that uses CNOT and the ZXZXZ single qubit parameterization with the linear topology.
-U3CNOTLinear -- A Gateset that uses CNOT and the U3 single qubit parameterization with the linear topology.
-QubitCNOTLinear -- A Gateset that uses CNOT and the U3 single qubit parameterization with the linear topology, except it uses an XZXZ instead of a U3 after the control qubit of each CNOT.  This results in a gateset that covers the same search space as U3CNOTLinear, but with fewer redundant parameters, and therefore faster runtime.
-QubitCNOTRing -- Uses U3 and XZXZ like QubitCNOTLinear, but includes a NonadjacentCNOTGate to add a link from the last qubit to the 0th.
-QubitCNOTAdjacencyList -- Similar to QubitCNOTLinear and QubitCNOTRing, but takes in an adjacency list which uses NonadjacentCNOTGate to define work with a custom topology.
-QutritCPIPhaseLinear -- A qutrit gateset that uses the CPIPhase gate as its two-qutrit gate, with a linear topology.
-QutritCNOTLinear -- A qutrit gateset that uses an upgraded version of the CNOT gate as its two-qutrit gate, with a linear topology.
-
 Several aliases are also defined, for the most common use cases.
-DefaultQubit -- The default Gateset for working with qubits.  Currently is equivalent to QubitCNOTLinear.
-DefaultQutrit -- The default Gateset for working with qutrits.  Currently is equivalent to QutritCPIPhaseLinear.
-Default -- The overall default Gateset, which is equivalent to DefaultQubit.
+
+Attributes:
+    ZXZXZCNOTLinear : A Gateset that uses CNOT and the ZXZXZ single qubit parameterization with the linear topology.
+    U3CNOTLinear : A Gateset that uses CNOT and the U3 single qubit parameterization with the linear topology.
+    QubitCNOTLinear : A Gateset that uses CNOT and the U3 single qubit parameterization with the linear topology, except it uses an XZXZ instead of a U3 after the control qubit of each CNOT.  This results in a gateset that covers the same search space as U3CNOTLinear, but with fewer redundant parameters, and therefore faster runtime.
+    QubitCNOTRing : Uses U3 and XZXZ like QubitCNOTLinear, but includes a NonadjacentCNOTGate to add a link from the last qubit to the 0th.
+    QubitCNOTAdjacencyList : Similar to QubitCNOTLinear and QubitCNOTRing, but takes in an adjacency list which uses NonadjacentCNOTGate to define work with a custom topology.
+    QutritCPIPhaseLinear : A qutrit gateset that uses the CPIPhase gate as its two-qutrit gate, with a linear topology.
+    QutritCNOTLinear : A qutrit gateset that uses an upgraded version of the CNOT gate as its two-qutrit gate, with a linear topology.
+
+    DefaultQubit : The default Gateset for working with qubits.  Currently is equivalent to QubitCNOTLinear.
+    DefaultQutrit : The default Gateset for working with qutrits.  Currently is equivalent to QutritCPIPhaseLinear.
+    Default : The overall default Gateset, which is equivalent to DefaultQubit.
 """
 from .gates import *
 from .assemblers import flatten_intermediate
@@ -32,8 +34,11 @@ class Gateset():
         """
         The initial layer in the compilation.  Usually a layer of parameterized single-qudit gates.
 
-        qudits -- The number of qudits in this circuit.
-        expected return value -- A single Gate representing an initial layer for the circuit
+        Args:
+            qudits : The number of qudits in this circuit.
+
+        Returns:
+            qsearch.gates.Gate : A single Gate representing an initial layer for the circuit
         """
         return None # NOTE: Returns A SINGLE gate
 
@@ -42,8 +47,11 @@ class Gateset():
         """
         A set of possible multi-qubit gates for searching.  Usually this is a two-qudit gate followed by two single-qudit gates, for every allowed placement of the two-qudit gate.  This defines the branching factor of the search tree.
 
-        qudits -- The number of qudits in this circuit
-        expected return value -- A list of tuples of (gate,weight) where Gate is the Gate representing that possible placement of the two-qudit gate, and weight is the weight or cost of adding that gate in that placement to the final circuit.
+        Args:
+            qudits : The number of qudits in this circuit
+        
+        Returns:
+            list : A list of tuples of (gate,weight) where Gate is the Gate representing that possible placement of the two-qudit gate, and weight is the weight or cost of adding that gate in that placement to the final circuit.
         """
         return [] # NOTES: Returns a LIST of tuples of (gate, weight)
 
@@ -51,8 +59,11 @@ class Gateset():
         """
         Returns an integer indicating the expected branching factor.  Usually this is automatically determined from search_layers, but it may need to be overridden if successors is overridden.
 
-        qudits -- The number of qudits in this circuit
-        expected return value -- An integer indicating the expecte branching factor
+        Args:
+            qudits : The number of qudits in this circuit
+
+        Returns:
+            int : An integer indicating the expecte branching factor
         """
         # This is the default implementation, for Gatesets that rely on search_layers
         return len(self.search_layers(qudits))
@@ -61,9 +72,12 @@ class Gateset():
         """
         Returns a list of Gates that are successors in the search tree to the input Gate, circ, representing a current ansatz circuit.
 
-        circ -- The curret ansatz Gate.
-        qudits -- The number of qudits in this circuit.
-        expected return value -- A list of tuples of (gate, weight) where gate is a Gate that is a successor to circ, and weight is the cost or weight of moving to gate from circ.
+        Args:
+            circ : The curret ansatz Gate.
+            qudits : The number of qudits in this circuit.
+
+        Returns:
+            list : A list of tuples of (gate, weight) where gate is a Gate that is a successor to circ, and weight is the cost or weight of moving to gate from circ.
         """
 
         # NOTE: Returns a LIST of tuples of (gate, weight)
@@ -157,12 +171,13 @@ class QubitCNOTAdjacencyList(Gateset):
         """
         Allows the specification of a custom topology through an adjacency list.
 
-        adjacency -- A list of tuples specifying which CNOT placements are allowed.  The tuples must be in the form of (control, target).
-
         For example, this is how you would specifiy the ring topology for 3 qubits:
-        [(0,1), (1,2), (2,1)]
+        `[(0,1), (1,2), (2,1)]`
 
         It is not recommended to add bi-directional links, because with the arbitrary parameterized single qubit gates everywhere, such links would be redundant.
+
+        Args:
+            adjacency : A list of tuples specifying which CNOT placements are allowed.  The tuples must be in the form of (control, target).
         """
         self.single_gate = U3Gate()
         self.single_alt = XZXZGate()

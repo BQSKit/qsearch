@@ -3,10 +3,12 @@ This module defines the Assembler class, which is used to convert a Qsearch-styl
 
 The DictionaryAssembler subclass is provided as the default implementation of an Assembler.  Use it as-is or as an example for writing your own Assembler.
 Some constants are also defined as DictionaryAssembler instances preloaded with the most common assembly dictionaries.
-ASSEMBLER_QISKIT -- Outputs Python code that generates a Qiskit circuit object.
-ASSEMBLER_OPENQASM -- Outputs generic Openqasm code.  This may not be compatible with IBM Qiskit.
-ASSEMBLER_IBMOPENQASM -- Outputs Openqasm code with the IBM imports and gate names.  This flavor of Openqasm is compatible with IBM Qiskit.
-ASSEMBLER_QUTRIT -- Outputs pseudocode for circuits built with single-qutrit gates and CNOTs.
+
+Attributes:
+    ASSEMBLER_QISKIT : Outputs Python code that generates a Qiskit circuit object.
+    ASSEMBLER_OPENQASM : Outputs generic Openqasm code.  This may not be compatible with IBM Qiskit.
+    ASSEMBLER_IBMOPENQASM : Outputs Openqasm code with the IBM imports and gate names.  This flavor of Openqasm is compatible with IBM Qiskit.
+    ASSEMBLER_QUTRIT : Outputs pseudocode for circuits built with single-qutrit gates and CNOTs.
 """
 
 from .options import Options
@@ -20,10 +22,12 @@ class Assembler():
     def assemble(self, resultdict, options=None):
         """
         The assemble function is used to convert the circuit described in resultdict.  See DictionaryAssembler for an example implementation.
-        
-        resultdict -- The dictionary representing the desired circuit.  It is expected to contain the entries "stucture" and "parameters".  It may contain other entries.
 
-        expected return value -- A string representing the converted circuit code.
+        Args:
+            resultdict : The dictionary representing the desired circuit.  It is expected to contain the entries "stucture" and "parameters".  It may contain other entries.
+
+        Returns:
+            str: A string representing the converted circuit code.
         """
         raise NotImplementedError()
 
@@ -31,7 +35,7 @@ class DictionaryAssembler(Assembler):
     """This subclass of Assembler uses a dictionary that specifies mappings from gate names to output code, as well as an output code initial line.
 
         Options:
-        assemblydict (required) -- A dictionary that specifies mappings from gate names to output code.
+        assemblydict (required) : A dictionary that specifies mappings from gate names to output code.
     """
 
     def assemble(self, resultdict, options=None):

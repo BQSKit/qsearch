@@ -1,14 +1,16 @@
 """
-This module contains miscellaneus helper functions and tools.
+This module contains miscellaneous helper functions and tools.
 
-The functions you may want to be aware of
-endian_reverse -- Reverses the endianness of the specified unitary.  Necessary for working with unitaries from Qiskit.
-matrix_distance_squared -- The default error_func.  Returns the Hilbert-Schmidt norm between two matrices.
-matrix_distance_squared_jac -- Returns the value that matrix_distance_squared would return, as well as the jacobian.
-matrix_residuals -- The default error_residuals.  Returns residuals based on difference between the poduct of the implemented matrix and the hermitian conjugate of the target and the identitiy.
-matrix_residuals_jac -- Returns the jacobian of matrix_residuals.  Does not return the value of matrix_residuals as well.
-remap -- Remaps a unitary for acting on qudits in a different order.
-upgrade_qudits -- Upgrades a unitary from a lower qudit size to a larger qudit size.
+The functions you may want to be aware of:
+
+Attributes:
+    endian_reverse : Reverses the endianness of the specified unitary.  Necessary for working with unitaries from Qiskit.
+    matrix_distance_squared : The default error_func.  Returns the Hilbert-Schmidt norm between two matrices.
+    matrix_distance_squared_jac : Returns the value that matrix_distance_squared would return, as well as the jacobian.
+    matrix_residuals : The default error_residuals.  Returns residuals based on difference between the poduct of the implemented matrix and the hermitian conjugate of the target and the identitiy.
+    matrix_residuals_jac : Returns the jacobian of matrix_residuals.  Does not return the value of matrix_residuals as well.
+    remap : Remaps a unitary for acting on qudits in a different order.
+    upgrade_qudits : Upgrades a unitary from a lower qudit size to a larger qudit size.
 """
 import numpy as np
 import scipy as sp
@@ -22,21 +24,21 @@ except ImportError:
 from . import unitaries
 
 def matrix_product(*LU):
-    # performs matrix multiplication of a list of matrices
+    """Performs matrix multiplication of a list of matrices."""
     result = np.array(np.eye(LU[0].shape[0]), dtype='complex128')
     for U in LU:
         result = np.matmul(U, result, out=result)
     return result
 
 def matrix_kron(*LU):
-    # performs the kronecker product on a list of matrices
+    """Performs the kronecker product on a list of matrices."""
     result = LU[0]
     for U in LU[1:]:
         result = np.kron(result,U)
     return result
 
 def op_norm(A):
-    # an implementation of the l1-l1 operator norm
+    """An implementation of the l1-l1 operator norm."""
     return max([np.linalg.norm(x,ord=1) for x in A])
 
 def matrix_distance_squared(A,B):
@@ -195,24 +197,22 @@ def qt_arb_rot(Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5):
         this method constructs an arbitrary single_qutrit unitary operation.
 
         Arguments:
-        qutrit_params: a list of eight parameters, in the following order
-            Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5
-        The formula for the matrix is:
-            u11 = cos[Theta_1]*cos[Theta_2]*exp[i*Phi_1]
-            u12 = sin[Theta_1]*exp[i*Phi_3]
-            u13 = cos[Theta_1]*sin[Theta_2]*exp[i*Phi_4]
-            u21 = sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_4 - i*Phi_5] -
-                    sin[Theta_1]*cos[Theta_2]*cos[Theta_3]*exp[i*Phi_1+i*Phi_2-i*Phi_3]
-            u22 = cos[Theta_1]*cos[Theta_3]*exp[i*Phi_2]
-            u23 = -cos[Theta_2]*sin[Theta_3]*exp[-i*Phi_1 - i*Phi_5] -
-                    sin[Theta_1]*sin[Theta_2]*cos[Theta_3]*exp[i*Phi_2 - i*Phi_3 + i*Phi_4]
-            u31 = -sin[Theta_1]*cos[Theta_2]*sin[Theta_3]*exp[i*Phi_1 - i*Phi_3 + i*Phi_5]
-                    - sin[Theta_2]*cos[Theta_3]*exp[-i*Phi_2-i*Phi_4]
-            u32 = cos[Theta_1]*sin[Theta_3]*exp[i*Phi_5]
-            u33 = cos[Theta_2]*cos[Theta_3]*exp[-i*Phi_1 - i*Phi_2] -
-                    sin[Theta_1]*sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_3 + i*Phi_4 + i*Phi_5]
-
-
+            qutrit_params: a list of eight parameters, in the following order
+                Theta_1, Theta_2, Theta_3, Phi_1, Phi_2, Phi_3, Phi_4, Phi_5
+                The formula for the matrix is:
+                    u11 = cos[Theta_1]*cos[Theta_2]*exp[i*Phi_1]
+                    u12 = sin[Theta_1]*exp[i*Phi_3]
+                    u13 = cos[Theta_1]*sin[Theta_2]*exp[i*Phi_4]
+                    u21 = sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_4 - i*Phi_5] -
+                            sin[Theta_1]*cos[Theta_2]*cos[Theta_3]*exp[i*Phi_1+i*Phi_2-i*Phi_3]
+                    u22 = cos[Theta_1]*cos[Theta_3]*exp[i*Phi_2]
+                    u23 = -cos[Theta_2]*sin[Theta_3]*exp[-i*Phi_1 - i*Phi_5] -
+                            sin[Theta_1]*sin[Theta_2]*cos[Theta_3]*exp[i*Phi_2 - i*Phi_3 + i*Phi_4]
+                    u31 = -sin[Theta_1]*cos[Theta_2]*sin[Theta_3]*exp[i*Phi_1 - i*Phi_3 + i*Phi_5]
+                            - sin[Theta_2]*cos[Theta_3]*exp[-i*Phi_2-i*Phi_4]
+                    u32 = cos[Theta_1]*sin[Theta_3]*exp[i*Phi_5]
+                    u33 = cos[Theta_2]*cos[Theta_3]*exp[-i*Phi_1 - i*Phi_2] -
+                            sin[Theta_1]*sin[Theta_2]*sin[Theta_3]*exp[-i*Phi_3 + i*Phi_4 + i*Phi_5]
     """
 
     # construct unitary, element by element
@@ -317,7 +317,11 @@ def mpi_rank():
     return comm.rank
 
 def mpi_do_work(comm):
-    """Do the work of a single compilation"""
+    """Do the work of a single compilation.
+
+    Arguments:
+        comm: An MPI communication object
+    """
     done = False
     eval = None
     eval = comm.bcast(eval, root=0)
