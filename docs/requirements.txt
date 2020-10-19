@@ -1,4 +1,3 @@
 sphinx
 recommonmark
 sphinx-autoapi
-sphinx-autodoc-typehints

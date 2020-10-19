@@ -33,7 +33,6 @@ release = '2.0.0'
 extensions = [
     'recommonmark',
     'sphinx.ext.autodoc',
-    'sphinx.ext.autodoc.typehints',
     'sphinx.ext.napoleon',
     'autoapi.extension',
 ]
