@@ -100,6 +100,8 @@ class Gate():
     def __repr__(self):
         return "Gate()"
 
+    def validate_structure(self):
+        return True
 
 class IdentityGate(Gate):
     """Represents an identity gate of any number of qudits of any size."""
@@ -142,7 +144,7 @@ class XGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "X", (v[0],), (i,)))
+        return [("gate", "X", (v[0],), (i,))]
 
     def __repr__(self):
         return "XGate()"
@@ -162,7 +164,7 @@ class YGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "Y", (v[0],), (i,)))
+        return [("gate", "Y", (v[0],), (i,))]
 
     def __repr__(self):
         return "YGate()"
@@ -182,7 +184,7 @@ class ZGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "Z", (v[0],), (i,)))
+        return [("gate", "Z", (v[0],), (i,))]
 
     def __repr__(self):
         return "ZGate()"
@@ -577,6 +579,15 @@ class NonadjacentCNOTGate(Gate):
     def __repr__(self):
         return "NonadjacentCNOTGate({}, {}, {})".format(self.qudits, self.control, self.target)
 
+    def validate_structure(self):
+        if self.control >= self.qudits or self.target > self.qudits:
+            warn("Invalid NonadjacentCNOTGate; both control and target must be smaller than dits.  Expected {} > {} and {}".format(self.qudits, self.control, self.target))
+            return False
+        if self.control == self.target:
+            warn("Invalid NonadjacentCNOTGate: control and target must be different. Expected {} != {}".format(self.control, self.target))
+            return False
+        return True
+
 class UGate(Gate):
     """Represents an arbitrary constant gate, defined by the unitary passed to the initializer."""
     def __init__(self, U, d=2, gatename="CUSTOM", gateparams=(), gateindices=None):
@@ -767,6 +778,24 @@ class KroneckerGate(Gate):
     def __repr__(self):
         return "KroneckerGate({})".format(repr(self._subgates)[1:-1])
 
+    def validate_structure(self):
+        valid = True
+        num_inputs = 0
+        dits = 0
+        for subgate in self._subgates:
+            if not subgate.validate_structure():
+                valid = False
+            num_inputs += subgate.num_inputs
+            dits += subgate.qudits
+
+        if num_inputs != self.num_inputs:
+            warn("KroneckerGate had a num_inputs mismatch: expected {} but got {}".format(self.num_inputs, num_inputs))
+            valid = False
+        if dits != self.qudits:
+            warn("KroneckerGate had a dits mismatch: expected {} but got {}".format(self.qudits, dits))
+            valid = False
+        return valid
+
 class ProductGate(Gate):
     """Represents a matrix product of Gates.  This is equivalent to performing those gates sequentially in a quantum circuit."""
     def __init__(self, *subgates):
@@ -873,3 +902,19 @@ class ProductGate(Gate):
 
     def __repr__(self):
         return "ProductGate({})".format(repr(self._subgates)[1:-1])
+
+    def validate_structure(self):
+        valid = True
+        num_inputs = 0
+        for subgate in self._subgates:
+            if subgate.qudits != self.qudits:
+                warn("ProductGate had a size mismatch: expected {} but got {}".format(self.qudits, subgate.qudits))
+                valid = False
+            if not subgate.validate_structure():
+                valid = False
+            num_inputs += subgate.num_inputs
+
+        if num_inputs != self.num_inputs:
+            warn("ProductGate had a num_inputs mismatch: expected {} but got {}".format(self.num_inputs, num_inputs))
+            valid = False
+        valid = True

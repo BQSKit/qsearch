@@ -67,7 +67,9 @@ standard_defaults = {
         "assembler" : assemblers.ASSEMBLER_QISKIT,
         "write_location" : None,
         "unitary_preprocessor": utils.nearest_unitary,
-        "timeout" : float('inf')
+        "timeout" : float('inf'),
+        "verbosity" : 1,
+        "stdout_enabled" : True
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
