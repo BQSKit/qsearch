@@ -68,7 +68,6 @@ standard_defaults = {
         "write_location" : None,
         "unitary_preprocessor": utils.nearest_unitary,
         "timeout" : float('inf'),
-        "verbosity" : 1,
         "stdout_enabled" : True
         }
 standard_smart_defaults = {

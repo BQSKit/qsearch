@@ -49,6 +49,7 @@ if __name__ == '__main__':
     U2 = utils.endian_reverse(U2) # switch from Qiskit endianess qsearch endianess
     # tell the optimizer what we are solving for
     opts = Options()
+    opts.verbosity = 1
     opts.target = unitaries.qft(32)
 
     #qc1.draw(output='mpl')
