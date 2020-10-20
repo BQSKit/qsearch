@@ -70,6 +70,12 @@ use utils::{
     matrix_distance_squared, matrix_distance_squared_jac, matrix_residuals, matrix_residuals_jac,
 };
 
+const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+
+fn log_2(x: usize) -> usize {
+    num_bits::<usize>() - x.leading_zeros() as usize - 1
+}
+
 #[cfg(feature = "python")]
 fn gate_to_object(
     gate: &Gate,
@@ -86,7 +92,7 @@ fn gate_to_object(
             let gate: PyObject = gates.get("IdentityGate")?.extract()?;
             let args = PyTuple::new(
                 py,
-                vec![constant_gates[id.index].size, id.data.dits as usize],
+                vec![log_2(constant_gates[id.index].size), id.data.dits as usize],
             );
             gate.call1(py, args)?
         }
