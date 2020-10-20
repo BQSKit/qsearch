@@ -157,7 +157,7 @@ rustup default nightly
 Then install `cargo-vcpkg`, which will help install dependencies for us. You can install it via
 
 ```
-cargo install varg-vcpkg
+cargo install cargo-vcpkg
 ```
 
 `cargo` is installed with Rust so this should work.
