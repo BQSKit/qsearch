@@ -131,13 +131,15 @@ def nearest_unitary(A):
 
     Thank you to Ed Younis, this is based on code from qfast
     """
+    try:
+        if len(A.shape) == 2 and A.shape[0] != A.shape[1]:
+            raise TypeError("A must be a square matrix.")
 
-    if len(A.shape) == 2 and A.shape[0] != A.shape[1]:
-        raise TypeError("A must be a square matrix.")
-
-    V, __, Wh = sp.linalg.svd(A)
-    U = np.array(V.dot(Wh))
-    return U
+        V, __, Wh = sp.linalg.svd(A)
+        U = np.array(V.dot(Wh))
+        return U
+    except Exception:
+        return A
 
 def index_test(i, di, df):
     if i < df:
