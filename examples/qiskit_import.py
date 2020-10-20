@@ -50,6 +50,7 @@ if __name__ == '__main__':
     # tell the optimizer what we are solving for
     opts = Options()
     opts.verbosity = 1
+    opts.stdout_enabled = True
     opts.target = unitaries.qft(32)
 
     #qc1.draw(output='mpl')
