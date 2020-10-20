@@ -68,7 +68,6 @@ standard_defaults = {
         "write_location" : None,
         "unitary_preprocessor": utils.nearest_unitary,
         "timeout" : float('inf'),
-        "stdout_enabled" : True
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
