@@ -142,7 +142,7 @@ class XGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "X", (v[0],), (i,)))
+        return [("gate", "X", (v[0],), (i,))]
 
     def __repr__(self):
         return "XGate()"
@@ -162,7 +162,7 @@ class YGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "Y", (v[0],), (i,)))
+        return [("gate", "Y", (v[0],), (i,))]
 
     def __repr__(self):
         return "YGate()"
@@ -182,7 +182,7 @@ class ZGate(Gate):
         return U, [J1]
 
     def assemble(self, v, i=0):
-        out.append(("gate", "Z", (v[0],), (i,)))
+        return [("gate", "Z", (v[0],), (i,))]
 
     def __repr__(self):
         return "ZGate()"
