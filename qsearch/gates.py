@@ -339,6 +339,39 @@ class U3Gate(Gate):
     def __repr__(self):
         return "U3Gate()"
 
+class U2Gate(Gate):
+    """Represents a parameterized single qubit gate, parameterized in the same way as IBM's U2 gate."""
+    def __init__(self):
+        self.num_inputs = 2
+        self.qudits = 1
+
+    def matrix(self, v):
+        return 1/np.sqrt(2) * np.array([[1, -np.exp(1j * v[1])], [np.exp(1j * v[0]), np.exp(1j * (v[0] + v[1]))]])
+
+    def mat_jac(self, v):
+        initial = 1/np.sqrt(2)
+        e1 = np.exp(1j * v[1])
+        e2 = np.exp(1j * v[0])
+        e3 = np.exp(1j * (v[0] + v[1]))
+        U = initial * np.array([[1, -e1], [e2, e3]])
+        J1 = initial * np.array([[0, 0], [1j * e2, 1j * e3]])
+        J2 = initial * np.array([[0, -1j * e1], [0, 1j * e3]])
+        return (U, [J1, J2])
+
+    def assemble(self, v, i=0):
+        out = []
+        v = np.array(v)%(2*np.pi) # confine the range of what we print to come up with nicer numbers at no loss of generality
+        out.append(("gate", "Z", (v[0],), (i,)))
+        out.append(("gate", "Y", (np.pi/2,), (i,)))
+        out.append(("gate", "Z", (v[1],), (i,)))
+        return [("block", out)]
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def __repr__(self):
+        return "U2Gate()"
+
 class SingleQutritGate(Gate):
     """This gate represents an arbitrary parameterized single-qutrit gate."""
     def __init__(self):

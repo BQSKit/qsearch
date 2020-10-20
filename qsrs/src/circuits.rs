@@ -22,6 +22,7 @@ pub enum Gate {
     Identity(GateIdentity),
     CNOT(GateCNOT),
     U3(GateU3),
+    U2(GateU2),
     X(GateX),
     Y(GateY),
     Z(GateZ),
@@ -38,6 +39,7 @@ impl Gate {
             Gate::Identity(i) => i.data.dits,
             Gate::CNOT(c) => c.data.dits,
             Gate::U3(u) => u.data.dits,
+            Gate::U2(u2) => u2.data.dits,
             Gate::X(x) => x.data.dits,
             Gate::Y(y) => y.data.dits,
             Gate::Z(z) => z.data.dits,
@@ -215,6 +217,56 @@ impl QuantumGate for GateU3 {
                     ],
                     2,
                 ),
+            ],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs as usize
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateU2 {
+    pub data: QuantumGateData,
+}
+
+impl GateU2 {
+    pub fn new() -> Self {
+        GateU2 {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 2,
+            },
+        }
+    }
+}
+
+/// based on https://quantumexperience.ng.bluemix.net/proxy/tutorial/full-user-guide/002-The_Weird_and_Wonderful_World_of_the_Qubit/004-advanced_qubit_gates.html
+impl QuantumGate for GateU2 {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let phase = r!(1.0) / r!(2.0f64.sqrt());
+        let e1 = (i!(1.0) * v[1]).exp();
+        let e2 = (i!(1.0) * v[0]).exp();
+        let e3 = (i!(1.0) * (v[0] + v[1])).exp();
+        SquareMatrix::from_vec(vec![phase, -phase * e1, phase * e2, phase * e3], 2)
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let phase = r!(1.0) / r!(2.0f64.sqrt());
+        let e1 = (i!(1.0) * v[1]).exp();
+        let e2 = (i!(1.0) * v[0]).exp();
+        let e3 = (i!(1.0) * (v[0] + v[1])).exp();
+
+        (
+            SquareMatrix::from_vec(vec![phase, -phase * e1, phase * e2, phase * e3], 2),
+            vec![
+                SquareMatrix::from_vec(vec![r!(0.0), r!(0.0), phase * i!(1.0) * e2, phase * i!(1.0) * e3], 2),
+                SquareMatrix::from_vec(vec![r!(0.0), phase * i!(-1.0) * e1, r!(0.0), phase * i!(1.0) * e3], 2),
             ],
         )
     }

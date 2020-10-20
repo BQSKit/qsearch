@@ -28,6 +28,9 @@ def compare_gradient(gate):
 def test_gradients_U3():
     compare_gradient(U3Gate())
 
+def test_gradients_U2():
+    compare_gradient(U2Gate())
+
 def test_gradients_X():
     compare_gradient(XGate())
 

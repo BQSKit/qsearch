@@ -21,6 +21,9 @@ def test_XZXZ():
 def test_U3():
     check_circuit(qs.gates.U3Gate())
 
+def test_U2():
+    check_circuit(qs.gates.U2Gate())
+
 def test_Id():
     check_circuit(qs.gates.IdentityGate(1))
 
