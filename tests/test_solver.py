@@ -10,6 +10,7 @@ except ImportError:
 import pytest
 import tempfile
 import os
+import sys
 
 qft3 = unitaries.qft(8)
 
@@ -30,6 +31,7 @@ def test_least_squares_jac(project):
     project['error_jac'] = utils.matrix_residuals_jac
     project.run()
 
+@pytest.mark.skipif(sys.platform == 'win32', reason="This test currently hangs due to the nested parallel executor")
 def test_multistart_least_squares(project):
     project.add_compilation('qft3', qft3)
     project['solver'] = multistart_solvers.MultiStart_Solver(2)
@@ -39,6 +41,7 @@ def test_multistart_least_squares(project):
     project['error_jac'] = utils.matrix_residuals_jac
     project.run()
 
+@pytest.mark.skipif(sys.platform == 'win32', reason="This test currently hangs due to the nested parallel executor")
 def test_multistart_bfgs(project):
     project.add_compilation('qft3', qft3)
     project['solver'] = multistart_solvers.MultiStart_Solver(2)
