@@ -123,10 +123,10 @@ class IdentityGate(Gate):
         return []
 
     def __repr__(self):
-        if self.qudits == 1 and self.d == 2:
+        if self.qudits == 1 and self._d == 2:
             return "IdentityGate()"
         else:
-            return "IdentityGate(qudits={}, d={})".format(qudits, d)
+            return "IdentityGate(qudits={}, d={})".format(self.qudits, self._d)
 
 
 class XGate(Gate):
