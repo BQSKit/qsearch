@@ -44,7 +44,7 @@ def op_norm(A):
 def matrix_distance_squared(A,B):
     # this distance function is designed to be phase agnostic
     # optimized implementation
-    return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0])
+    return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.T.conjugate()))) / A.shape[0]
 
