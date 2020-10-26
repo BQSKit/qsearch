@@ -5,6 +5,7 @@ import numpy as np
 if __name__ == "__main__":
     with qsearch.Project("benchmarks") as project:
         project.clear()
+        project["gateset"] = qsearch.gatesets.QubitCNOTRing()
         project.add_compilation("qft2", unitaries.qft(4))
         project.add_compilation("qft3", unitaries.qft(8))
         project.add_compilation("fredkin", unitaries.fredkin)
@@ -29,11 +30,11 @@ if __name__ == "__main__":
 
         times = {}
         best_results = {}
-        diff_results_flag = {}
+        avg_result = {}
         for compilation in project.compilations:
             times[compilation] = 0
             best_results[compilation] = None
-            diff_results_flag[compilation] = False
+            avg_result[compilation] = 0
 
         for _ in range(10):
             project.reset()
@@ -43,9 +44,10 @@ if __name__ == "__main__":
                 cnotcount = repr(project.get_result(compilation)["structure"]).count("CNOT")
                 if best_results[compilation] is None:
                     best_results[compilation] = cnotcount
-                elif best_results[compilation] < cnotcount:
+                elif best_results[compilation] > cnotcount:
                     best_results[compilation] = cnotcount
-                    diff_results_flag[compilation] = True
 
-        for compilation in project.compilations:
-            print(f'Compilation {compilation} took {times[compilation]/10}s on average, achieving CNOT count {best_results[compilation]} {"inconsistently" if diff_results_flag[compilation] else "consistently"}.')
+                avg_result[compilation] += cnotcount
+        with open("final_output.tsv", "w") as out:
+            for compilation in project.compilations:
+                out.write(f"{compilation}\t{times[compilation]/10}s\t{best_results[compilation]}\t{avg_result[compilation]/10}\n")
