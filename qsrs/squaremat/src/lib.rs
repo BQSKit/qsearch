@@ -1,5 +1,4 @@
 use cblas::*;
-use multiversion::multiversion;
 use ndarray::Array2;
 
 use num_complex::Complex64;
@@ -36,10 +35,6 @@ macro_rules! i {
     };
 }
 
-#[multiversion]
-#[clone(target = "[x86|x86_64]+avx+avx2+sse")]
-#[clone(target = "[x86|x86_64]+sse")]
-#[clone(target = "[x86|x86_64]")]
 fn kron(a: &[Complex64], row_a: usize, b: &[Complex64], row_b: usize, out: &mut [Complex64]) {
     let a_data = &a[..row_a * row_a];
     let b_data = &b[..row_b * row_b];
