@@ -1,5 +1,5 @@
 import qiskit
-from qsearch.qiskit import qiskit_to_qsearch
+from qsearch.integrations import qiskit_to_qsearch
 from qsearch import multistart_solvers, utils, Options, defaults, unitaries
 from qsearch.assemblers import ASSEMBLER_IBMOPENQASM
 from qsrs import native_from_object
@@ -56,9 +56,12 @@ if __name__ == '__main__':
     #qc1.draw(output='mpl')
     #plt.show()
     circ, vec = qiskit_to_qsearch(qc1)
+    print(f"Matrix distance of loaded circuit: {utils.matrix_distance_squared(circ.matrix(vec), unitaries.qft(32))}")
+    print("Running some circuit verification checks...")
     circ.validate_structure()
     compare_gradient(circ)
     print("Passed checks!")
+    print("Trying to re-optimize the circuit parameters...")
     for _ in range(100):
         U1, vec = solv.solve_for_unitary(circ, opts)
         dist = utils.matrix_distance_squared(U1, unitaries.qft(32))
@@ -68,5 +71,5 @@ if __name__ == '__main__':
     print(dist)
     qasm = ASSEMBLER_IBMOPENQASM.assemble(res, opts)
     qc2 = qiskit.QuantumCircuit.from_qasm_str(qasm)
-    qc2.draw(output='mpl')
-    plt.show()
+    #qc2.draw(output='mpl')
+    #plt.show()

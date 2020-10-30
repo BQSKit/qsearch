@@ -5,20 +5,14 @@ except ImportError:
     qiskit = None
     raise ImportError("Cannot import qiskit, please run pip3 install qiskit before importing qiskit code.")
 
+import numpy as np
+
 from .gates import *
 
 
 class QiskitImportError(Exception):
     """A class to represent issues importing code from qiskit"""
 
-class QiskitGateConverter:
-    def __init__(self, num_qubits):
-        self.registers = []
-        self.num_qubits = num_qubits
-        self.parameters = []
-
-class DictionaryQiskitGateConverter:
-    pass
 
 class QiskitGateConverter:
     def __init__(self, num_qubits):
@@ -50,6 +44,13 @@ class QiskitGateConverter:
         index = qubits[0].index
         return KroneckerGate(*[identity_gate]*index, U3Gate(), *[identity_gate]*(self.num_qubits-index-1))
 
+    def convert_u2(self, gate, qubits, cbits):
+        assert len(qubits) == 1, "U2 on more than one qubit?"
+        identity_gate = IdentityGate()
+        self.parameters.extend(gate.params)
+        index = qubits[0].index
+        return KroneckerGate(*[identity_gate]*index, U2Gate(), *[identity_gate]*(self.num_qubits-index-1))
+
     def convert_rx(self, gate, qubits, cbits):
         assert len(qubits) == 1, "X on more than one qubit?"
         identity_gate = IdentityGate()
@@ -71,10 +72,11 @@ class QiskitGateConverter:
         index = qubits[0].index
         return KroneckerGate(*[identity_gate]*index, ZGate(), *[identity_gate]*(self.num_qubits-index-1))
 
+
 def qiskit_to_qsearch(circ, converter=None):
     """Convert qiskit code to qsearch *structure* but not parameters"""
     converter = converter if converter is not None else QiskitGateConverter(circ.num_qubits)
     circuit = []
     for gate, qubits, cbits in circ.data:
         circuit.append(converter.convert(gate, qubits, cbits))
-    return ProductGate(*circuit), converter.parameters
+    return ProductGate(*circuit), np.array(converter.parameters)
