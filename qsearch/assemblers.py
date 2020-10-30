@@ -84,7 +84,7 @@ assemblydict_qiskit = {
         "X" : "qc.rx({}, {})\n",
         "Y" : "qc.ry({}, {})\n",
         "Z" : "qc.rz({}, {})\n",
-        "U3" : "qc.u3({}, {}, {}, {})\n",
+        "U3" : "qc.u({}, {}, {}, {})\n",
         "CNOT" : "qc.cx({}, {})\n",
 }
 
