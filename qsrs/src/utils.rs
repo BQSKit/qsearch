@@ -126,7 +126,7 @@ pub fn matrix_distance_squared(a: &SquareMatrix, b: &SquareMatrix) -> f64 {
     let mul = a.multiply(&bc);
     let sum = mul.sum();
     let norm = sum.norm();
-    1f64 - (norm / a.size as f64).powf(2.0)
+    1f64 - norm / a.size as f64
 }
 
 pub fn matrix_distance(a: &SquareMatrix, b: &SquareMatrix) -> f64 {
@@ -140,18 +140,17 @@ pub fn matrix_distance_squared_jac(
     j: Vec<SquareMatrix>,
 ) -> (f64, Vec<f64>) {
     let s = u.multiply(&m.conj()).sum();
-    let dsq = 1f64 - (s.norm() / u.size as f64).powf(2.0);
+    let dsq = 1f64 - s.norm() / u.size as f64;
     if s == r!(0.0) {
         return (dsq, vec![std::f64::INFINITY; j.len()]);
     }
     let jus: Vec<Complex64> = j.iter().map(|ji| u.multiply(&ji.conj()).sum()).collect();
     let jacs = jus
         .iter()
-        .map(|jusi| -2.0 * (jusi.re * s.re + jusi.im * s.im) / (u.size as f64).powf(2.0))
+        .map(|jusi| -(jusi.re * s.re + jusi.im * s.im) * u.size as f64 / s.norm())
         .collect();
     (dsq, jacs)
 }
-
 /// Calculates the residuals and the jacobian
 pub fn matrix_residuals(a: &SquareMatrix, b: &SquareMatrix, i: &Array2<f64>) -> Vec<f64> {
     let m = b.matmul(&a.H());
