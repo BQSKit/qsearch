@@ -30,21 +30,21 @@ jobs:
           if: startsWith(runner.os, 'Linux')
           with:
             path: ~/.cache/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            key: ${{ runner.os }}-pip2-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
               ${{ runner.os }}-pip-
         - uses: actions/cache@v2
           if: startsWith(runner.os, 'macOS')
           with:
             path: ~/Library/Caches/pip
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            key: ${{ runner.os }}-pip2-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
               ${{ runner.os }}-pip-
         - uses: actions/cache@v2
           if: startsWith(runner.os, 'Windows')
           with:
             path: ~\AppData\Local\pip\Cache
-            key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            key: ${{ runner.os }}-pip2-${{ hashFiles('**/requirements.txt') }}
             restore-keys: |
               ${{ runner.os }}-pip-
         - uses: actions/cache@v2
@@ -53,13 +53,13 @@ jobs:
               ~/.cargo/registry
               ~/.cargo/git
               qsrs/target
-            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            key: ${{ runner.os }}-cargo2-${{ hashFiles('**/Cargo.lock') }}
         - uses: actions/cache@v2
           if: startsWith(matrix.os, 'Windows')
           with:
             path: |
               qsrs/target/vcpkg
-            key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+            key: ${{ runner.os }}-cargo2-${{ hashFiles('**/Cargo.toml') }}
         - name: Install nightly-2020-04-06
           uses: actions-rs/toolchain@v1
           with:
@@ -111,7 +111,7 @@ jobs:
           env:
             TWINE_USERNAME: __token__
             TWINE_PASSWORD: ${{ secrets.pypi_password }}
-          run: twine upload qsrs/target/wheels/qsrs-1.1*.whl
+          run: twine upload qsrs/target/wheels
           if: "contains(github.event.head_commit.message, '[qsrs pypi]')"
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rm -rf target/wheels
