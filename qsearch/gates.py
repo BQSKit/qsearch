@@ -5,6 +5,7 @@ Through the use of KroneckerGate and ProductGate, Gates can be formed for comple
 """
 
 import numpy as np
+import scipy as sp
 from . import utils, unitaries
 from hashlib import md5
 
@@ -102,6 +103,10 @@ class Gate():
 
     def validate_structure(self):
         return True
+
+    def iter_with_locations(self, i=0):
+        yield self, tuple(range(i, i + self.qudits))
+
 
 class IdentityGate(Gate):
     """Represents an identity gate of any number of qudits of any size."""
@@ -793,6 +798,11 @@ class KroneckerGate(Gate):
             i += gate.qudits
         return [("block", out)]
 
+    def iter_with_locations(self, i=0):
+        for gate in self._subgates:
+            yield from gate.iter_with_locations(i)
+            i += gate.qudits
+
     def appending(self, gate):
         """Returns a new KroneckerGate with the new gate added to the list.
         
@@ -912,6 +922,10 @@ class ProductGate(Gate):
             out += gate.assemble(v[index:index+gate.num_inputs], i)
             index += gate.num_inputs
         return out
+
+    def iter_with_locations(self, i=0):
+        for gate in self._subgates:
+            yield from gate.iter_with_locations(i)
 
     def appending(self, *gates):
         """Returns a new ProductGate with the new gates appended to the end.

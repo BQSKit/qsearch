@@ -6,14 +6,19 @@ import sys
 import numpy as np
 import scipy as sp
 import scipy.optimize
+from scipy.stats import unitary_group
 
 from . import utils
 from .gatesets import *
+from .gates import IdentityGate
 from .logging import Logger
 try:
     from qsrs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object, matrix_residuals, matrix_residuals_jac
 except ImportError:
     LeastSquares_Jac_SolverNative = BFGS_Jac_SolverNative = native_from_object = matrix_residuals= matrix_residuals_jac = None
+
+from qfactor import Gate, optimize
+from qiskit.quantum_info.synthesis import euler_angles_1q
 
 def default_solver(options, x0=None):
     """Runs a complex list of tests to determine the best Solver for a specific situation."""
@@ -185,4 +190,37 @@ class LeastSquares_Jac_Solver(Solver):
     @property
     def distance_metric(self):
         return "Residuals"
+
+class QFactor_Solver(Solver):
+    def __init__(self, inner_solver):
+        self.inner_solver = inner_solver
+
+    def solve_for_unitary(self, circuit, options, x0=None):
+        orig_circ = circuit
+        circuit = circuit.as_python()
+        gate_list = []
+        # filter out the unusefuly Identites
+        gates = [gate for gate in circuit.iter_with_locations() if not isinstance(gate[0], IdentityGate)]
+        for gate, locations in gates:
+            assert not isinstance(gate, IdentityGate)
+            if gate.num_inputs == 0:
+                U = gate.matrix(np.array([]))
+                gate_list.append(Gate(U, locations, fixed=True))
+            else:
+                U = unitary_group.rvs(2**gate.qudits)
+                gate_list.append(Gate(U, locations))
+        ans = optimize( gate_list, options.target,
+                diff_tol = options.threshold/10,     # Stopping criteria for distance change
+                dist_tol = 1e-15,     # Stopping criteria for distance
+                max_iters = 10000,   # Maximum number of iterations
+                min_iters = 0,     # Minimum number of iterations
+                slowdown_factor = 4 ) # Larger numbers slowdown optimization
+                                      # to avoid local minima
+        opts = options.copy()
+        params = []
+        for (gate, locations), unitary in zip(gates, ans):
+            if gate.num_inputs > 0:
+                params.extend(euler_angles_1q(unitary.utry))
+        params = np.array(params)
+        return (orig_circ.matrix(params), params)
 
