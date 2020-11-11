@@ -265,17 +265,17 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     overall_best_pair = best_pair
                     overall_best_value = best_value
                     # select the points which are greater than the search window and adjust by new reoptimization
-                    print(f'old midpoinst: {midpoints}')
+                    logger.logprint(f'old midpoinst: {midpoints}')
                     midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
-                    print(f'new midpoints: {midpoints}')
+                    logger.logprint(f'new midpoints: {midpoints}')
                     child_checkpoint.save(None)
                     child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
                     break # break out so we can re-run optimization on the better circuit
                 else:
                     logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
-                    print(f'old midpoinst: {midpoints}')
+                    logger.logprint(f'old midpoinst: {midpoints}')
                     midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
-                    print(f'new midpoints: {midpoints}')
+                    logger.logprint(f'new midpoints: {midpoints}')
                     start_point = point
                     child_checkpoint.save(None)
                     child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
