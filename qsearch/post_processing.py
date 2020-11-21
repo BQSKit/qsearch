@@ -120,6 +120,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         It is recommended to call like:
         `project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)`
         """
+        if len(result['structure']._subgates) <= options.weight_limit if 'weight_limit' in options and options.weight_limit else options.reoptimize_size:
+            return result
         best_pair = (result['structure'], result['parameters'])
         opts = options.updated(best_pair=best_pair, cut_depths=result['cut_depths'])
         return self.compile(opts)
@@ -135,7 +137,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
 
         if "unitary_preprocessor" in options:
             U = options.unitary_preprocessor(options.target)
-        depth = options.weight_limit
+        depth = options.weight_limit if 'weight_limit' in options else options.reoptimize_size
         child_checkpoint = ChildCheckpoint(Options(parent=options.checkpoint))
 
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
