@@ -227,7 +227,7 @@ fn object_to_gate(
                 constant_gates.push(SquareMatrix::from_ndarray(mat.to_owned()).T());
                 Ok(GateConstantUnitary::new(index, dits).into())
             } else {
-                Err(exceptions::ValueError::py_err(format!(
+                Err(exceptions::PyValueError::new_err(format!(
                     "Unknown gate {}",
                     name
                 )))
