@@ -68,6 +68,9 @@ classifier = [
     'Topic :: Software Development :: Compilers',
 ]
 
+[patch.crates-io]
+openblas-src = { git = "https://github.com/ethanhs/openblas-src", branch="scrs" }
+
 [package.metadata.vcpkg]
 git = "https://github.com/microsoft/vcpkg"
 rev = "2020.06"
