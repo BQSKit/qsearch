@@ -203,7 +203,7 @@ class Project:
     def run(self):
         """Runs all of the compilations in the Project."""
         freeze_support()
-
+        self.aborted = False
         self.logger.logprint("Started running project {}".format(self.name))
         self.status(logger=self.logger)
         for name in self._compilations:
@@ -223,11 +223,21 @@ class Project:
                 from threadpoolctl import threadpool_limits
             except ImportError:
                 starttime = time()
-                result = compiler.compile(runopt)
+                try:
+                    result = compiler.compile(runopt)
+                except KeyboardInterrupt:
+                    self.aborted = True
+                    self.logger.logprint("\nStopping due to Ctrl+C...\n")
+                    return
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
                     starttime = time()
-                    result = compiler.compile(runopt)
+                    try:
+                        result = compiler.compile(runopt)
+                    except KeyboardInterrupt:
+                        self.aborted = True
+                        self.logger.logprint("\nStopping due to Ctrl+C...\n")
+                        return
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
             cdict.update(**result)
@@ -250,16 +260,17 @@ class Project:
             options : Options to pass to the qsearch.post_processing.PostProcessor passed in `postprocessor`
             extraargs : Extra arguments passed as options to the qsearch.post_processing.PostProcessor passed in `postprocessor`
         """
-        names = [name] if name else self._compilations
-        for name in names:
-            self.logger.logprint("Started postprocessing of {}".format(name))
-            cdict = self._compilations[name]
-            finaloptions = self.options.updated(cdict["options"]).updated(options, **xtraargs)
-            result = postprocessor.post_process_circuit(cdict, finaloptions)
-            cdict.update(**result)
-            self._compilations[name] = cdict
-            self.logger.logprint("Finished postprocessing of {}".format(name))
-        self._save()
+        if not self.aborted:
+            names = [name] if name else self._compilations
+            for name in names:
+                self.logger.logprint("Started postprocessing of {}".format(name))
+                cdict = self._compilations[name]
+                finaloptions = self.options.updated(cdict["options"]).updated(options, **xtraargs)
+                result = postprocessor.post_process_circuit(cdict, finaloptions)
+                cdict.update(**result)
+                self._compilations[name] = cdict
+                self.logger.logprint("Finished postprocessing of {}".format(name))
+            self._save()
             
     def complete(self):
         """Returns a True if all compilations in the Project have finished and False otherwise."""

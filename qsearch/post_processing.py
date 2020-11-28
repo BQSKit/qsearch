@@ -156,132 +156,134 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
             overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
         else:
             overall_best_pair, start_depth, midpoints, start_point, overall_best_value = recovered_outer
-        while True:
-            if 'timeout' in options and timer() - overall_startime > options.timeout:
-                break
-            best_circuit = overall_best_pair[0]
-            best_circuit_depth = len(best_circuit._subgates) - 1
-            if 'cut_depths' in options:
-                insertion_points = midpoints
-            else:
-                insertion_points = range(start_point,best_circuit_depth)
-            for point in insertion_points:
+        try:
+            while True:
                 if 'timeout' in options and timer() - overall_startime > options.timeout:
                     break
-                startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
-                window_size = depth or options.reoptimize_size
-                root = ProductGate(*best_circuit._subgates[:point], *best_circuit._subgates[point + window_size:])
-                h = options.heuristic
-                qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
-
-                if options.gateset.d**qudits != np.shape(U)[0]:
-                    raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
-
-                I = gates.IdentityGate(d=options.gateset.d)
-
-                initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
-                search_layers = options.gateset.search_layers(qudits)
-
-                if len(search_layers) <= 0:
-                    logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
-                    root = initial_layer
-                    result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-                    return (root, result[1])
-
-                # TODO move these print statements somewhere else
-                # this is good informati
-                logger.logprint("There are {} processors available to Pool.".format(options.num_tasks))
-                logger.logprint("The branching factor is {}.".format(len(search_layers)))
-                beams = int(options.beams)
-                if beams < 1 and len(search_layers) > 0:
-                    beams = int(options.num_tasks // len(search_layers))
-                if beams < 1:
-                    beams = 1
-                if beams > 1:
-                    logger.logprint("The beam factor is {}.".format(beams))
-
-                recovered_state = child_checkpoint.recover()
-                queue = []
-                best_depth = 0
-                best_value = 0
-                best_pair  = 0
-                tiebreaker = 0
-                rectime = 0
-                if recovered_state == None:
-                    result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-                    best_value = options.eval_func(U, result[0])
-                    best_pair = (root, result[1])
-                    logger.logprint("New best! {} at depth 0".format(best_value))
-                    if depth == 0:
-                        return best_pair
-
-                    queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
-                    #         heuristic      depth  distance tiebreaker parameters structure
-                    #             0            1      2         3         4        5
-                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
+                best_circuit = overall_best_pair[0]
+                best_circuit_depth = len(best_circuit._subgates) - 1
+                if 'cut_depths' in options:
+                    insertion_points = midpoints
                 else:
-                    queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
-                    logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
-
-                options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
-
-                while len(queue) > 0:
+                    insertion_points = range(start_point,best_circuit_depth)
+                for point in insertion_points:
                     if 'timeout' in options and timer() - overall_startime > options.timeout:
                         break
-                    if best_value < options.threshold:
-                        queue = []
-                        break
-                    popped = []
-                    for _ in range(0, beams):
-                        if len(queue) == 0:
+                    startime = timer() # note, because all of this setup gets included in the total time, stopping and restarting the project may lead to time durations that are not representative of the runtime under normal conditions
+                    window_size = depth or options.reoptimize_size
+                    root = ProductGate(*best_circuit._subgates[:point], *best_circuit._subgates[point + window_size:])
+                    h = options.heuristic
+                    qudits = int(np.round(np.log(np.shape(U)[0])/np.log(options.gateset.d)))
+
+                    if options.gateset.d**qudits != np.shape(U)[0]:
+                        raise ValueError("The target matrix of size {} is not compatible with qudits of size {}.".format(np.shape(U)[0], self.options.gateset.d))
+
+                    I = gates.IdentityGate(d=options.gateset.d)
+
+                    initial_layer = options.initial_layer if 'initial_layer' in options else options.gateset.initial_layer(qudits)
+                    search_layers = options.gateset.search_layers(qudits)
+
+                    if len(search_layers) <= 0:
+                        logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
+                        root = initial_layer
+                        result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
+                        return (root, result[1])
+
+                    # TODO move these print statements somewhere else
+                    # this is good informati
+                    logger.logprint("There are {} processors available to Pool.".format(options.num_tasks))
+                    logger.logprint("The branching factor is {}.".format(len(search_layers)))
+                    beams = int(options.beams)
+                    if beams < 1 and len(search_layers) > 0:
+                        beams = int(options.num_tasks // len(search_layers))
+                    if beams < 1:
+                        beams = 1
+                    if beams > 1:
+                        logger.logprint("The beam factor is {}.".format(beams))
+
+                    recovered_state = child_checkpoint.recover()
+                    queue = []
+                    best_depth = 0
+                    best_value = 0
+                    best_pair  = 0
+                    tiebreaker = 0
+                    rectime = 0
+                    if recovered_state == None:
+                        result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
+                        best_value = options.eval_func(U, result[0])
+                        best_pair = (root, result[1])
+                        logger.logprint("New best! {} at depth 0".format(best_value))
+                        if depth == 0:
+                            return best_pair
+
+                        queue = [(h(*best_pair, 0, options), 0, best_value, -1, result[1], root)]
+                        #         heuristic      depth  distance tiebreaker parameters structure
+                        #             0            1      2         3         4        5
+                        child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, timer()-startime))
+                    else:
+                        queue, best_depth, best_value, best_pair, tiebreaker, rectime = recovered_state
+                        logger.logprint("Recovered state with best result {} at depth {}".format(best_value, best_depth))
+
+                    options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
+
+                    while len(queue) > 0:
+                        if 'timeout' in options and timer() - overall_startime > options.timeout:
                             break
-                        tup = heapq.heappop(queue)
-                        popped.append(tup)
-                        logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
+                        if best_value < options.threshold:
+                            queue = []
+                            break
+                        popped = []
+                        for _ in range(0, beams):
+                            if len(queue) == 0:
+                                break
+                            tup = heapq.heappop(queue)
+                            popped.append(tup)
+                            logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
 
-                    then = timer()
-                    new_steps = [(current_tup[5].inserting(search_layer[0], depth=point), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
-                    for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
-                        current_value = options.eval_func(U, result[0])
-                        new_depth = current_depth + weight
-                        if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
-                            best_value = current_value
-                            best_pair = (step, result[1])
-                            best_depth = new_depth
-                            logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
-                        if depth is None or new_depth < depth - 1:
-                            heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
-                            tiebreaker+=1
-                    logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-                    if (options.weight_limit is not None and best_depth >= options.weight_limit - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
-                        break
-                    child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
+                        then = timer()
+                        new_steps = [(current_tup[5].inserting(search_layer[0], depth=point), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
+                        for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
+                            current_value = options.eval_func(U, result[0])
+                            new_depth = current_depth + weight
+                            if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
+                                best_value = current_value
+                                best_pair = (step, result[1])
+                                best_depth = new_depth
+                                logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
+                            if depth is None or new_depth < depth - 1:
+                                heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
+                                tiebreaker+=1
+                        logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
+                        if (options.weight_limit is not None and best_depth >= options.weight_limit - 1) or ('reoptimize_size' in options and best_depth >= options.reoptimize_size - 1):
+                            break
+                        child_checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-startime)))
 
 
-                logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
-                new_circuit_depth = len(best_pair[0]._subgates) - 1
-                if best_value < options.threshold and new_circuit_depth < best_circuit_depth:
-                    logger.logprint(f"With starting point {point} re-optimized from depth {best_circuit_depth} to depth {new_circuit_depth}")
-                    overall_best_pair = best_pair
-                    overall_best_value = best_value
-                    # select the points which are greater than the search window and adjust by new reoptimization
-                    print(f'old midpoinst: {midpoints}')
-                    midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
-                    print(f'new midpoints: {midpoints}')
-                    child_checkpoint.save(None)
-                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
-                    break # break out so we can re-run optimization on the better circuit
-                else:
-                    logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
-                    print(f'old midpoinst: {midpoints}')
-                    midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
-                    print(f'new midpoints: {midpoints}')
-                    start_point = point
-                    child_checkpoint.save(None)
-                    child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
-                    continue
-            if new_circuit_depth >= best_circuit_depth:
-                break
-        parallel.done()
+                    logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-startime)))
+                    new_circuit_depth = len(best_pair[0]._subgates) - 1
+                    if best_value < options.threshold and new_circuit_depth < best_circuit_depth:
+                        logger.logprint(f"With starting point {point} re-optimized from depth {best_circuit_depth} to depth {new_circuit_depth}")
+                        overall_best_pair = best_pair
+                        overall_best_value = best_value
+                        # select the points which are greater than the search window and adjust by new reoptimization
+                        print(f'old midpoinst: {midpoints}')
+                        midpoints = [i - (best_circuit_depth - new_circuit_depth) for i in midpoints if (i - (point + window_size)) > 0]
+                        print(f'new midpoints: {midpoints}')
+                        child_checkpoint.save(None)
+                        child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                        break # break out so we can re-run optimization on the better circuit
+                    else:
+                        logger.logprint(f"With starting point {point} no improvement was made to depth", verbosity=2)
+                        print(f'old midpoinst: {midpoints}')
+                        midpoints = [i for i in midpoints if (i - (point + window_size)) > 0]
+                        print(f'new midpoints: {midpoints}')
+                        start_point = point
+                        child_checkpoint.save(None)
+                        child_checkpoint.save_parent((overall_best_pair, start_depth, midpoints, start_point, overall_best_value))
+                        continue
+                if new_circuit_depth >= best_circuit_depth:
+                    break
+        finally:
+            parallel.done()
         logger.logprint("Finished all compilations at depth {} with score {} after {} seconds.".format(best_circuit_depth, overall_best_value, rectime+(timer()-overall_startime)))
         return {'structure': overall_best_pair[0], 'parameters': overall_best_pair[1]}

@@ -189,48 +189,49 @@ class SubCompiler(Compiler):
         options.generate_cache() # cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes
         previous_bests_depths = []
         previous_bests_values = []
-        while len(queue) > 0:
-            if 'timeout' in options and timer() - options.overall_starttime > options.timeout:
-                break
-            if best_value < options.threshold:
-                queue = []
-                break
-            popped = []
-            for _ in range(0, beams):
-                if len(queue) == 0:
+        try:
+            while len(queue) > 0:
+                if 'timeout' in options and timer() - options.overall_starttime > options.timeout:
                     break
-                tup = heapq.heappop(queue)
-                popped.append(tup)
-                logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
+                if best_value < options.threshold:
+                    queue = []
+                    break
+                popped = []
+                for _ in range(0, beams):
+                    if len(queue) == 0:
+                        break
+                    tup = heapq.heappop(queue)
+                    popped.append(tup)
+                    logger.logprint("Popped a node with score: {} at depth: {}".format((tup[2]), tup[1]), verbosity=2)
 
-            then = timer()
-            new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
-            for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
-                current_value = options.eval_func(U, result[0])
-                new_depth = current_depth + weight
-                if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
-                    best_value = current_value
-                    best_pair = (step, result[1])
-                    best_depth = new_depth
-                    logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
-                    if len(previous_bests_values) > 1:
-                        slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
-                        predicted_best = slope * new_depth + intercept
-                        delta = predicted_best - best_value
-                        logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
-                        if not np.isnan(predicted_best) and best_value < options.overall_best_value and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
-                            parallel.done()
-                            return (best_pair, best_value, best_depth)
-                    previous_bests_depths.append(best_depth)
-                    previous_bests_values.append(best_value)
+                then = timer()
+                new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
+                for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
+                    current_value = options.eval_func(U, result[0])
+                    new_depth = current_depth + weight
+                    if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
+                        best_value = current_value
+                        best_pair = (step, result[1])
+                        best_depth = new_depth
+                        logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
+                        if len(previous_bests_values) > 1:
+                            slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                            predicted_best = slope * new_depth + intercept
+                            delta = predicted_best - best_value
+                            logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
+                            if not np.isnan(predicted_best) and best_value < options.overall_best_value and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
+                                parallel.done()
+                                return (best_pair, best_value, best_depth)
+                        previous_bests_depths.append(best_depth)
+                        previous_bests_values.append(best_value)
 
-                if depth is None or new_depth < depth:
-                    heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
-                    tiebreaker+=1
-            logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
-
+                    if depth is None or new_depth < depth:
+                        heapq.heappush(queue, (h(step, result[1], new_depth, options), new_depth, current_value, tiebreaker, result[1], step))
+                        tiebreaker+=1
+                logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
+                checkpoint.save((queue, best_depth, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
+        finally:
+            parallel.done()
 
         logger.logprint("Finished compilation at depth {} with score {} after {} seconds.".format(best_depth, best_value, rectime+(timer()-starttime)))
-        parallel.done()
         return (best_pair, best_value, best_depth)
