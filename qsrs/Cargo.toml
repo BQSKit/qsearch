@@ -1,6 +1,6 @@
 [package]
 name = "qsrs"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["Ethan Smith <ethanhs@lbl.gov>"]
 license = "LGPL-2.1 AND BSD-3-Clause"
 edition = "2018"
@@ -62,6 +62,7 @@ classifier = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Science/Research',
     'Topic :: Software Development :: Compilers',
