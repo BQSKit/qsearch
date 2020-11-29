@@ -12,7 +12,7 @@ accelerate = ["accelerate-src", "blas-src/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl"]
 
 [dependencies]
-num-complex = { version = "0.2.0"}
+num-complex = "0.2.4"
 cblas = "0.2.0"
 ndarray = { version = "0.13.1", features = ["blas"] }
 blas-src = { version = "0.6.1", default-features = false }
