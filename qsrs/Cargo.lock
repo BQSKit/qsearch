@@ -655,9 +655,9 @@ dependencies = [
 
 [[package]]
 name = "nlopt"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5842a088c6c628b5ab172a4ca421982fd58206051307e550d0ab345571ed1e00"
+checksum = "26a343c627878fbc130a26812f4461f95cb5a95d9a2d43b92bc107634bb4da3e"
 dependencies = [
  "cmake",
 ]
