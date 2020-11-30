@@ -32,7 +32,7 @@ better-panic = "0.2.0"
 squaremat = { path = "./squaremat" }
 md5 = "0.7.0"
 rand = "0.7.3"
-nlopt = { version = "0.5.2", optional = true }
+nlopt = { version = "=0.5.0", optional = true }
 ceres = { path = "./ceres", optional = true }
 num_cpus = "1.13.0"
 
