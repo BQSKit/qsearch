@@ -94,4 +94,4 @@ Also check out the [examples](https://github.com/BQSKit/qsearch/tree/master/exam
 
 # Legal/Copyright information
 
-Please read our [LICENSE](./LICENSE)
+Please read our [LICENSE](https://github.com/BQSKit/qsearch/blob/master/LICENSE)
