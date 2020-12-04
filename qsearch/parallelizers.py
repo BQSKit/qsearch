@@ -14,6 +14,7 @@ Attributes:
 from multiprocessing import get_context, cpu_count
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+import signal
 import sys
 
 try:
@@ -36,6 +37,9 @@ def evaluate_step(tup, options):
 
 def single_task(opts):
     return 1
+
+def process_initializer():
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 class Parallelizer():
     """Base class for all Parallelizers. Parallelizers calculate the value of multiple search nodes in parallel."""
@@ -68,7 +72,7 @@ class MultiprocessingParallelizer(Parallelizer):
         else:
             ctx = get_context()
         options.set_smart_defaults(num_tasks=default_num_tasks)
-        self.pool = ctx.Pool(options.num_tasks)
+        self.pool = ctx.Pool(options.num_tasks, initializer=process_initializer)
         self.process_func = partial(evaluate_step, options=options)
 
     def solve_circuits_parallel(self, tuples):
@@ -85,9 +89,9 @@ class ProcessPoolParallelizer(Parallelizer):
         options.set_smart_defaults(num_tasks=default_num_tasks)
         if sys.version_info >= (3, 8, 0) and sys.platform != 'win32':
             ctx = get_context('fork')
-            self.pool = ProcessPoolExecutor(options.num_tasks, mp_context=ctx)
+            self.pool = ProcessPoolExecutor(options.num_tasks, mp_context=ctx, initializer=process_initializer)
         else:
-            self.pool = ProcessPoolExecutor(options.num_tasks)
+            self.pool = ProcessPoolExecutor(options.num_tasks, initializer=process_initializer)
 
         self.process_func = partial(evaluate_step, options=options)
 

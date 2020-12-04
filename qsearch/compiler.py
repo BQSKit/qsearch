@@ -130,37 +130,38 @@ class SearchCompiler(Compiler):
             logger.logprint("Recovered state with best result {} at weight {}".format(best_value, best_weight))
 
         options.generate_cache() # Cache the results of smart_default settings, such as the default solver, before entering the main loop where the options will get pickled and the smart_default functions called many times because later caching won't persist cause of pickeling and multiple processes.
-
-        while len(queue) > 0:
-            if timer() - starttime > options.timeout:
-                break
-            if best_value < options.threshold:
-                queue = []
-                break
-            popped = []
-            for _ in range(0, beams):
-                if len(queue) == 0:
+        try:
+            while len(queue) > 0:
+                if timer() - starttime > options.timeout:
                     break
-                tup = heapq.heappop(queue)
-                popped.append(tup)
-                logger.logprint("Popped a node with score: {} at weight: {}".format((tup[2]), tup[1]), verbosity=2)
+                if best_value < options.threshold:
+                    queue = []
+                    break
+                popped = []
+                for _ in range(0, beams):
+                    if len(queue) == 0:
+                        break
+                    tup = heapq.heappop(queue)
+                    popped.append(tup)
+                    logger.logprint("Popped a node with score: {} at weight: {}".format((tup[2]), tup[1]), verbosity=2)
 
-            then = timer()
-            new_steps = [(successor[0], current_tup[1], successor[1]) for current_tup in popped for successor in options.gateset.successors(current_tup[5])]
-            for step, result, current_weight, weight in parallel.solve_circuits_parallel(new_steps):
-                current_value = options.eval_func(U, result[0])
-                new_weight = current_weight + weight
-                if (current_value < best_value and (best_value >= options.threshold or new_weight <= best_weight)) or (current_value < options.threshold and new_weight < best_weight):
-                    best_value = current_value
-                    best_pair = (step, result[1])
-                    best_weight = new_weight
-                    logger.logprint("New best! score: {} at weight: {}".format(best_value, new_weight))
-                if weight_limit is None or new_weight < weight_limit:
-                    heapq.heappush(queue, (h(step, result[1], new_weight, options), new_weight, current_value, tiebreaker, result[1], step))
-                    tiebreaker+=1
-            logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
-            checkpoint.save((options, queue, best_weight, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
-
+                then = timer()
+                new_steps = [(successor[0], current_tup[1], successor[1]) for current_tup in popped for successor in options.gateset.successors(current_tup[5])]
+                for step, result, current_weight, weight in parallel.solve_circuits_parallel(new_steps):
+                    current_value = options.eval_func(U, result[0])
+                    new_weight = current_weight + weight
+                    if (current_value < best_value and (best_value >= options.threshold or new_weight <= best_weight)) or (current_value < options.threshold and new_weight < best_weight):
+                        best_value = current_value
+                        best_pair = (step, result[1])
+                        best_weight = new_weight
+                        logger.logprint("New best! score: {} at weight: {}".format(best_value, new_weight))
+                    if weight_limit is None or new_weight < weight_limit:
+                        heapq.heappush(queue, (h(step, result[1], new_weight, options), new_weight, current_value, tiebreaker, result[1], step))
+                        tiebreaker+=1
+                logger.logprint("Layer completed after {} seconds".format(timer() - then), verbosity=2)
+                checkpoint.save((options, queue, best_weight, best_value, best_pair, tiebreaker, rectime+(timer()-starttime)))
+        finally:
+            parallel.done()
 
         logger.logprint("Finished compilation at weight {} with score {} after {} seconds.".format(best_weight, best_value, rectime+(timer()-starttime)))
         parallel.done()
