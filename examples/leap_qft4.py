@@ -12,4 +12,4 @@ with qsearch.Project("leapex") as project:
     project["compiler_class"] = leap_compiler.LeapCompiler
     project["verbosity"] = 2
     project.run()
-    project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, weight_limit=7)
+    project.post_process(post_processing.LEAPReoptimizing_PostProcessor(), solver=multistart_solvers.MultiStart_Solver(8), parallelizer=parallelizers.ProcessPoolParallelizer, reoptimize_size=7)
