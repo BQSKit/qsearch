@@ -228,7 +228,7 @@ class Project:
                 except KeyboardInterrupt:
                     self.aborted = True
                     self.logger.logprint("\nStopping due to Ctrl+C...\n")
-                    project.status()
+                    self.status()
                     return
             else:
                 with threadpool_limits(limits=blas_threads, user_api='blas'):
@@ -238,7 +238,7 @@ class Project:
                     except KeyboardInterrupt:
                         self.aborted = True
                         self.logger.logprint("\nStopping due to Ctrl+C...\n")
-                        project.status()
+                        self.status()
                         return
             endtime = time()
             self.logger.logprint("Finished compilation of {}".format(name))
