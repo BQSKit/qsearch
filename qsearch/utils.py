@@ -44,7 +44,7 @@ def op_norm(A):
 def matrix_distance_squared(A,B):
     # this distance function is designed to be phase agnostic
     # optimized implementation
-    return 1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0]
+    return np.abs(1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0])
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.T.conjugate()))) / A.shape[0]
 
@@ -177,7 +177,7 @@ def generate_stateprep_target_matrix(state):
     return M
 
 def matrix_distance(A,B):
-    return np.sqrt(np.abs(matrix_distance_squared(A,B)))
+    return np.abs(np.sqrt(np.abs(matrix_distance_squared(A,B))))
 
 def re_rot_z(theta, old_z):
     old_z[0,0] = np.exp(-1j*theta/2)
