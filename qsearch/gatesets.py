@@ -165,7 +165,7 @@ class QubitCNOTRing(Gateset):
         return gates + [finisher]
 
 class QubitCZLinear(Gateset):
-    """A Gateset for working with CZ and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology.  This Gateset covers the same search space but uses fewer parameters than ZXZXZCNOTLinear and U3CNOTLinear."""
+    """A Gateset for working with CZ and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
     def __init__(self):
         self.single_gate = U3Gate()
         self.single_alt  = XZXZGate()
@@ -188,7 +188,7 @@ class QubitCZLinear(Gateset):
         return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.two_gate, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitISwapLinear(Gateset):
-    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology.  This Gateset covers the same search space but uses fewer parameters than ZXZXZCNOTLinear and U3CNOTLinear."""
+    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
     def __init__(self):
         self.single_gate = U3Gate()
         self.single_alt  = XZXZGate()
@@ -211,7 +211,7 @@ class QubitISwapLinear(Gateset):
         return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.two_gate, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitXXLinear(Gateset):
-    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology.  This Gateset covers the same search space but uses fewer parameters than ZXZXZCNOTLinear and U3CNOTLinear."""
+    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
     def __init__(self):
         self.single_gate = U3Gate()
         self.single_alt  = XZXZGate()
