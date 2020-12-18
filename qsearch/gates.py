@@ -571,6 +571,7 @@ class CNOTGate(Gate):
                        [0,1,0,0],
                        [0,0,0,1],
                        [0,0,1,0]], dtype='complex128')
+
     def __init__(self):
         self.num_inputs = 0
         self.qudits = 2
@@ -586,6 +587,75 @@ class CNOTGate(Gate):
 
     def __repr__(self):
         return "CNOTGate()"
+
+class CZGate(Gate):
+    """Represents the constant two-qubit gate Controlled-Z."""
+    _gate = np.array([[1,0,0,0],
+                       [0,1,0,0],
+                       [0,0,1,0],
+                       [0,0,0,-1]], dtype='complex128')
+
+    def __init__(self):
+        self.num_inputs = 0
+        self.qudits = 2
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def matrix(self, v):
+        return CZGate._gate
+
+    def assemble(self, v, i=0):
+        return [("gate", "CZ", (), (i, i+1))]
+
+    def __repr__(self):
+        return "CZGate()"
+
+class ISwapGate(Gate):
+    """Represents the constant two-qubit gate ISwap."""
+    _gate = np.array([[1,0,0,0],
+                       [0,0,1j,0],
+                       [0,1j,0,0],
+                       [0,0,0,1]], dtype='complex128')
+
+    def __init__(self):
+        self.num_inputs = 0
+        self.qudits = 2
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def matrix(self, v):
+        return ISwapGate._gate
+
+    def assemble(self, v, i=0):
+        return [("gate", "ISWAP", (), (i, i+1))]
+
+    def __repr__(self):
+        return "ISwapGate()"
+
+class XXGate(Gate):
+    """Represents the constant two-qubit gate XX(pi/2)."""
+    _gate = np.array([[0,0,0,-1j],
+                       [0,0,-1j,0],
+                       [0,-1j,0,0],
+                       [-1j,0,0,0]], dtype='complex128')
+
+    def __init__(self):
+        self.num_inputs = 0
+        self.qudits = 2
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def matrix(self, v):
+        return XXGate._gate
+
+    def assemble(self, v, i=0):
+        return [("gate", "XX", (), (i, i+1))]
+
+    def __repr__(self):
+        return "XXGate()"
 
 class NonadjacentCNOTGate(Gate):
     """Represents the two-qubit gate CNOT, but between two qubits that are not necessarily next to each other."""

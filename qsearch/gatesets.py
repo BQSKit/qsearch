@@ -164,6 +164,74 @@ class QubitCNOTRing(Gateset):
         finisher = (ProductGate(NonadjacentCNOTGate(n, n-1, 0), KroneckerGate(self.single_gate, *[I]*(n-2), self.single_alt)), 1)
         return gates + [finisher]
 
+class QubitCZLinear(Gateset):
+    """A Gateset for working with CZ and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
+    def __init__(self):
+        self.single_gate = U3Gate()
+        self.single_alt  = XZXZGate()
+        self.two_gate = CZGate()
+        self.d = 2
+
+    def initial_layer(self, n):
+        return fill_row(self.single_gate, n)
+    
+    def search_layers(self, n):
+        return linear_topology(self.two_gate, self.single_gate, n, self.d, single_alt=self.single_alt)
+
+    def branching_factor(self, qudits):
+        return qudits-1
+
+    def successors(self, circ, qudits=None):
+        if qudits is None:
+            qudits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        skip_index = find_last_3_cnots_linear(circ)
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.two_gate, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
+
+class QubitISwapLinear(Gateset):
+    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
+    def __init__(self):
+        self.single_gate = U3Gate()
+        self.single_alt  = XZXZGate()
+        self.two_gate = ISwapGate()
+        self.d = 2
+
+    def initial_layer(self, n):
+        return fill_row(self.single_gate, n)
+    
+    def search_layers(self, n):
+        return linear_topology(self.two_gate, self.single_gate, n, self.d, single_alt=self.single_alt)
+
+    def branching_factor(self, qudits):
+        return qudits-1
+
+    def successors(self, circ, qudits=None):
+        if qudits is None:
+            qudits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        skip_index = find_last_3_cnots_linear(circ)
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.two_gate, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
+
+class QubitXXLinear(Gateset):
+    """A Gateset for working with ISwap and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology."""
+    def __init__(self):
+        self.single_gate = U3Gate()
+        self.single_alt  = XZXZGate()
+        self.two_gate = XXGate()
+        self.d = 2
+
+    def initial_layer(self, n):
+        return fill_row(self.single_gate, n)
+    
+    def search_layers(self, n):
+        return linear_topology(self.two_gate, self.single_gate, n, self.d, single_alt=self.single_alt)
+
+    def branching_factor(self, qudits):
+        return qudits-1
+
+    def successors(self, circ, qudits=None):
+        if qudits is None:
+            qudits = int(np.log(circ.matrix([0]*circ.num_inputs).shape[0])/np.log(self.d))
+        skip_index = find_last_3_cnots_linear(circ)
+        return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.two_gate, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCNOTAdjacencyList(Gateset):
     """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on a custom topology, specified in the initializer."""
