@@ -40,6 +40,7 @@ class Project:
             self.rank = 0
 
         if self.rank == 0:
+            self.aborted = False
             self.folder = path
             self.name = os.path.basename(os.path.normpath(path))
             self.projfile = os.path.join(path, "qcproject")
