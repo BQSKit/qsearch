@@ -636,10 +636,10 @@ class ISwapGate(Gate):
 
 class XXGate(Gate):
     """Represents the constant two-qubit gate XX(pi/2)."""
-    _gate = np.array([[0,0,0,-1j],
-                       [0,0,-1j,0],
-                       [0,-1j,0,0],
-                       [-1j,0,0,0]], dtype='complex128')
+    _gate = 1/np.sqrt(2) * np.array([[1,0,0,-1j],
+                                    [0,1,-1j,0],
+                                    [0,-1j,1,0],
+                                    [-1j,0,0,1]], dtype='complex128')
 
     def __init__(self):
         self.num_inputs = 0
