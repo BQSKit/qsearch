@@ -86,6 +86,9 @@ assemblydict_qiskit = {
         "Z" : "qc.rz({}, {})\n",
         "U3" : "qc.u({}, {}, {}, {})\n",
         "CNOT" : "qc.cx({}, {})\n",
+        "CZ": "qc.cz({}, {})\n",
+        "XX": "qc.rxx({}, {})\n",
+        "ISWAP": "qc.iswap({}, {})\n",
 }
 
 # Currently ibm's quantum experience cannot handle normal openqasm, even though supposedly u3 and cx below should evaluate to U3 and CX above.
@@ -97,7 +100,11 @@ assemblydict_openqasm = {
         "Y" : "U({}, 0, 0) q[{}];\n",
         "Z" : "U(0, 0, {}) q[{}];\n",
         "U3" : "U({}, {}, {}) q[{}];\n",
-        "CNOT" : "CX q[{}], q[{}];\n"
+        "CNOT" : "CX q[{}], q[{}];\n",
+        # these are based on the official definition of CZ/XX/ISWAP
+        "CZ" : "U(pi/2, 0, pi) {1};\nCX {0},{1};\nU(pi/2, 0, pi) {0};\n",
+        "XX" : "U(pi/2, 0, pi) {0};\nU(pi/2, 0, pi) {1};\nCX {0},{1};\nU(0, 0, pi/2) {1};\nCX {0},{1};\nU(pi/2, 0, pi) {1};\nU(pi/2, 0, pi) {0};\n",
+        "ISWAP": "U(0, 0, pi/2) {0};\nU(0, 0, pi/2) {1};\nU(pi/2, 0, pi) {0};\nCX {0},{1};\nCX {1},{0};\nU(pi/2, 0, pi) {1};\n",
 }
 
 # currently ibm's quantum experience cannot handle normal openqasm, even though supposedly u3 and cx below should evaluate to U3 and CX above.
@@ -108,7 +115,11 @@ assemblydict_ibmopenqasm = {
         "Y" : "ry({}) q[{}];\n",
         "Z" : "rz({}) q[{}];\n",
         "U3" : "u3({}, {}, {}) q[{}];\n",
-        "CNOT" : "cx q[{}], q[{}];\n"
+        "CNOT" : "cx q[{}], q[{}];\n",
+        "CZ" : "cz q[{}], q[{}];\n",
+        "XX" : "rxx(pi/2) q[{}], q[{}];\n",
+        # this is based on the official definition of ISWAP
+        "ISWAP": "s q[{0}];\ns q[{1}];\nh q[{0}];\ncx q[{0}],q[{1}];\ncx q[{1}],q[{0}];\nh q[{1}];",
 }
 
 assemblydict_qutrit = {
