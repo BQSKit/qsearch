@@ -2,7 +2,31 @@ import qsearch
 import numpy as np
 from qsearch.gates import *
 
-def compare_gradient(gate):
+import pytest
+
+u = U3Gate()
+xzxz = XZXZGate()
+cnot = CNOTGate()
+id = IdentityGate(1)
+RUST_GATES = (
+    XGate(),
+    YGate(),
+    ZGate(),
+    XZXZGate(),
+    ZXZXZGate(),
+    U3Gate(),
+    U2Gate(),
+    IdentityGate(1),
+    CNOTGate(),
+    ProductGate(u, xzxz, u),
+    KroneckerGate(u, u),
+    KroneckerGate(u, cnot, xzxz),
+    SingleQutritGate(),
+    ProductGate(KroneckerGate(U3Gate(), U3Gate(), U3Gate()), KroneckerGate(ProductGate(CNOTGate(), KroneckerGate(XZXZGate(), U3Gate())), IdentityGate())),
+)
+
+@pytest.mark.parametrize("gate", RUST_GATES, ids=lambda gate: repr(gate))
+def test_gradients(gate):
     totaldiff = [0] * gate.num_inputs
     eps = 1e-5
     repeats = 100
@@ -23,41 +47,3 @@ def compare_gradient(gate):
 
     for i in range(gate.num_inputs):
         assert totaldiff[i] < eps
-
-
-def test_gradients_U3():
-    compare_gradient(U3Gate())
-
-def test_gradients_U2():
-    compare_gradient(U2Gate())
-
-def test_gradients_X():
-    compare_gradient(XGate())
-
-def test_gradients_Y():
-    compare_gradient(YGate())
-
-def test_gradients_Z():
-    compare_gradient(ZGate())
-
-def test_gradients_ZXZXZ():
-    compare_gradient(ZXZXZGate())
-
-def test_gradients_XZXZ():
-    compare_gradient(XZXZGate())
-
-def test_gradients_SingleQutrit():
-    compare_gradient(SingleQutritGate())
-
-def test_gradients_Kronecker_Simple():
-    compare_gradient(KroneckerGate(U3Gate(), U3Gate()))
-
-def test_gradients_Kronecker_LessSimple():
-    compare_gradient(KroneckerGate(U3Gate(), CNOTGate(), XZXZGate()))
-
-def test_gradients_Product_Simple():
-    compare_gradient(ProductGate(U3Gate(), U3Gate()))
-
-def test_gradients_Product_LessSimple():
-    compare_gradient(ProductGate(KroneckerGate(U3Gate(), U3Gate(), U3Gate()), KroneckerGate(ProductGate(CNOTGate(), KroneckerGate(XZXZGate(), U3Gate())), IdentityGate())))
-

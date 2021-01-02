@@ -50,7 +50,7 @@ ASSEMBLER_GATES = (
 )
 
 @pytest.mark.skipif(qiskit is None, reason="Qiskit not installed")
-@pytest.mark.parametrize("gate", ASSEMBLER_GATES, ids=lambda gate: gate.__class__.__name__)
+@pytest.mark.parametrize("gate", ASSEMBLER_GATES, ids=lambda gate: repr(gate))
 def test_assemble_ibmopenqasm(gate):
     parameters = np.random.uniform(size=(max(gate.num_inputs, 1),))
     cdict = {"structure": gate, "parameters": parameters}
