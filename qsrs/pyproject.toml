@@ -1,9 +1,10 @@
 [build-system]
 requires = [
     "maturin",
-    "numpy==1.16.5; python_version=='3.6'",
+    # from scipy
     "numpy==1.16.5; python_version=='3.7'",
-    "numpy==1.17.3; python_version>='3.8'",
+    "numpy==1.17.3; python_version=='3.8'",
+    "numpy; python_version>='3.9'",
 ]
 build-backend = "maturin"
 
