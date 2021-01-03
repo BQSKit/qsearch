@@ -2,7 +2,7 @@ FROM quay.io/pypa/manylinux2010_x86_64
 # This docker file is based on the official maturin docker file https://github.com/PyO3/maturin/blob/master/Dockerfile
 ENV PATH /root/.cargo/bin:$PATH
 # Add all supported python versions
-ENV PATH /opt/python/cp37-cp37m/bin/:/opt/python/cp38-cp38/bin/:/opt/python/cp39-cp39m/bin/:$PATH
+ENV PATH /opt/python/cp37-cp37m/bin/:/opt/python/cp38-cp38/bin/:/opt/python/cp39-cp39/bin/:$PATH
 # Otherwise `cargo new` errors
 ENV USER root
 
