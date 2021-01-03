@@ -62,7 +62,7 @@ pub type PySquareMatrix = PyArray2<Complex64>;
 #[cfg(feature = "python")]
 use circuits::{
     Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct,
-    GateSingleQutrit, GateU3, GateU2, GateX, GateXZXZ, GateY, GateZ, QuantumGate,
+    GateSingleQutrit, GateU3, GateU2, GateU1, GateX, GateXZXZ, GateY, GateZ, QuantumGate,
 };
 
 #[cfg(feature = "python")]
@@ -102,6 +102,10 @@ fn gate_to_object(
         }
         Gate::U2(..) => {
             let gate: PyObject = gates.get("U2Gate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::U1(..) => {
+            let gate: PyObject = gates.get("U1Gate")?.extract()?;
             gate.call0(py)?
         }
         Gate::X(..) => {
@@ -186,6 +190,7 @@ fn object_to_gate(
         }
         "U3Gate" => Ok(GateU3::new().into()),
         "U2Gate" => Ok(GateU2::new().into()),
+        "U1Gate" => Ok(GateU1::new().into()),
         "XGate" => Ok(GateX::new().into()),
         "YGate" => Ok(GateY::new().into()),
         "ZGate" => Ok(GateZ::new().into()),
@@ -297,6 +302,7 @@ impl PyGateWrapper {
             Gate::Identity(..) => String::from("Identity"),
             Gate::U3(..) => String::from("U3"),
             Gate::U2(..) => String::from("U2"),
+            Gate::U1(..) => String::from("U1"),
             Gate::X(..) => String::from("X"),
             Gate::Y(..) => String::from("Y"),
             Gate::Z(..) => String::from("Z"),

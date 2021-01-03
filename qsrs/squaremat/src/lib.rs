@@ -4,7 +4,7 @@ use ndarray::Array2;
 use num_complex::Complex64;
 
 use std::fmt;
-use std::ops::{Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[cfg(feature = "accelerate")]
 extern crate accelerate_src;
@@ -277,6 +277,20 @@ impl Div<f64> for SquareMatrix {
             )
         };
         self
+    }
+}
+
+impl Add<SquareMatrix> for SquareMatrix {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        SquareMatrix::from_vec(
+            self.data
+                .iter()
+                .zip(other.data.iter())
+                .map(|(a, b)| a + b)
+                .collect(),
+            self.size,
+        )
     }
 }
 

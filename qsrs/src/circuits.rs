@@ -23,6 +23,7 @@ pub enum Gate {
     CNOT(GateCNOT),
     U3(GateU3),
     U2(GateU2),
+    U1(GateU1),
     X(GateX),
     Y(GateY),
     Z(GateZ),
@@ -40,6 +41,7 @@ impl Gate {
             Gate::CNOT(c) => c.data.dits,
             Gate::U3(u) => u.data.dits,
             Gate::U2(u2) => u2.data.dits,
+            Gate::U1(u1) => u1.data.dits,
             Gate::X(x) => x.data.dits,
             Gate::Y(y) => y.data.dits,
             Gate::Z(z) => z.data.dits,
@@ -267,6 +269,48 @@ impl QuantumGate for GateU2 {
             vec![
                 SquareMatrix::from_vec(vec![r!(0.0), r!(0.0), phase * i!(1.0) * e2, phase * i!(1.0) * e3], 2),
                 SquareMatrix::from_vec(vec![r!(0.0), phase * i!(-1.0) * e1, r!(0.0), phase * i!(1.0) * e3], 2),
+            ],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs as usize
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateU1 {
+    pub data: QuantumGateData,
+}
+
+impl GateU1 {
+    pub fn new() -> Self {
+        GateU1 {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateU1 {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let phase = (i!(1.0) * v[0] / 2.0).exp();
+        rot_z(v[0]) * phase
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let phase = (i!(1.0) * v[0] / 2.0).exp();
+        let dphase = i!(1.0) / 2.0 * phase;
+        (
+            rot_z(v[0]) * phase,
+            vec![
+                rot_z(v[0]) * dphase + rot_z_jac(v[0]) * phase,
             ],
         )
     }
