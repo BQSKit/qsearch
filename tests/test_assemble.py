@@ -43,6 +43,8 @@ ASSEMBLER_GATES = (
     YGate(),
     ZGate(),
     U3Gate(),
+    U2Gate(),
+    U1Gate(),
     CNOTGate(),
     CZGate(),
     XXGate(),

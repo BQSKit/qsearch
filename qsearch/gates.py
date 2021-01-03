@@ -359,18 +359,38 @@ class U2Gate(Gate):
         return (U, [J1, J2])
 
     def assemble(self, v, i=0):
-        out = []
-        v = np.array(v)%(2*np.pi) # confine the range of what we print to come up with nicer numbers at no loss of generality
-        out.append(("gate", "Z", (v[0],), (i,)))
-        out.append(("gate", "Y", (np.pi/2,), (i,)))
-        out.append(("gate", "Z", (v[1],), (i,)))
-        return [("block", out)]
+        v = np.array(v)%(2*np.pi) # confine the range to nice numbers
+        return [("gate", "U3", (np.pi/2, v[0], v[1]), (i,))]
 
     def __eq__(self, other):
         return type(self) == type(other)
 
     def __repr__(self):
         return "U2Gate()"
+
+class U1Gate(Gate):
+    """Represents an parameterized single qubit gate, parameterized in the same way as IBM's U1 gate."""
+    def __init__(self):
+        self.num_inputs = 1
+        self.qudits = 1
+
+    def matrix(self, v):
+        return np.exp(1j*v[0]/2) * unitaries.rot_z(v[0])
+
+    def mat_jac(self, v):
+        U = np.exp(1j*v[0]/2) * unitaries.rot_z(v[0])
+        J1 = 1j/2 * np.exp(1j*v[0]/2) * unitaries.rot_z(v[0]) + np.exp(1j*v[0]/2) * unitaries.rot_z_jac(v[0])
+        return (U, [J1])
+
+    def assemble(self, v, i=0):
+        v = np.array(v)%(2*np.pi) # confine the range to nice numbers
+        return [("gate", "U3", (0, 0, v[0]), (i,))]
+
+    def __eq__(self, other):
+        return type(self) == type(other)
+
+    def __repr__(self):
+        return "U1Gate()"
 
 class SingleQutritGate(Gate):
     """This gate represents an arbitrary parameterized single-qutrit gate."""

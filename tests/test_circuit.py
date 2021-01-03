@@ -28,6 +28,7 @@ RUST_GATES = (
     XZXZGate(),
     U3Gate(),
     U2Gate(),
+    U1Gate(),
     IdentityGate(1),
     CNOTGate(),
     CPIGate(),

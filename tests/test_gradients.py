@@ -16,6 +16,7 @@ RUST_GATES = (
     ZXZXZGate(),
     U3Gate(),
     U2Gate(),
+    U1Gate(),
     IdentityGate(1),
     CNOTGate(),
     ProductGate(u, xzxz, u),
