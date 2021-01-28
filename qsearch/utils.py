@@ -106,9 +106,6 @@ def generate_stateprep_target_matrix(state):
     M[0] = state
     return M
 
-def matrix_distance(A,B):
-    return np.abs(np.sqrt(np.abs(matrix_distance_squared(A,B))))
-
 def re_rot_z(theta, old_z):
     old_z[0,0] = np.exp(-1j*theta/2)
     old_z[1,1] = np.exp(1j*theta/2)

@@ -18,6 +18,19 @@ def matrix_distance_squared(A,B):
     return np.abs(1 - np.abs(np.sum(np.multiply(A,np.conj(B)))) / A.shape[0])
     #original implementation
     #return 1 - np.abs(np.trace(np.dot(A,B.T.conjugate()))) / A.shape[0]
+    
+def matrix_distance(A,B):
+    """
+    The square root of matrix_distance_squared is more analgous to "distance", although for most purposes, working with a distance squared is fine, since inequalities hold.
+
+    Args:
+        A : A unitary matrix in the form of a numpy ndarray.
+        B : Another unitary matrix of the same size as A, as a numpy ndarray.
+
+    Returns:
+        Float : A single value between 0 and 1, representing how closely A and B match.  A value near 0 indicates that A and B are the same unitary, up to an overall phase difference.
+    """
+    return np.abs(np.sqrt(np.abs(matrix_distance_squared(A,B))))
 
 def matrix_distance_squared_jac(U, M, J):
     """
@@ -74,3 +87,23 @@ def matrix_residuals_slice(slices, A, B, I):
     #M *= np.abs(M[0][0])/M[0][0]
     Re, Im = np.real(M), np.imag(M)
     Re = np.reshape(Re, (1,-1))
+    Im = np.reshape(Im, (1,-1))
+    return np.append(Re, Im)
+
+def matrix_residuals_slice_jac(slices, A, B, J):
+    JU = np.array([np.append(np.reshape(np.real(K[slices]), (1,-1)), np.reshape(np.imag(K[slices]), (1,-1))) for K in J])
+    return JU.T
+
+def matrix_residuals_blacklist(badrows, badcols, A, B, I):
+    M = (B - A)
+    M = np.delete(M, badrows, 0)
+    M = np.delete(M, badcols, 1)
+    #M *= np.abs(M[0][0])/M[0][0]
+    Re, Im = np.real(M), np.imag(M)
+    Re = np.reshape(Re, (1,-1))
+    Im = np.reshape(Im, (1,-1))
+    return np.append(Re, Im)
+
+def matrix_residuals_blacklist_jac(badrows, badcols, A, B, J):
+    JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
+    return JU.T
