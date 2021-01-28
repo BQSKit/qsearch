@@ -11,6 +11,7 @@ Attributes:
 
 from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
 from functools import partial
+import numpy as np
 
 
 
@@ -47,6 +48,9 @@ def default_logger(options):
 def default_checkpoint(options):
     return checkpoints.FileCheckpoint(options=options)
 
+def default_gen_fullsize_I(options):
+    return np.eye(options.target.shape[0], dtype='complex128')
+
 def identity(U):
     return U
 
@@ -77,6 +81,7 @@ standard_smart_defaults = {
         "heuristic":default_heuristic,
         "logger" :default_logger,
         "checkpoint":default_checkpoint,
+        "fullsize_I":default_gen_fullsize_I,
         }
 
 stateprep_defaults = {
