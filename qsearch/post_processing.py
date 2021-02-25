@@ -123,6 +123,8 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
         """
         if str(result['structure']).count('CNOT') <= (options.weight_limit if 'weight_limit' in options and options.weight_limit else options.reoptimize_size):
             return result
+        if 'cut_depths' not in result:
+            return result
         best_pair = (result['structure'], result['parameters'])
         opts = options.updated(best_pair=best_pair, cut_depths=result['cut_depths'])
         return self.compile(opts)
