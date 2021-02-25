@@ -8,7 +8,6 @@ import scipy as sp
 import scipy.optimize
 
 from . import utils
-from . import comparison
 from .gatesets import *
 from .logging import Logger
 try:
@@ -48,12 +47,12 @@ def default_solver(options, x0=None):
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif error_func is not None and (error_func.__module__ != comparison.matrix_distance_squared.__module__ or (error_func.__name__ != comparison.matrix_distance_squared.__name__ and error_func.__name__ != comparison.matrix_residuals.__name__)):
+    elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed or options.error_residuals not in (comparison.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (comparison.matrix_residuals_jac, matrix_residuals_jac):
+        if rs_failed or options.error_residuals not in (utils.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (utils.matrix_residuals_jac, matrix_residuals_jac):
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
@@ -72,7 +71,7 @@ def default_solver(options, x0=None):
         except:
             jac_failed = True
 
-    if error_jac is None and error_func not in [None, comparison.matrix_distance_squared, comparison.matrix_residuals]:
+    if error_jac is None and error_func not in [None, utils.matrix_distance_squared, utils.matrix_residuals]:
         jac_failed = True
 
     if jac_failed:
@@ -117,7 +116,7 @@ class CMA_Solver(Solver):
 class COBYLA_Solver(Solver):
     """Uses cobyla gradient-free optimization from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
+        eval_func = lambda v: options.error_func(circuit, v, options.target, options)
         initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
         x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,2*np.pi))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
         return (circuit.matrix(x), x)
@@ -162,20 +161,22 @@ class BFGS_Jac_Solver(Solver):
     def solve_for_unitary(self, circuit, options, x0=None):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
-            return options.error_jac(options.target, M, jacs)
+            return options.error_jac(circuit, v, options.target,  options)
         result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
-class LeastSquares_Jac_Solver(Solver):
+class LeastSquares_Jac_Solver_Future(Solver):
     """Uses the Leavenberg-Marquardt least-squares optimizer in scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
         # 2. This solver (currently) does not correct for an overall phase, and so may not be able to find a solution for some gates with some gatesets.  It has been tested and works fine with QubitCNOTLinear, so any single-qubit and CNOT-based gateset is likely to work fine.
+        target = options.target
         I = np.eye(options.target.shape[0])
-        eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
-        jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
+        options.fullsize_I = I
+        eval_func = lambda v: options.error_residuals(circuit, v, target, options)
+        jac_func = lambda v: options.error_residuals_jac(circuit, v, target, options)
         if options.max_quality_optimization:
             result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, jac_func, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
         else:

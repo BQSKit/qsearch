@@ -34,28 +34,28 @@ def error_stateprep_distsq_jac(circuit, parameters, target, options):
 
 # Error residual funcs based on matrix comparison
 
-def resisduals_product(circuit, parameters, target, options):
+def residuals_product(circuit, parameters, target, options):
     return comparison.matrix_residuals(target, circuit.matrix(parameters), options.fullsize_I)
 
-def residuals_product_jac(circuit, parameters, target, jacs, options):
-    return comparison.matrix_distance_squared_jac(target, ciruit.matrix(parameters), jacs)
+def residuals_product_jac(circuit, parameters, target, options):
+    return comparison.matrix_residuals_jac(target, *circuit.mat_jac(parameters))
 
 def residuals_difference(circuit, parameters, target, options):
     return comparison.matrix_residuals_v2(target, circuit.matrix(parameters), options.fullsize_I)
 
-def residuals_difference_jac(circuit, parameters, target, jacs, options):
-    return comparison.matrix_residuals_v2_jac(target, circuit.matrix(parameters), jacs)
+def residuals_difference_jac(circuit, parameters, target, options):
+    return comparison.matrix_residuals_v2_jac(target, *circuit.mat_jac(parameters))
 
 def residuals_slice(circuit, parameters, target, options):
     return comparison.matrix_residuals_slice(options.slices, target, circuit.matrix(parameters), options.fullsize_I)
 
-def residuals_slice_jac(circuit, parameters, target, jacs, options):
-    return comparison.matrix_residuals_slice_jac(options.slices, target, circuit.matrix(parameters), jacs)
+def residuals_slice_jac(circuit, parameters, target, options):
+    return comparison.matrix_residuals_slice_jac(options.slices, target, circuit.mat_jac(parameters))
 
 def residuals_blacklist(circuit, parameters, target, options):
-    return comparison.matrix_residuals_blacklist(options.badrows, options.badcols, target, circuit.matrix(parameters), options.fullsize_I)
+    return comparison.matrix_residuals_blacklist(options.badrows, options.badcols, target, circuit.matrix(parameters), options.fullsize_)
 
-def residuals_blacklist_jac(circuit, parameters, target, jacs, options):
+def residuals_blacklist_jac(circuit, parameters, target, options):
     return comparison.matrix_residuals_blacklist_jac(options.badrows, options.badcols, target, circuit.matrix(parameters), jacs)
 
 

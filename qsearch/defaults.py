@@ -9,15 +9,15 @@ Attributes:
     stateprep_defaults : A dictionary containing defaults for stateprep synthesis.
 """
 
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers, comparison
 from functools import partial
 import numpy as np
 
 
 
 def default_eval_func(options):
-    if options.error_func == utils.matrix_residuals:
-        return utils.matrix_distance_squared
+    if options.error_func == comparison.matrix_residuals:
+        return comparison.matrix_distance_squared
     else:
         return options.error_func
 
@@ -31,14 +31,14 @@ def default_heuristic(options):
     raise KeyError("Unknown search_type {}, and no alternative heuristic provided.".format(options.search_type))
 
 def default_error_jac(options):
-    if options.error_func == utils.matrix_distance_squared:
-        return utils.matrix_distance_squared_jac
+    if options.error_func == comparison.matrix_distance_squared:
+        return comparison.matrix_distance_squared_jac
     else:
         return None
 
 def default_error_residuals_jac(options):
-    if options.error_residuals == utils.matrix_residuals:
-        return utils.matrix_residuals_jac
+    if options.error_residuals == comparison.matrix_residuals:
+        return comparison.matrix_residuals_jac
     else:
         return None
 
@@ -62,8 +62,8 @@ standard_defaults = {
         "weight_limit":None,
         "search_type":"astar",
         "statefile":None,
-        "error_func":utils.matrix_distance_squared,
-        "error_residuals":utils.matrix_residuals,
+        "error_func":comparison.matrix_distance_squared,
+        "error_residuals":comparison.matrix_residuals,
         "backend":backends.SmartDefaultBackend(),
         "parallelizer":parallelizers.MultiprocessingParallelizer,
         "log_file":None,
@@ -85,9 +85,9 @@ standard_smart_defaults = {
         }
 
 stateprep_defaults = {
-        "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
-        "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
-        "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None)))),
+        "error_residuals" : partial(comparison.matrix_residuals_slice, (0, slice(None))),
+        "error_residuals_jac" : partial(comparison.matrix_residuals_slice_jac, (0, slice(None))),
+        "eval_func" : partial(comparison.eval_func_from_residuals, partial(comparison.matrix_residuals_slice, (0, slice(None)))),
         "unitary_preprocessor": identity
         }
 

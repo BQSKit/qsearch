@@ -1,6 +1,8 @@
 """
 This module contains functions for comparing matrices, vectors, and other numerical objects.  These functions do not all follow a standardized form, but many of these have a standardized version found in evaluation.py.
 """
+import numpy as np
+
 from . import utils
 
 def matrix_distance_squared(A,B):
@@ -107,3 +109,9 @@ def matrix_residuals_blacklist(badrows, badcols, A, B, I):
 def matrix_residuals_blacklist_jac(badrows, badcols, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
     return JU.T
+
+
+
+
+def eval_func_from_residuals(f, A, B):
+    return np.sum(np.square(f(A,B,I=np.array(np.eye(A.shape[0]), dtype='float64'))))
