@@ -172,7 +172,7 @@ class SubCompiler(Compiler):
             else:
                 root = gates.ProductGate(initial_layer)
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            best_value = options.eval_func(U, result[0])
+            best_value = options.objective.gen_eval_func(root, options)(result[1])
             best_pair = (root, result[1])
             logger.logprint("New best! {} at depth 0".format(best_value))
             if depth == 0:
@@ -207,7 +207,7 @@ class SubCompiler(Compiler):
                 then = timer()
                 new_steps = [(current_tup[5].appending(search_layer[0]), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
                 for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
-                    current_value = options.eval_func(U, result[0])
+                    current_value = options.objective.gen_eval_func(step, options)(result[1])
                     new_depth = current_depth + weight
                     if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
                         best_value = current_value

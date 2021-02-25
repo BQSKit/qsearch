@@ -7,10 +7,10 @@ import numpy as np
 import scipy as sp
 import scipy.optimize
 
-from . import utils
-from . import comparison
+from . import utils, objectives
 from .gatesets import *
 from .logging import Logger
+
 try:
     from qsrs import LeastSquares_Jac_SolverNative, BFGS_Jac_SolverNative, native_from_object, matrix_residuals, matrix_residuals_jac
 except ImportError:
@@ -48,12 +48,12 @@ def default_solver(options, x0=None):
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif error_func is not None and (error_func.__module__ != comparison.matrix_distance_squared.__module__ or (error_func.__name__ != comparison.matrix_distance_squared.__name__ and error_func.__name__ != comparison.matrix_residuals.__name__)):
+    elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
         ls_failed = True
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed or options.error_residuals not in (comparison.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (comparison.matrix_residuals_jac, matrix_residuals_jac):
+        if rs_failed or type(options.objective) != objectives.MatrixDistanceObjective: #could/should replace this test with one that calls gen_matrix_distance etc. and checks to see if the result is None
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
@@ -72,7 +72,7 @@ def default_solver(options, x0=None):
         except:
             jac_failed = True
 
-    if error_jac is None and error_func not in [None, comparison.matrix_distance_squared, comparison.matrix_residuals]:
+    if error_jac is None and error_func not in [None, utils.matrix_distance_squared, utils.matrix_residuals]:
         jac_failed = True
 
     if jac_failed:
@@ -109,17 +109,17 @@ class CMA_Solver(Solver):
         except ImportError:
             print("ERROR: Could not find cma, try running pip install quantum_synthesis[cma]", file=sys.stderr)
             sys.exit(1)
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
+        error_func = options.gen_error_func(circuit, options)
         initial_guess = 'np.random.rand({})*2*np.pi'.format(circuit.num_inputs) if x0 is None else x0
-        xopt, _ = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2)
+        xopt, _ = cma.fmin2(error_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
-class COBYLA_Solver(Solver):
+class COBYLA_Solver_Objective(Solver):
     """Uses cobyla gradient-free optimization from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
+        error_func = options.objective.gen_error_func(circuit, options)
         initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
-        x = sp.optimize.fmin_cobyla(eval_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,2*np.pi))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
+        x = sp.optimize.fmin_cobyla(error_func, initial_guess, cons=[lambda x: np.all(np.less_equal(x,2*np.pi))], rhobeg=0.5, rhoend=1e-12, maxfun=1000*circuit.num_inputs)
         return (circuit.matrix(x), x)
 
 class DIY_Solver(Solver):
@@ -129,41 +129,15 @@ class DIY_Solver(Solver):
         self.f = f
 
     def solve_for_unitary(self, circuit, options, x0=None):
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
+        error_func = options.objective.gen_error_func(circuit, options)
         initial_guess = np.array(np.random.rand(circuit.num_inputs))*2*np.pi if x0 is None else x0
-        x = f(eval_func, initial_guess)
-
-class NM_Solver(Solver):
-    """A solver based on the Nelder-Mead gradient free optimizer from scipy."""
-    def solve_for_unitary(self, circuit, options, x0=None):
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='Nelder-Mead', options={"ftol":1e-14})
-        xopt = result.x
-        return (circuit.matrix(xopt), xopt)
-
-class CMA_Jac_Solver(Solver):
-    """A solver based on the cmaes optimizer from the cma package, but using gradients."""
-    def solve_for_unitary(self, circuit, options, x0=None):
-        try:
-            import cma
-        except ImportError:
-            print("ERROR: Could not find cma, try running pip install quantum_synthesis[cma]", file=sys.stderr)
-            sys.exit(1)
-        eval_func = lambda v: options.error_func(options.target, circuit.matrix(v))
-        jac_func  = lambda v: options.error_jac(options.target, circuit.mat_jac(v))
-        initial_guess = 'np.random.rand({})'.format(circuit.num_inputs)*2*np.pi if x0 is None else x0
-        xopt, es = cma.fmin2(eval_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2, gradf=jac_func)
-        if circuit.num_inputs > 18:
-            raise Warning("Finished with {} evaluations".format(es.result[3]))
-        return (circuit.matrix(xopt), xopt)
+        x = f(error_func, initial_guess)
 
 class BFGS_Jac_Solver(Solver):
     """A solver based on the BFGS implementation in scipy.  It requires gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
-        def eval_func(v):
-            M, jacs = circuit.mat_jac(v)
-            return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
+        error_jac = options.objective.gen_error_jac(circuit, options)
+        result = sp.optimize.minimize(error_jac, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
@@ -173,13 +147,12 @@ class LeastSquares_Jac_Solver(Solver):
         # This solver is usually faster than BFGS, but has some caveats
         # 1. This solver relies on matrix residuals, and therefore ignores the specified error_func, making it currently not suitable for alternative synthesis goals like stateprep
         # 2. This solver (currently) does not correct for an overall phase, and so may not be able to find a solution for some gates with some gatesets.  It has been tested and works fine with QubitCNOTLinear, so any single-qubit and CNOT-based gateset is likely to work fine.
-        I = np.eye(options.target.shape[0])
-        eval_func = lambda v: options.error_residuals(options.target, circuit.matrix(v), I)
-        jac_func = lambda v: options.error_residuals_jac(options.target, *circuit.mat_jac(v))
+        error_residuals = options.objective.gen_error_residuals(circuit, options)
+        error_residuals_jac = options.objective.gen_error_residuals_jac(circuit, options)
         if options.max_quality_optimization:
-            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, jac_func, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
+            result = sp.optimize.least_squares(error_residuals, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, error_residuals_jac, method="lm", ftol=5e-16, xtol=5e-16, gtol=1e-15)
         else:
-            result = sp.optimize.least_squares(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, jac_func, method="lm")
+            result = sp.optimize.least_squares(error_residuals, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, error_residuals_jac, method="lm")
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 

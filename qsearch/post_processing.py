@@ -66,7 +66,7 @@ class BasicSingleQubitReduction_PostProcessor(PostProcessor):
                 newstr = components[0] + identitystr + "".join([component + gate for component in components[1:-1]]) + components[-1]
                 newcirc = eval(newstr)
                 mat, xopt = options.solver.solve_for_unitary(newcirc, options)
-                if options.eval_func(target, mat) < options.threshold:
+                if options.objective.gen_eval_func(newcirc, options)(xopt) < options.threshold:
                     components = [components[0] + identitystr + components[1]] + components[2:]
                     finalx = xopt
                     finalcirc = newcirc
@@ -87,16 +87,17 @@ class ParameterTuning_PostProcessor(PostProcessor):
         initialx = result["parameters"]
         options = self.options.updated(options)
         options.max_quality_optimization = True
+        eval_func = options.objective.gen_eval_func(circuit, options)
         if "unitary_preprocessor" in options:
             target = options.unitary_preprocessor(options.target)
         else:
             target = options.target
-        initial_value = options.eval_func(target, circuit.matrix(initialx))
+        initial_value = eval_func(initialx)
         options.logger.logprint("Initial Distance: {}".format(initial_value))
 
         U, x = options.solver.solve_for_unitary(circuit, options)
 
-        final_value = options.eval_func(target, U)
+        final_value = eval_func(x)
         if np.abs(final_value) < np.abs(initial_value):
             options.logger.logprint("Improved Distance: {}".format(final_value))
             return {"parameters":x}
@@ -155,7 +156,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                 midpoints = [1] + [pt + int((pt - prev)/2) for pt, prev in zip(options.cut_depths[1:],options.cut_depths)]
                 logger.logprint(f'Midpoints initialized as {midpoints}', verbosity=2)
             start_point = 1
-            overall_best_value = options.eval_func(U, overall_best_pair[0].matrix(overall_best_pair[1]))
+            overall_best_value = options.objective.gen_eval_func(overall_best_pair[0], options)(overall_best_pair[1])
         else:
             overall_best_pair, start_depth, midpoints, start_point, overall_best_value = recovered_outer
         try:
@@ -212,7 +213,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                     rectime = 0
                     if recovered_state == None:
                         result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-                        best_value = options.eval_func(U, result[0])
+                        best_value = options.objective.gen_eval_func(root, options)(result[1])
                         best_pair = (root, result[1])
                         logger.logprint("New best! {} at depth 0".format(best_value))
                         if depth == 0:
@@ -245,7 +246,7 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
                         then = timer()
                         new_steps = [(current_tup[5].inserting(search_layer[0], depth=point), current_tup[1], search_layer[1]) for search_layer in search_layers for current_tup in popped]
                         for step, result, current_depth, weight in parallel.solve_circuits_parallel(new_steps):
-                            current_value = options.eval_func(U, result[0])
+                            current_value = options.objective.gen_eval_func(step, options)(result[1])
                             new_depth = current_depth + weight
                             if (current_value < best_value and (best_value >= options.threshold or new_depth <= best_depth)) or (current_value < options.threshold and new_depth < best_depth):
                                 best_value = current_value

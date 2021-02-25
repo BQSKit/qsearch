@@ -16,8 +16,11 @@ from .persistent_aposmm import initialize_APOSMM, decide_where_to_start_localopt
 
 def distance_for_x(x, options, circuit):
     """Calculate the distance between circuit and the target for input x based on the distance metric"""
+    return options.objective.gen_error_func(circuit, options)(x)
+
+    # TODO I've left this up for debate before deleting, but with the new code, it is the job of the passed Objective to manage creating an equivalent single-valued objective to use, and by default it generates one in exactly the same way as is generated here.
     if options.inner_solver.distance_metric == "Frobenius":
-        return options.error_func(options.target, circuit.matrix(x))
+        return options.objective.gen_error_func(circuit, options)(x)
     elif options.inner_solver.distance_metric == "Residuals":
         return np.sum(options.error_residuals(options.target, circuit.matrix(x), np.eye(options.target.shape[0]))**2)
 
