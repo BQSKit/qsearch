@@ -74,7 +74,7 @@ class QiskitGateConverter:
 
 
 def qiskit_to_qsearch(circ, converter=None):
-    """Convert qiskit code to qsearch *structure* but not parameters"""
+    """Convert qiskit code to qsearch *structure* and parameters"""
     converter = converter if converter is not None else QiskitGateConverter(circ.num_qubits)
     circuit = []
     for gate, qubits, cbits in circ.data:
