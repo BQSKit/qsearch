@@ -242,7 +242,7 @@ fn object_to_gate(
 }
 
 #[cfg(feature = "python")]
-#[pyclass(name=Gate, dict, module = "qsrs")]
+#[pyclass(name="Gate", module = "qsrs")]
 struct PyGateWrapper {
     #[pyo3(get)]
     dits: u8,
@@ -349,7 +349,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 }
 
 #[cfg(all(feature = "python", feature = "rustopt"))]
-#[pyclass(name=BFGS_Jac_SolverNative, dict, module = "qsrs")]
+#[pyclass(name="BFGS_Jac_SolverNative", module = "qsrs")]
 struct PyBfgsJacSolver {
     size: usize,
     #[pyo3(get)]
@@ -418,7 +418,7 @@ impl PyBfgsJacSolver {
 }
 
 #[cfg(all(feature = "python", feature = "rustopt"))]
-#[pyclass(name=LeastSquares_Jac_SolverNative, dict, module = "qsrs")]
+#[pyclass(name="LeastSquares_Jac_SolverNative", module = "qsrs")]
 struct PyLeastSquaresJacSolver {
     #[pyo3(get)]
     distance_metric: String,
