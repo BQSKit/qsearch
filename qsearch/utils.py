@@ -108,6 +108,28 @@ def matrix_residuals_blacklist(badrows, badcols, A, B, I):
     Im = np.reshape(Im, (1,-1))
     return np.append(Re, Im)
 
+def distance_with_initial_state(stateA,stateB,A,B):
+    return np.abs(1-np.abs(np.vdot(A.dot(stateA),B.dot(stateB))))
+
+def distance_with_initial_state_jac(stateA,stateB,A,B,J):
+    si = A.dot(stateA)
+    s = np.vdot(si,B.dot(stateB))
+    dist = 1-np.abs(s)
+    vu = np.array([np.vdot(si, K.dot(stateB)) for K in J])
+    jacs = -(np.real(s)*np.real(vu) + np.imag(s)*np.imag(vu))/np.abs(s)
+    return (dist, jacs)
+
+def residuals_with_initial_state(stateA, stateB,A,B,I):
+    v = 1-np.conj(A.dot(stateA)) * B.dot(stateB)
+    Re, Im = np.real(v), np.imag(v)
+    return np.append(Re,Im)
+
+def residuals_with_initial_state_jac(stateA,stateB, U, M, J):
+    vc = np.conj(U.dot(stateA))
+    vu = [-vc * K.dot(stateB) for K in J]
+    vu = np.array([np.append(np.real(v),np.imag(v)) for v in vu])
+    return vu.T
+
 def matrix_residuals_blacklist_jac(slices, A, B, J):
     JU = np.array([np.append(np.reshape(np.real(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1)), np.reshape(np.imag(np.delete(np.delete(K, badrows, 0), badcols, 1)), (1,-1))) for K in J])
     return JU.T

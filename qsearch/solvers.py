@@ -18,16 +18,15 @@ except ImportError:
 def default_solver(options, x0=None):
     """Runs a complex list of tests to determine the best Solver for a specific situation."""
     options = options.copy()
-    # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
-    options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None, target=None)
-    options.remove_smart_defaults("error_func", "error_jac")
+    options.make_required("error_func", "error_residuals", "error_jac", "error_residuals_jac")
+
 
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
     # check if Rust works on the layers
     gateset = options.gateset
-    qudits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    qudits = 0 if "target" not in options else int(np.log(options.target.shape[0]) // np.log(gateset.d))
 
     rs_failed = True
     if native_from_object is not None:
@@ -41,18 +40,17 @@ def default_solver(options, x0=None):
             rs_failed = False
 
     # Check to see if the gateset and error func are explicitly supported by LeastSquares
-    error_func = options.error_func
-    error_jac = options.error_jac
     logger = options.logger
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
+
+    if "error_func" in options and "error_residuals" not in options:
         ls_failed = True
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed or options.error_residuals not in (utils.matrix_residuals, matrix_residuals) or options.error_residuals_jac not in (utils.matrix_residuals_jac, matrix_residuals_jac):
+        if rs_failed or "error_residuals" not in options or "error_residuals_jac" not in options:
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
@@ -71,7 +69,7 @@ def default_solver(options, x0=None):
         except:
             jac_failed = True
 
-    if error_jac is None and error_func not in [None, utils.matrix_distance_squared, utils.matrix_residuals]:
+    if "error_func" in options and not "error_jac" in options: 
         jac_failed = True
 
     if jac_failed:
@@ -162,7 +160,7 @@ class BFGS_Jac_Solver(Solver):
         def eval_func(v):
             M, jacs = circuit.mat_jac(v)
             return options.error_jac(options.target, M, jacs)
-        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
+        result = sp.optimize.minimize(eval_func, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True,options={"gtol":options.threshold*0.1})
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 

@@ -50,10 +50,11 @@ class SearchCompiler(Compiler):
         Args:
             options: See class level documentation for the options SearchCompiler uses
         """
-        self.options = options
+        self.options = Options()
         self.options.set_defaults(**standard_defaults)
         self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True)
         self.options.set_smart_defaults(**standard_smart_defaults)
+        self.options = self.options.updated(options)
 
     def compile(self, options=Options()):
         """

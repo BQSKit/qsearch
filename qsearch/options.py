@@ -58,10 +58,11 @@ class Options():
             # to generate an error rather than recurse infinitely when there are interdependent smart default functions
             smartfunc = self.smart_defaults[name]
             self.required.add(name)
-            retval = smartfunc(self)
-            self.smart_defaults[name] = smartfunc
-            self.cache[name] = retval
-            self.required.remove(name)
+            try:
+                retval = smartfunc(self)
+                self.cache[name] = retval
+            finally:
+                self.required.remove(name)
             return retval
         elif name in self.defaults:
             return self.defaults[name]
@@ -75,6 +76,8 @@ class Options():
     def __contains__(self, name):
         if name in self.__dict__:
             return True
+        elif name in self.required:
+            return False
         elif name in self.defaults:
             return True
         elif name in self.smart_defaults:
@@ -84,14 +87,14 @@ class Options():
 
     def empty_copy(self):
         """Create an Options object with the same defaults but without any specific values."""
-        newOptions = Options(**self.defaults)
+        newOptions = Options(self.defaults)
         newOptions.smart_defaults = self.smart_defaults
         newOptions.required = self.required.copy()
         return newOptions
 
     def copy(self):
         """Create a full copy of an Options object."""
-        newOptions = Options(**self.defaults)
+        newOptions = Options(self.defaults)
         newOptions.smart_defaults.update(self.smart_defaults)
         newOptions._update_dict(self.__dict__)
         newOptions.required = self.required.copy()
@@ -99,7 +102,7 @@ class Options():
         return newOptions
 
     def __copy__(self):
-        newOptions = Options(**self.defaults)
+        newOptions = Options(self.defaults)
         newOptions.smart_defaults.update(self.smart_defaults)
         newOptions._update_dict(self.__dict__)
         newOptions.required = self.required.copy()
