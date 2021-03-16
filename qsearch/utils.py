@@ -309,8 +309,15 @@ def upgrade_qudits(U, di=2, df=3):
 
 
 def endian_reverse(U, d=2):
+    is_vector = False
+    if len(U.shape) < 2:
+        is_vector = True
+        U = np.diag(U)
     n = int(np.log(U.shape[0])/np.log(d))
-    return remap(U, list(reversed(range(0, n))), d)
+    U = remap(U, list(reversed(range(0, n))), d)
+    if is_vector:
+        U = np.diag(U)
+    return U
 
 def mpi_rank():
     if MPI is None:
