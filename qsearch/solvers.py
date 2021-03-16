@@ -27,10 +27,10 @@ def default_solver(options, x0=None):
     # check if Rust works on the layers
     gateset = options.gateset
     qudits = 0 if "target" not in options else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
 
     rs_failed = True
     if native_from_object is not None:
-        layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
         for layer in layers:
             try:
                 native_from_object(layer[0])
@@ -50,7 +50,7 @@ def default_solver(options, x0=None):
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed or "error_residuals" not in options or "error_residuals_jac" not in options:
+        if rs_failed or "error_residuals" in options or "error_residuals_jac" in options:
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
@@ -68,6 +68,7 @@ def default_solver(options, x0=None):
             layer.mat_jac(np.random.rand(layer.num_inputs))
         except:
             jac_failed = True
+            break
 
     if "error_func" in options and not "error_jac" in options: 
         jac_failed = True

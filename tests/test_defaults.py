@@ -46,7 +46,6 @@ def test_smart_defaults():
     assert c.options.error_residuals is utils.matrix_residuals
     assert c.options.error_residuals_jac is utils.matrix_residuals_jac
 
-@pytest.mark.skip()
 def test_no_grad_gateset():
     options = Options()
     options.target = unitaries.qft(4)
@@ -54,6 +53,10 @@ def test_no_grad_gateset():
     options.gateset = NoJacCNOTLinear()
     c = compiler.SearchCompiler(options=options)
     res = c.compile()
+    assert isinstance(solvers.default_solver(c.options), solvers.COBYLA_Solver)
+    print(c.options.__dict__["solvers"])
+    print(c.options.defaults["solvers"])
+    print(c.options.smart_defaults["solvers"])
     assert isinstance(c.options.solver, solvers.COBYLA_Solver)
     assert isinstance(c.options.backend, backends.SmartDefaultBackend)
     assert isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), Gate)

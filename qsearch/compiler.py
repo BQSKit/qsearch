@@ -85,7 +85,7 @@ class SearchCompiler(Compiler):
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            return (root, result[1])
+            return {"structure":root, "parameters":result[1]}
 
         parallel = options.parallelizer(options)
         # TODO move these print statements somewhere like parallelizers possibly
