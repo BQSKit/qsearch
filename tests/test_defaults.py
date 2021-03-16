@@ -11,7 +11,7 @@ import pytest
 class NoJacQiskitU3QubitStep(Gate):
     def __init__(self):
         self.num_inputs = 3
-        self.dits = 1
+        self.qudits = 1
 
     def matrix(self, v):
         ct = np.cos(v[0] * np.pi)
@@ -25,7 +25,8 @@ class NoJacQiskitU3QubitStep(Gate):
 class NoJacCNOTLinear(gatesets.QubitCNOTLinear):
     def __init__(self):
         gatesets.QubitCNOTLinear.__init__(self)
-        self.single_step = NoJacQiskitU3QubitStep()
+        self.single_alt = NoJacQiskitU3QubitStep()
+        self.single_gate = NoJacQiskitU3QubitStep()
 
 def test_smart_defaults():
     options = Options()
@@ -46,7 +47,6 @@ def test_smart_defaults():
     assert c.options.error_residuals is utils.matrix_residuals
     assert c.options.error_residuals_jac is utils.matrix_residuals_jac
 
-@pytest.mark.skip()
 def test_no_grad_gateset():
     options = Options()
     options.target = unitaries.qft(4)

@@ -8,14 +8,21 @@ from functools import partial
 p = qsearch.Project("stateprep-example")
 
 # configure the project with the stateprep defaults instead of the standard synthesis defaults
-p.configure(**qsearch.defaults.stateprep_defaults)
-p["compiler_class"] = leap_compiler.LeapCompiler
-p["solver"] = qsearch.solvers.LeastSquares_Jac_Solver()
+
+stateprep_options = qsearch.Options(smart_defaults=qsearch.defaults.stateprep_smart_defaults)
+p.set_smart_defaults(qsearch.defaults.stateprep_smart_defaults)
 
 # add states that are converted using generate_stateprep_target_matrix
-p.add_compilation("basic_state_test", qsearch.utils.generate_stateprep_target_matrix([0.5,0,0,0.5j,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-0.5j,0,0,0,0,0,0,0,-0.5,0,0,0,0,0]))
+
+# It may seem strange that we have to pass an identity.  Qsearch is still doing unitary synthesis;
+# stateprep is achieved by modifying the way we compare unitaries such that they are compared by
+# the state produced by acting on an initial state.
+# In this case, we are synthesizing a circuit designed to act on the |000> state to match the state
+# resulting by performing the Identity on the desired state.
+# Note that you can specify the intiial state for the circuit as initial_state (the default state is
+# the zero state that matches target_state in number of qudits).
+toffoli_magic_state = np.array([0.5,0,0.5,0,0.5,0,0,0.5], dtype='complex128')
+p.add_compilation("toffoli_magic_state", np.eye(8,dtype='complex128'), target_state=toffoli_magic_state)
 
 p.run()
 
-# run post-processing to improve circuits that were generated with LEAP
-p.post_process(reoptimizing_compiler.ReoptimizingCompiler(), solver=multistart_solvers.MultiStart_Solver(12), parallelizer=parallelizers.ProcessPoolParallelizer, depth=7)

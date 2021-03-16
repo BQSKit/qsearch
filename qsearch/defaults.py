@@ -9,15 +9,13 @@ Attributes:
     stateprep_defaults : A dictionary containing defaults for stateprep synthesis.
 """
 
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers, compiler
 from functools import partial
+import numpy as np
 
 
 
 def default_eval_func(options):
-    if options.error_func == utils.matrix_residuals:
-        return utils.matrix_distance_squared
-    else:
         return options.error_func
 
 def default_heuristic(options):
@@ -47,6 +45,37 @@ def default_logger(options):
 def default_checkpoint(options):
     return checkpoints.FileCheckpoint(options=options)
 
+def stateprep_error_func(options):
+    return partial(utils.distance_with_initial_state,options.target_state,options.initial_state)
+
+def stateprep_error_jac(options):
+    return partial(utils.distance_with_initial_state_jac,options.target_state,options.initial_state)
+
+def stateprep_error_resi(options):
+    return partial(utils.residuals_with_initial_state,options.target_state,options.initial_state)
+
+def stateprep_error_resi_jac(options):
+    return partial(utils.residuals_with_initial_state_jac,options.target_state,options.initial_state)
+
+def stateprep_initial_state(options):
+    v = np.zeros(options.target_state.shape,dtype='complex128')
+    v[0] = 1
+    return v
+
+def stateprep_target(options):
+    return np.eye(options.target_state.shape[0], dtype='complex128')
+
+def stateprep_default_solver(options):
+    opt = options.copy()
+    opt.make_required("error_jac", "error_func")
+    if "error_func" in opt and "error_jac" not in opt:
+        return solvers.COBYLA_Solver()
+    else:
+        return solvers.BFGS_Jac_Solver()
+
+def default_compiler(options):
+    return compiler.SearchCompiler # this gets around some pesky import loops
+
 def identity(U):
     return U
 
@@ -68,6 +97,9 @@ standard_defaults = {
         "write_location" : None,
         "unitary_preprocessor": utils.nearest_unitary,
         "timeout" : float('inf'),
+        "blas_threads" : None,
+        "verbosity" : 1,
+        "stdout_enabled" : True,
         }
 standard_smart_defaults = {
         "eval_func":default_eval_func,
@@ -77,12 +109,16 @@ standard_smart_defaults = {
         "heuristic":default_heuristic,
         "logger" :default_logger,
         "checkpoint":default_checkpoint,
+        "compiler_class" : default_compiler,
         }
 
-stateprep_defaults = {
-        "error_residuals" : partial(utils.matrix_residuals_slice, (0, slice(None))),
-        "error_residuals_jac" : partial(utils.matrix_residuals_slice_jac, (0, slice(None))),
-        "eval_func" : partial(utils.eval_func_from_residuals, partial(utils.matrix_residuals_slice, (0, slice(None)))),
-        "unitary_preprocessor": identity
+stateprep_smart_defaults = {
+        "error_residuals" : stateprep_error_resi,
+        "error_residuals_jac" : stateprep_error_resi_jac,
+        "error_func" : stateprep_error_func,
+        "error_jac" : stateprep_error_jac,
+        "initial_state" : stateprep_initial_state,
+        "target" : stateprep_target,
+        "solver" : stateprep_default_solver,
         }
 
