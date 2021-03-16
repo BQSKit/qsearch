@@ -69,7 +69,7 @@ jobs:
         - if: startsWith(matrix.os, 'ubuntu')
           run: sudo apt install libopenblas-dev libgfortran-7-dev libceres-dev
         - if: startsWith(matrix.os, 'macOS')
-          run: brew install ceres-solver eigen
+          run: brew install ceres-solver@1.14.0 eigen
         - if: startsWith(matrix.os, 'Windows')
           run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
         - name: install test dependencies
