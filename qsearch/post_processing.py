@@ -19,7 +19,7 @@ from .gates import *
 
 from . import solvers as scsolver
 from .options import Options
-from .defaults import standard_defaults as defaults, standard_smart_defaults as smart_defaults
+from .defaults import standard_defaults, standard_smart_defaults
 from . import parallelizers, backends
 from . import utils, heuristics, gates, logging, gatesets
 from .compiler import Compiler, SearchCompiler
@@ -111,9 +111,10 @@ class LEAPReoptimizing_PostProcessor(Compiler, PostProcessor):
     qsearch on those holes to reduce the total number of gates.
     """
     def __init__(self, options=Options()):
-        self.options = options.copy()
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **defaults)
-        self.options.set_smart_defaults(**smart_defaults)
+        self.options = Options()
+        self.options.set_defaults(**standard_defaults)
+        self.options.set_smart_defaults(**standard_smart_defaults)
+        self.options = self.options.updated(options)
 
     def post_process_circuit(self, result, options=None):
         """Re-optimize a LEAP circuit. Pass "depth" to indicate the size to re-synthesize.
