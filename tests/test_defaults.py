@@ -11,7 +11,7 @@ import pytest
 class NoJacQiskitU3QubitStep(Gate):
     def __init__(self):
         self.num_inputs = 3
-        self.dits = 1
+        self.qudits = 1
 
     def matrix(self, v):
         ct = np.cos(v[0] * np.pi)
@@ -25,7 +25,8 @@ class NoJacQiskitU3QubitStep(Gate):
 class NoJacCNOTLinear(gatesets.QubitCNOTLinear):
     def __init__(self):
         gatesets.QubitCNOTLinear.__init__(self)
-        self.single_step = NoJacQiskitU3QubitStep()
+        self.single_alt = NoJacQiskitU3QubitStep()
+        self.single_gate = NoJacQiskitU3QubitStep()
 
 def test_smart_defaults():
     options = Options()
@@ -53,10 +54,6 @@ def test_no_grad_gateset():
     options.gateset = NoJacCNOTLinear()
     c = compiler.SearchCompiler(options=options)
     res = c.compile()
-    assert isinstance(solvers.default_solver(c.options), solvers.COBYLA_Solver)
-    print(c.options.__dict__["solvers"])
-    print(c.options.defaults["solvers"])
-    print(c.options.smart_defaults["solvers"])
     assert isinstance(c.options.solver, solvers.COBYLA_Solver)
     assert isinstance(c.options.backend, backends.SmartDefaultBackend)
     assert isinstance(c.options.backend.prepare_circuit(c.options.gateset.initial_layer(2), c.options), Gate)
