@@ -927,12 +927,7 @@ class ProductGate(Gate):
             subgates : A list of Gates to be multiplied together.  ProductGate returns the matrix product of the unitaries returned by those Gates.
         """
         self.num_inputs = sum([gate.num_inputs for gate in subgates])
-        self._subgates = []
-        for subgate in subgates:
-            if type(subgate) is ProductGate:
-                self._subgates.extend(subgate._subgates)
-            else:
-                self._subgates.append(subgate)
+        self._subgates = list(subgates)
         self.qudits = 0 if len(subgates) == 0 else subgates[0].qudits
 
     def matrix(self, v):
