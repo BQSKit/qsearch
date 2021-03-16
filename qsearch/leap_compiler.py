@@ -146,7 +146,8 @@ class SubCompiler(Compiler):
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            return (root, result[1])
+            value = options.eval_func(U, result[0])
+            return ((root, result[1]), value, 0)
 
         parallel = options.parallelizer(options)
         # TODO move these print statements somewhere else
