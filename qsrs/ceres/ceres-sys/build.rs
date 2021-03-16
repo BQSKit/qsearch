@@ -44,6 +44,8 @@ fn main() {
             println!("cargo:rustc-link-search=native={}/lib", ceres.display());
             println!("cargo:rustc-link-lib=static=ceres");
             cpp_build::Config::new()
+                .flag("-std=c++14")
+                .flag("-Wno-unused-parameter")
                 .include(format!("{}/include", ceres.display()))
                 .include(format!(
                     "{}/include/ceres/internal/miniglog",
@@ -57,6 +59,8 @@ fn main() {
     } else {
         println!("cargo:rustc-link-lib=ceres");
         cpp_build::Config::new()
+            .flag("-std=c++14")
+            .flag("-Wno-unused-parameter")
             .include("/usr/include/eigen3")
             .include("/usr/local/include/eigen3")
             .include("/usr/local/include/eigen")
