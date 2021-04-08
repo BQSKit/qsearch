@@ -24,10 +24,10 @@ def distance_for_x(x, options, circuit):
     elif options.inner_solver.distance_metric == "Residuals":
         return np.sum(options.error_residuals(options.target, circuit.matrix(x), np.eye(options.target.shape[0]))**2)
 
-def optimize_worker(circuit, options, q, x0):
+def optimize_worker(circuit, options, q, x0, error_func):
     """Worker function used to run the inner solver in parallel"""
     _, xopt = options.inner_solver.solve_for_unitary(circuit, options, x0)
-    q.put((distance_for_x(xopt, options, circuit), xopt))
+    q.put((error_func(xopt), xopt))
 
 class MultiStart_Solver(Solver):
     """A higher accuracy solver based on APOSMM https://www.mcs.anl.gov/~jlarson/APOSMM/
@@ -58,6 +58,7 @@ class MultiStart_Solver(Solver):
         if 'inner_solver' not in options:
             options.inner_solver = default_solver(options)
         U = options.target
+        error_func = options.objective.gen_error_func(circuit, options)
         logger = options.logger if "logger" in options else logging.Logger(verbosity=options.verbosity, stdout_enabled=options.stdout_enabled, output_file=options.log_file)
 
         #np.random.seed(4) # usually we do not want fixed seeds, but it can be useful for some debugging
@@ -77,7 +78,7 @@ class MultiStart_Solver(Solver):
         add_to_local_H(H, initial_sample, specs, on_cube=True)
 
         for i, x in enumerate(initial_sample):
-            H['f'][i] = distance_for_x(2*np.pi*x, options, circuit)
+            H['f'][i] = error_func(2*np.pi*x)
 
         H[['returned']] = True
 
@@ -91,7 +92,7 @@ class MultiStart_Solver(Solver):
         processes = []
         rets = []
         for x0 in starting_points:
-            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0))
+            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, 2*np.pi*x0, error_func))
             processes.append(p)
             p.start()
         for p in processes:
