@@ -61,10 +61,10 @@ jobs:
             path: |
               qsrs/target/vcpkg
             key: ${{ runner.os }}-cargo2-${{ hashFiles('**/Cargo.toml') }}
-        - name: Install nightly-2020-04-06
+        - name: Install nightly-2021-04-13
           uses: actions-rs/toolchain@v1
           with:
-              toolchain: nightly-2020-04-06
+              toolchain: nightly-2021-04-13
               default: true
         - if: startsWith(matrix.os, 'ubuntu')
           run: sudo apt install libopenblas-dev libgfortran-7-dev libceres-dev
