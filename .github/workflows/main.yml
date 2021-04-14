@@ -116,7 +116,7 @@ jobs:
           if: contains(github.event.head_commit.message, '[qsrs pypi]') && !((matrix.python-version == 3.6 || matrix.python-version == 3.8 || matrix.python_version == 3.9) && startsWith(matrix.os, 'ubuntu'))
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rm -rf target/wheels
-          if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.8
+          if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.7
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rmdir /s /q target\vcpkg
           shell: cmd
