@@ -98,7 +98,7 @@ jobs:
           run: cd qsrs && rm -rf target
           if: startsWith(matrix.os, 'ubuntu')
         - name: Build manylinux wheels
-          run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2014:0.1 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2014 --no-sdist
+          run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2014:0.1 build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/static,squaremat/openblas-static" --release --manylinux 2014 --no-sdist
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == 3.7

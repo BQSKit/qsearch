@@ -9,7 +9,7 @@ publish = false
 include = ["src/**/*", "LICENSE", "README.md", "build.rs", "Dockerfile", "pyproject.toml", "test-requirements.txt", "squaremat/**/*", "ceres/**/*"]
 
 [features]
-static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-src/cblas", "squaremat/openblas-static", "ceres/static"]
+static = ["openblas-src", "blas-src/openblas", "openblas-src/cblas", "ceres/static"]
 default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system", "rustopt"]
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
