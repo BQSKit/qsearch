@@ -2,7 +2,6 @@ use crate::utils::{rot_x, rot_x_jac, rot_y, rot_y_jac, rot_z, rot_z_jac, rot_z_j
 use crate::{i, r};
 use enum_dispatch::enum_dispatch;
 use num_complex::Complex64;
-use reduce::Reduce;
 use squaremat::SquareMatrix;
 
 #[enum_dispatch]
