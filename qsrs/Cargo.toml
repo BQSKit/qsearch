@@ -9,7 +9,7 @@ publish = false
 include = ["src/**/*", "LICENSE", "README.md", "build.rs", "Dockerfile", "pyproject.toml", "test-requirements.txt", "squaremat/**/*", "ceres/**/*"]
 
 [features]
-static = ["openblas-src", "blas-src/openblas", "openblas-src/cblas", "ceres/static"]
+static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "squaremat/openblas-static", "openblas-src/cblas", "ceres/static"]
 default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system", "rustopt"]
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
@@ -35,6 +35,9 @@ nlopt = { version = "0.5.3", optional = true }
 ceres = { path = "./ceres", optional = true }
 num_cpus = "1.13.0"
 pyo3 = { version = "0.13.2", features = ["extension-module", "abi3-py37"] }
+
+[patch.crates-io]
+openblas-src = { git = "https://github.com/ethanhs/openblas-src", branch="vcpkgfix" }
 
 [lib]
 name = "qsrs"
