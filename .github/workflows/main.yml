@@ -69,15 +69,16 @@ jobs:
         - if: startsWith(matrix.os, 'ubuntu')
           run: sudo apt install libopenblas-dev libgfortran-7-dev libceres-dev
         - if: startsWith(matrix.os, 'macOS')
-          run: brew install ceres-solver eigen
+          run: brew install eigen gcc gfortran
         - if: startsWith(matrix.os, 'Windows')
           run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
         - name: install test dependencies
           run: pip install -r test-requirements.txt
         - name: Build macOS wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
+            CC: "gcc-10"
           if: startsWith(matrix.os, 'macOS')
         - name: Build Windows wheels
           run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/system,squaremat/openblas-system" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
