@@ -83,7 +83,7 @@ class Gate():
         return repr(self) == repr(other)
 
     def __hash__(self):
-        return int(md5(repr(self).encode()).hexdigest(), 16)
+        return int(md5(repr(self).encode()).hexdigest(), 16) # using md5 rather than the default python has method ensures that hashes don't change when restarting python, which can be a problem if hashes are saved as part of intermediate states
 
     def copy(self):
         return self
