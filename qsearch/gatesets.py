@@ -123,10 +123,15 @@ class U3CNOTLinear(Gateset):
         return linear_topology(self.cnot, self.single_gate, n, self.d)
 
 class QubitCNOTLinear(Gateset):
-    """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology.  This Gateset covers the same search space but uses fewer parameters than ZXZXZCNOTLinear and U3CNOTLinear."""
-    def __init__(self):
-        self.single_gate = U3Gate()
-        self.single_alt  = XZXZGate()
+    """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on the linear topology.  This Gateset covers the same search space but uses fewer parameters than ZXZXZCNOTLinear and U3CNOTLinear.
+    
+       Args:
+           single_gate: A qsearch.gates.Gate object used as the single-qubit gate placed after the target side of a CNOT.
+           single_alt: A qsearch.gates.Gate object used as the single-qubit gate placed after the control side of a CNOT.
+    """
+    def __init__(self, single_gate=U3Gate(), single_alt=XZXZGate()):
+        self.single_gate = single_gate
+        self.single_alt  = single_alt
         self.cnot = CNOTGate()
         self.d = 2
 
@@ -146,10 +151,14 @@ class QubitCNOTLinear(Gateset):
         return [(circ.appending(layer[0]), layer[1]) for layer in linear_topology(self.cnot, self.single_gate, qudits, self.d, single_alt=self.single_alt, skip_index=skip_index)]
 
 class QubitCNOTRing(Gateset):
-    """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on the ring topology."""
-    def __init__(self):
-        self.single_gate = U3Gate()
-        self.single_alt  = XZXZGate()
+    """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on the ring topology.
+       Args:
+           single_gate: A qsearch.gates.Gate object used as the single-qubit gate placed after the target side of a CNOT.
+           single_alt: A qsearch.gates.Gate object used as the single-qubit gate placed after the control side of a CNOT.
+    """
+    def __init__(self, single_gate=U3Gate(), single_alt=XZXZGate()):
+        self.single_gate = single_gate
+        self.single_alt  = single_alt
         self.cnot = CNOTGate()
         self.d = 2
 
@@ -235,7 +244,7 @@ class QubitXXLinear(Gateset):
 
 class QubitCNOTAdjacencyList(Gateset):
     """A Gateset for working with CNOT and single-qubit gates parameterized with U3Gate and XZXZGate on a custom topology, specified in the initializer."""
-    def __init__(self, adjacency):
+    def __init__(self, adjacency, single_gate=U3Gate(), single_alt=XZXZGate()):
         """
         Allows the specification of a custom topology through an adjacency list.
 
@@ -246,9 +255,11 @@ class QubitCNOTAdjacencyList(Gateset):
 
         Args:
             adjacency : A list of tuples specifying which CNOT placements are allowed.  The tuples must be in the form of (control, target).
+            single_gate: A qsearch.gates.Gate object used as the single-qubit gate placed after the target side of a CNOT.
+            single_alt: A qsearch.gates.Gate object used as the single-qubit gate placed after the control side of a CNOT.
         """
-        self.single_gate = U3Gate()
-        self.single_alt = XZXZGate()
+        self.single_gate = single_gate
+        self.single_alt = single_alt
         self.I = IdentityGate()
         self.adjacency = adjacency
         self.d = 2
