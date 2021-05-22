@@ -27,6 +27,7 @@ pub enum Gate {
     Y(GateY),
     Z(GateZ),
     XZXZ(GateXZXZ),
+    ZXZXZ(GateZXZXZ),
     Kronecker(GateKronecker),
     Product(GateProduct),
     ConstantUnitary(GateConstantUnitary),
@@ -45,6 +46,7 @@ impl Gate {
             Gate::Y(y) => y.data.dits,
             Gate::Z(z) => z.data.dits,
             Gate::XZXZ(x) => x.data.dits,
+            Gate::ZXZXZ(x) => x.data.dits,
             Gate::Kronecker(k) => k.data.dits,
             Gate::Product(p) => p.data.dits,
             Gate::ConstantUnitary(pl) => pl.data.dits,
@@ -470,6 +472,76 @@ impl QuantumGate for GateXZXZ {
         let u = rotz3.matmul(&out2);
 
         (u, vec![J1, J2])
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateZXZXZ {
+    pub data: QuantumGateData,
+    x90_index: usize,
+}
+
+impl GateZXZXZ {
+    pub fn new(x90_index: usize) -> Self {
+        GateZXZXZ {
+            data: QuantumGateData {
+                dits: 1,
+                num_inputs: 3,
+            },
+            x90_index,
+        }
+    }
+}
+
+impl QuantumGate for GateZXZXZ {
+    fn mat(&self, v: &[f64], constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let rotz = rot_z(v[0]);
+        let start = constant_gates[self.x90_index].matmul(&rotz);
+        let rotz1 = rot_z(v[1]);
+        let buffer = rotz1.matmul(&start);
+        let out = constant_gates[self.x90_index].matmul(&buffer);
+        let rotz2 = rot_z(v[2]);
+        rotz2.matmul(&out)
+    }
+
+    #[allow(non_snake_case)]
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let rotz_jac = rot_z_jac_mul(v[0], Some(1.0));
+        let start = constant_gates[self.x90_index].matmul(&rotz_jac);
+        let rotz1_1 = rot_z(v[1]);
+        let buffer = rotz1_1.matmul(&start);
+        let out = constant_gates[self.x90_index].matmul(&buffer);
+        let rotz2_1 = rot_z(v[2]);
+        let J1 = rotz2_1.matmul(&out);
+
+        let rotz0_2 = rot_z(v[0]);
+        let start2 = constant_gates[self.x90_index].matmul(&rotz0_2);
+        let rotz_jac1 = rot_z_jac_mul(v[1], Some(1.0));
+        let buffer2 = rotz_jac1.matmul(&start2);
+        let out2 = constant_gates[self.x90_index].matmul(&buffer2);
+        let rotz2_2 = rot_z(v[2]);
+        let J2 = rotz2_2.matmul(&out2);
+
+        let rotz_jac2 = rot_z_jac_mul(v[2], Some(1.0));
+        let rotz0_3 = rot_z(v[0]);
+        let start3 = constant_gates[self.x90_index].matmul(&rotz0_3);
+        let rotz1_3 = rot_z(v[1]);
+        let buffer3 = rotz1_3.matmul(&start3);
+        let out3 = constant_gates[self.x90_index].matmul(&buffer3);
+        let J3 = rotz_jac2.matmul(&out3);
+
+        let rotz2_3 = rot_z(v[2]);
+        let u = rotz2_3.matmul(&out3);
+
+        (u, vec![J1, J2, J3])
     }
 
     fn inputs(&self) -> usize {
