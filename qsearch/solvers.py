@@ -19,20 +19,19 @@ except ImportError:
 def default_solver(options, x0=None):
     """Runs a complex list of tests to determine the best Solver for a specific situation."""
     options = options.copy()
-    # re-route the default behavior for error_func and error_jac because the default functions for those parameters often rely on the return valye from default_solver
-    options.set_defaults(logger=Logger(), U=np.array([]), error_func=None, error_jac=None, target=None)
-    options.remove_smart_defaults("error_func", "error_jac")
+    options.make_required("error_func", "error_residuals", "error_jac", "error_residuals_jac")
+
 
     # Choosse the best default solver for the given gateset
     ls_failed = False
 
     # check if Rust works on the layers
     gateset = options.gateset
-    qudits = 0 if options.target is None else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    qudits = 0 if "target" not in options else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
 
     rs_failed = True
     if native_from_object is not None:
-        layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
         for layer in layers:
             try:
                 native_from_object(layer[0])
@@ -42,13 +41,12 @@ def default_solver(options, x0=None):
             rs_failed = False
 
     # Check to see if the gateset and error func are explicitly supported by LeastSquares
-    error_func = options.error_func
-    error_jac = options.error_jac
     logger = options.logger
 
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
-    elif error_func is not None and (error_func.__module__ != utils.matrix_distance_squared.__module__ or (error_func.__name__ != utils.matrix_distance_squared.__name__ and error_func.__name__ != utils.matrix_residuals.__name__)):
+
+    if "error_func" in options and "error_residuals" not in options:
         ls_failed = True
 
     if not ls_failed:
@@ -71,8 +69,9 @@ def default_solver(options, x0=None):
             layer.mat_jac(np.random.rand(layer.num_inputs))
         except:
             jac_failed = True
+            break
 
-    if error_jac is None and error_func not in [None, utils.matrix_distance_squared, utils.matrix_residuals]:
+    if "error_func" in options and not "error_jac" in options: 
         jac_failed = True
 
     if jac_failed:

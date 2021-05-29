@@ -111,6 +111,28 @@ def matrix_residuals_blacklist_jac(badrows, badcols, A, B, J):
     return JU.T
 
 
+def distance_with_initial_state(stateA, stateB, A, B):
+    return max([np.linalg.norm(x,ord=1) for x in A])
+
+def distance_with_initial_state_jac(stateA,stateB,A,B,J):
+    si = A.dot(stateA)
+    s = np.vdot(si,B.dot(stateB))
+    dist = 1-np.abs(s)
+    vu = np.array([np.vdot(si, K.dot(stateB)) for K in J])
+    jacs = -(np.real(s)*np.real(vu) + np.imag(s)*np.imag(vu))/np.abs(s)
+    return (dist, jacs)
+
+def residuals_with_initial_state(stateA, stateB,A,B,I):
+    v = 1-np.conj(A.dot(stateA)) * B.dot(stateB)
+    Re, Im = np.real(v), np.imag(v)
+    return np.append(Re,Im)
+
+def residuals_with_initial_state_jac(stateA,stateB, U, M, J):
+    vc = np.conj(U.dot(stateA))
+    vu = [-vc * K.dot(stateB) for K in J]
+    vu = np.array([np.append(np.real(v),np.imag(v)) for v in vu])
+    return vu.T
+
 
 
 def eval_func_from_residuals(f, A, B):

@@ -49,7 +49,6 @@ class Project:
                     os.mkdir(path)
                 with open(self.projfile, "rb") as projfile:
                     self._compilations, self.options = pickle.load(projfile)
-                    self.set_defaults()
                     self.logger = logging.Logger(self.options.stdout_enabled, os.path.join(path, "{}-project-log.txt".format(self.name)), self.options.verbosity)
                     self.logger.logprint("Successfully loaded project {}".format(self.name))
                     self.status(logger=self.logger)
@@ -57,6 +56,7 @@ class Project:
                 self._compilations = dict()
                 self.options = Options()
                 self.set_defaults()
+                self.set_smart_defaults()
                 self.logger = logging.Logger(True, os.path.join(path, "{}-project-log.txt".format(self.name)), verbosity=1)
 
     def _save(self):
@@ -91,7 +91,6 @@ class Project:
             elif s == Project_Status.PROGRESS or s == Project_Status.COMPLETE:
                 warn("A compilation with name {} already exists.  To change it, remove it and then add it again.".format(name), RuntimeWarning, stacklevel=2)
                 return
-        
         compopt = Options(statefile=self._checkpoint_path(name))
         compopt.update(options, **extraargs)
         compopt.target = U
@@ -196,10 +195,13 @@ class Project:
         else:
             sys.exit(0)
 
-    def set_defaults(self):
-        """Updates the Project Options with the standard defaults from defaults.py"""
-        self.options.set_defaults(verbosity=1,stdout_enabled=True,blas_threads=None,compiler_class=SearchCompiler,**standard_defaults)
-        self.options.set_smart_defaults(**standard_smart_defaults)
+    def set_defaults(self, defaults=standard_defaults):
+        """Updates the Project Options with the standard defaults from defaults.py, or a provided dictionary."""
+        self.options.set_defaults(**defaults)
+
+    def set_smart_defaults(self, smart_defaults=standard_smart_defaults):
+        """Updates the Project Options with the standard smart_defaults from defaults.py, or a provided dictionary"""
+        self.options.set_smart_defaults(**smart_defaults)
 
     def run(self):
         """Runs all of the compilations in the Project."""

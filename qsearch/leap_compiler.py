@@ -53,9 +53,10 @@ class LeapCompiler(Compiler):
         Args:
             options: options for the compilations, see the class level documentation for details.
         """
-        self.options = options.copy()
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
+        self.options = Options()
+        self.options.set_defaults(**standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
+        self.options = self.options.updated(options)
 
     def compile(self, options=Options()):
         """Run LEAP on the compilation specified in options.
@@ -113,9 +114,10 @@ class SubCompiler(Compiler):
     """A modified SearchCompiler for the LeapCompiler to use.
     """
     def __init__(self, options=Options()):
-        self.options = options.copy()
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True, **standard_defaults)
+        self.options = Options()
+        self.options.set_defaults(**standard_defaults)
         self.options.set_smart_defaults(**standard_smart_defaults)
+        self.options = self.options.updated(options)
 
     def compile(self, options=Options()):
         options = self.options.updated(options)
@@ -144,7 +146,8 @@ class SubCompiler(Compiler):
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            return (root, result[1])
+            value = options.eval_func(U, result[0])
+            return ((root, result[1]), value, 0)
 
         parallel = options.parallelizer(options)
         # TODO move these print statements somewhere else

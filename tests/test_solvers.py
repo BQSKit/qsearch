@@ -27,8 +27,8 @@ def test_bfgs_jac(project):
 def test_least_squares_jac(project):
     project.add_compilation('qft3', qft3)
     project['solver'] = solvers.LeastSquares_Jac_Solver()
-    project['error_func'] = utils.matrix_residuals
-    project['error_jac'] = utils.matrix_residuals_jac
+    project['error_residuals'] = utils.matrix_residuals
+    project['error_residuals_jac'] = utils.matrix_residuals_jac
     project.run()
 
 @pytest.mark.skipif(sys.platform == 'win32', reason="This test currently hangs due to the nested parallel executor")
@@ -37,8 +37,8 @@ def test_multistart_least_squares(project):
     project['solver'] = multistart_solvers.MultiStart_Solver(2)
     project['inner_solver'] = solvers.LeastSquares_Jac_Solver()
     project['parallelizer'] = parallelizers.ProcessPoolParallelizer
-    project['error_func'] = utils.matrix_residuals
-    project['error_jac'] = utils.matrix_residuals_jac
+    project['error_residuals'] = utils.matrix_residuals
+    project['error_residuals_jac'] = utils.matrix_residuals_jac
     project.run()
 
 @pytest.mark.skipif(sys.platform == 'win32', reason="This test currently hangs due to the nested parallel executor")

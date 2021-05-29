@@ -2,6 +2,7 @@ use cmake::Config;
 use std::env;
 
 fn main() {
+    let target = env::var("TARGET").unwrap();
     if env::var("CARGO_FEATURE_STATIC").is_ok() {
         if cfg!(target_os = "windows") {
             #[cfg(target_os = "windows")]
@@ -26,10 +27,15 @@ fn main() {
             #[cfg(target_os = "windows")]
             println!("cargo:rustc-link-lib=shlwapi")
         } else {
+            let use_cxx_threads = if target.contains("apple") {
+                "OFF"
+            } else {
+                "ON"
+            };
             let ceres = Config::new("ceres-solver")
                 .define("EXPORT_BUILD_DIR", "ON")
                 .define("CXX11", "ON")
-                .define("CXX11_THREADS", "ON")
+                .define("CXX11_THREADS", use_cxx_threads)
                 .define("BUILD_TESTING", "OFF")
                 .define("BUILD_BENCHMARKS", "OFF")
                 .define("MINIGLOG", "ON")
@@ -42,8 +48,14 @@ fn main() {
                 .define("CXSPARSE", "OFF")
                 .build();
             println!("cargo:rustc-link-search=native={}/lib", ceres.display());
-            println!("cargo:rustc-link-lib=static=ceres");
+            if env::var("PROFILE").unwrap() == "debug" {
+                println!("cargo:rustc-link-lib=static=ceres-debug");
+            } else {
+                println!("cargo:rustc-link-lib=static=ceres");
+            }
             cpp_build::Config::new()
+                .flag("-std=c++14")
+                .flag("-Wno-unused-parameter")
                 .include(format!("{}/include", ceres.display()))
                 .include(format!(
                     "{}/include/ceres/internal/miniglog",
@@ -57,12 +69,13 @@ fn main() {
     } else {
         println!("cargo:rustc-link-lib=ceres");
         cpp_build::Config::new()
+            .flag("-std=c++14")
+            .flag("-Wno-unused-parameter")
             .include("/usr/include/eigen3")
             .include("/usr/local/include/eigen3")
             .include("/usr/local/include/eigen")
             .build("src/solve_silent.rs");
     }
-    let target = env::var("TARGET").unwrap();
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=dylib=c++");
     } else if target.contains("linux") {

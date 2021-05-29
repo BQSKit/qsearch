@@ -56,7 +56,7 @@ impl Solver for BfgsJacSolver {
         let mut x0: Vec<f64> = if let Some(x) = x0 {
             x
         } else {
-            (0..i).map(|_| rng.gen_range(0.0, 2.0 * PI)).collect()
+            (0..i).map(|_| rng.gen_range(0.0..2.0 * PI)).collect()
         };
         let mut fmin = Nlopt::new(Algorithm::Lbfgs, i, &f, Target::Minimize, ());
         fmin.set_upper_bound(2.0 * PI).unwrap();
@@ -98,7 +98,7 @@ impl Solver for LeastSquaresJacSolver {
         let mut x0: Vec<f64> = if let Some(x) = x0 {
             x
         } else {
-            (0..i).map(|_| rng.gen_range(0.0, 2.0 * PI)).collect()
+            (0..i).map(|_| rng.gen_range(0.0..2.0 * PI)).collect()
         };
         let eye = Array2::eye(unitary.size);
         let mut cost_fn = |params: &[f64], resids: &mut [f64], jac: Option<&mut [f64]>| {

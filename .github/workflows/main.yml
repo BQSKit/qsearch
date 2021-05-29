@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7,3.8,3.9]
-        os: [macOS-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
       fail-fast: false
     steps:
         - name: checkout
@@ -61,26 +61,27 @@ jobs:
             path: |
               qsrs/target/vcpkg
             key: ${{ runner.os }}-cargo2-${{ hashFiles('**/Cargo.toml') }}
-        - name: Install nightly-2020-04-06
+        - name: Install nightly-2021-04-13
           uses: actions-rs/toolchain@v1
           with:
-              toolchain: nightly-2020-04-06
+              toolchain: nightly-2021-04-13
               default: true
         - if: startsWith(matrix.os, 'ubuntu')
           run: sudo apt install libopenblas-dev libgfortran-7-dev libceres-dev
         - if: startsWith(matrix.os, 'macOS')
-          run: brew install ceres-solver eigen
+          run: brew install eigen gcc gfortran
         - if: startsWith(matrix.os, 'Windows')
           run: cargo install cargo-vcpkg && cd qsrs && cargo vcpkg -v build
         - name: install test dependencies
           run: pip install -r test-requirements.txt
         - name: Build macOS wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,accelerate,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
+            CC: "gcc-10"
           if: startsWith(matrix.os, 'macOS')
         - name: Build Windows wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,rustopt,static" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/system,squaremat/openblas-system" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'Windows')
@@ -98,25 +99,27 @@ jobs:
           run: cd qsrs && rm -rf target
           if: startsWith(matrix.os, 'ubuntu')
         - name: Build manylinux wheels
-          run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2010:0.8 build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --manylinux 2010 --no-sdist
+          run: cd qsrs && docker run -e OPENBLAS_ARGS="DYNAMIC_ARCH=1" --rm -v $(pwd):/io ethanhs/maturin-manylinux-2014:0.1 build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/static,squaremat/openblas-static" --release --manylinux 2014 --no-sdist
           env:
             RUST_BACKTRACE: 1
-          if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == 3.8
+          if: startsWith(matrix.os, 'ubuntu') && matrix.python-version == 3.7
         - name: upload wheel artifacts
           uses: actions/upload-artifact@v1
           with:
             name: qsrs-wheels-${{matrix.os}}-${{matrix.python-version}}
             path: qsrs/target/wheels
-          if: startsWith(matrix.os, 'macOS') || matrix.python-version == 3.8
+          if: startsWith(matrix.os, 'macOS') || matrix.python-version == 3.7
         - name: Publish qsrs to PyPI
-          env:
-            TWINE_USERNAME: __token__
-            TWINE_PASSWORD: ${{ secrets.pypi_password }}
-          run: twine upload qsrs/target/wheels/*
-          if: contains(github.event.head_commit.message, '[qsrs pypi]') && !((matrix.python-version == 3.6 || matrix.python-version == 3.7 || matrix.python_version == 3.9) && startsWith(matrix.os, 'ubuntu'))
+          uses: pypa/gh-action-pypi-publish@release/v1
+          with:
+            user: __token__
+            password: ${{ secrets.pypi_password }}
+            packages_dir: qsrs/target/wheels
+            skip_existing: true
+          if: contains(github.event.head_commit.message, '[qsrs pypi]') && !((matrix.python-version == 3.6 || matrix.python-version == 3.8 || matrix.python_version == 3.9) && startsWith(matrix.os, 'ubuntu'))
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rm -rf target/wheels
-          if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.8
+          if: (startsWith(matrix.os, 'macOS') || startsWith(matrix.os, 'ubuntu')) && matrix.python-version != 3.7
         - name: Remove target/wheels to clear some space
           run: cd qsrs && rmdir /s /q target\vcpkg
           shell: cmd

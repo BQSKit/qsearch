@@ -1,6 +1,6 @@
 [package]
 name = "qsrs"
-version = "1.4.0"
+version = "1.4.2"
 authors = ["Ethan Smith <ethanhs@berkeley.edu>"]
 license = "LGPL-2.1 AND BSD-3-Clause"
 edition = "2018"
@@ -9,7 +9,7 @@ publish = false
 include = ["src/**/*", "LICENSE", "README.md", "build.rs", "Dockerfile", "pyproject.toml", "test-requirements.txt", "squaremat/**/*", "ceres/**/*"]
 
 [features]
-static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "openblas-src/cblas", "squaremat/openblas-static", "ceres/static"]
+static = ["openblas-src", "blas-src/openblas", "openblas-src/static", "squaremat/openblas-static", "openblas-src/cblas", "ceres/static"]
 default = ["openblas-src", "blas-src/openblas", "openblas-src/system", "openblas-src/cblas", "squaremat/openblas-system", "rustopt"]
 accelerate = ["accelerate-src", "blas-src/accelerate", "squaremat/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl", "squaremat/mkl"]
@@ -17,28 +17,27 @@ python = ["numpy"]
 rustopt = ["nlopt", "ceres"]
 
 [dependencies]
-num-complex = { version = "0.2.4", features = ["serde"] }
-ndarray = { version = "0.13.1", features = ["blas"] }
-blas-src = { version = "0.6.1", default-features = false }
-openblas-src = { version = "0.9.0", default-features = false, optional = true }
+num-complex = { version = "0.3.0", features = ["serde"] }
+ndarray = { version = "0.14.0", features = ["blas"] }
+blas-src = { version = "0.8.0", default-features = false }
+openblas-src = { version = "0.10.4", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
 intel-mkl-src = { version = "0.5.0", optional = true }
-enum_dispatch = "0.3.4"
-numpy = { version = "0.12.1", optional = true }
-libc = "0.2.80"
+enum_dispatch = "0.3.5"
+numpy = { version = "0.13.1", optional = true }
+libc = "0.2.93"
 num-traits = "0.2.14"
-reduce = "0.1.3"
 better-panic = "0.2.0"
 squaremat = { path = "./squaremat" }
 md5 = "0.7.0"
-rand = "0.7.3"
-nlopt = { version = "=0.5.1", optional = true }
+rand = "0.8.3"
+nlopt = { version = "0.5.3", optional = true }
 ceres = { path = "./ceres", optional = true }
 num_cpus = "1.13.0"
+pyo3 = { version = "0.13.2", features = ["extension-module", "abi3-py37"] }
 
-[dependencies.pyo3]
-version = "0.12.4"
-features = ["extension-module"]
+[patch.crates-io]
+openblas-src = { git = "https://github.com/ethanhs/openblas-src", branch="vcpkgfix" }
 
 [lib]
 name = "qsrs"
@@ -66,9 +65,6 @@ classifier = [
     'Intended Audience :: Science/Research',
     'Topic :: Software Development :: Compilers',
 ]
-
-[patch.crates-io]
-openblas-src = { git = "https://github.com/ethanhs/openblas-src", branch="scrs" }
 
 [package.metadata.vcpkg]
 git = "https://github.com/microsoft/vcpkg"

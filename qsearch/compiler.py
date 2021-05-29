@@ -46,10 +46,10 @@ class SearchCompiler(Compiler):
         Args:
             options: See class level documentation for the options SearchCompiler uses
         """
-        self.options = options
+        self.options = Options()
         self.options.set_defaults(**standard_defaults)
-        self.options.set_defaults(verbosity=1, logfile=None, stdout_enabled=True)
         self.options.set_smart_defaults(**standard_smart_defaults)
+        self.options = self.options.updated(options)
 
     def compile(self, options=Options()):
         """
@@ -80,7 +80,7 @@ class SearchCompiler(Compiler):
             logger.logprint("This gateset has no branching factor so only an initial optimization will be run.")
             root = initial_layer
             result = options.solver.solve_for_unitary(options.backend.prepare_circuit(root, options), options)
-            return (root, result[1])
+            return {"structure":root, "parameters":result[1]}
 
         parallel = options.parallelizer(options)
         # TODO move these print statements somewhere like parallelizers possibly
