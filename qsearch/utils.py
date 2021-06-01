@@ -22,6 +22,8 @@ except ImportError:
     MPI = None
 
 from . import unitaries
+
+# this is for backwards compatability
 from .comparison import *
 
 def matrix_product(*LU):

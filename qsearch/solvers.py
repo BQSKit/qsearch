@@ -7,7 +7,7 @@ import numpy as np
 import scipy as sp
 import scipy.optimize
 
-from . import utils, objectives
+from . import utils, objectives, comparison
 from .gatesets import *
 from .logging import Logger
 
@@ -18,9 +18,9 @@ except ImportError:
 
 def default_solver(options, x0=None):
     """Runs a complex list of tests to determine the best Solver for a specific situation."""
+    objectives_opt = options.copy()
     options = options.copy()
     options.make_required("error_func", "error_residuals", "error_jac", "error_residuals_jac")
-
 
     # Choosse the best default solver for the given gateset
     ls_failed = False
@@ -28,7 +28,10 @@ def default_solver(options, x0=None):
     # check if Rust works on the layers
     gateset = options.gateset
     qudits = 0 if "target" not in options else int(np.log(options.target.shape[0]) // np.log(gateset.d))
+    if "target" not in options:
+        objectives_opt.target = np.eye(2, dtype='complex128')
     layers = [(gateset.initial_layer(qudits), 0)] + gateset.search_layers(qudits)
+    circ = gateset.initial_layer(qudits)
 
     rs_failed = True
     if native_from_object is not None:
@@ -46,12 +49,12 @@ def default_solver(options, x0=None):
     if type(gateset).__module__ != QubitCNOTLinear.__module__:
         ls_failed = True
 
-    if "error_func" in options and "error_residuals" not in options:
+    if objectives_opt.objective.gen_error_residuals(circ, objectives_opt) is None:
         ls_failed = True
 
     if not ls_failed:
         # since all provided gatesets support jacobians, this is the only check we need
-        if rs_failed or type(options.objective) != objectives.MatrixDistanceObjective: #could/should replace this test with one that calls gen_matrix_distance etc. and checks to see if the result is None
+        if rs_failed or objectives_opt.error_residuals is not comparison.matrix_residuals: #could/should replace this test with one that calls gen_matrix_distance etc. and checks to see if the result is None
             logger.logprint("Smart default chose LeastSquares_Jac_Solver", verbosity=3)
             return LeastSquares_Jac_Solver()
         else:
@@ -71,7 +74,7 @@ def default_solver(options, x0=None):
             jac_failed = True
             break
 
-    if "error_func" in options and not "error_jac" in options: 
+    if objectives_opt.objective.gen_error_jac(circ, objectives_opt) is None: 
         jac_failed = True
 
     if jac_failed:
@@ -113,7 +116,7 @@ class CMA_Solver(Solver):
         xopt, _ = cma.fmin2(error_func, initial_guess, 0.25, {'verb_disp':0, 'verb_log':0, 'bounds' : [0,2*np.pi]}, restarts=2)
         return (circuit.matrix(xopt), xopt)
 
-class COBYLA_Solver_Objective(Solver):
+class COBYLA_Solver(Solver):
     """Uses cobyla gradient-free optimization from scipy."""
     def solve_for_unitary(self, circuit, options, x0=None):
         error_func = options.objective.gen_error_func(circuit, options)

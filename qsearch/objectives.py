@@ -23,7 +23,7 @@ class Objective:
         if generated_error_residuals_jac is None:
             return None
         def generated_error_jac(parameters):
-            return 2*np.sum(generated_error_residuals_jac(parameters))
+            return 2*np.sum(generated_error_residuals_jac(parameters, axis=1))
 
     def gen_error_residuals(self, circuit, options):
         return None
@@ -86,5 +86,54 @@ class StateprepObjective(Objective):
         def generated_error_residuals_jac(parameters):
             vecs = [np.dot(K, initial_state) for K in circuit.mat_jac(parameters)[1]]
             return np.array([np.append(np.real(v), np.imag(v)) for v in vecs]).T
+
+        return generated_error_residuals_jac
+
+class BackwardsCompatibleObjective(Objective):
+    def gen_error_func(self, circuit, options):
+        target = options.target
+        eval_func = options.eval_func
+        def generated_eval_func(parameters):
+            return eval_func(target, circuit.matrix(parameters))
+
+        return generated_eval_func
+
+    def gen_error_func(self, circuit, options):
+        target = options.target
+        error_func = options.error_func
+        def generated_error_func(parameters):
+            return error_func(target, circuit.matrix(parameters))
+
+        return generated_error_func
+
+    def gen_error_jac(self, circuit, options):
+        target = options.target
+        if not "error_jac" in options:
+            return None
+        error_jac = options.error_jac
+        def generated_error_jac(parameters):
+            return error_jac(target, *circuit.mat_jac(parameters))
+
+        return generated_error_jac
+
+    def gen_error_residuals(self, circuit, options):
+        target = options.target
+        if not "error_residuals" in options:
+            return None
+        error_residuals = options.error_residuals
+        I = np.eye(target.shape[0], dtype='complex128')
+        def generated_error_residuals(parameters):
+            return error_residuals(target, circuit.matrix(parameters), I)
+
+        return generated_error_residuals
+
+    def gen_error_residuals_jac(self, circuit, options):
+        target = options.target
+        if not "error_residuals_jac" in options:
+            return None
+        error_residuals_jac = options.error_residuals_jac
+        I = np.eye(target.shape[0], dtype='complex128')
+        def generated_error_residuals_jac(parameters):
+            return error_residuals_jac(target, *circuit.mat_jac(parameters))
 
         return generated_error_residuals_jac

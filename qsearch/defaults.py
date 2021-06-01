@@ -9,7 +9,7 @@ Attributes:
     stateprep_defaults : A dictionary containing defaults for stateprep synthesis.
 """
 
-from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers, comparison, objectives
+from . import utils, gatesets, solvers, backends, parallelizers, heuristics, logging, checkpoints, assemblers, comparison, objectives, compiler
 from functools import partial
 import numpy as np
 
@@ -39,6 +39,50 @@ def stateprep_error_resi(options):
 
 def stateprep_error_resi_jac(options):
     return partial(utils.residuals_with_initial_state_jac,options.target_state,options.initial_state)
+
+def default_eval_func(options):
+    if isinstance(options.objective, objectives.BackwardsCompatibleObjective):
+        return options.error_func
+    elif isinstance(options.objective, objectives.MatrixDistanceObjective):
+        return comparison.matrix_distance_squared
+    raise AttributeError("Could not find option 'eval_func'.  This option can be used in some cases for backwards compatability, but generally 'objective' should be used instead.")
+
+
+def default_error_func(options):
+    if isinstance(options.objective, objectives.MatrixDistanceObjective) or isinstance(options.objective, objectives.BackwardsCompatibleObjective):
+        return comparison.matrix_distance_squared
+    raise AttributeError("Could not find option 'error_func'.  This option can be used in some cases for backwards compatability, but generally 'objective' should be used instead.")
+
+def default_error_residuals(options):
+    if isinstance(options.objective, objectives.MatrixDistanceObjective) or isinstance(options.objective, objectives.BackwardsCompatibleObjective):
+        return comparison.matrix_residuals
+    raise AttributeError("No 'error_func' was found.  This option can be used in some cases for backwards compatability, but generally 'objective' should be used instead.")
+
+def default_error_jac(options):
+    if isinstance(options.objective, objectives.BackwardsCompatibleObjective):
+        if options.error_func is comparison.matrix_distance_squared:
+            return comparison.matrix_distance_squared_jac
+        else:
+            return None
+    elif isinstance(options.objective, objectives.MatrixDistanceObjective):
+        return comparison.matrix_distance_squared_jac
+    raise AttributeError("Could not find option 'error_jac'.  This option can be used in some cases for backwards compatability, but generally 'objective' should be used instead.")
+
+def default_error_residuals_jac(options):
+    if isinstance(options.objective, objectives.BackwardsCompatibleObjective):
+        if options.error_residuals is comparison.matrix_residuals:
+            return comparison.matrix_residuals_jac
+        else:
+            return None
+    elif isinstance(options.objective, objectives.MatrixDistanceObjective):
+        return comparison.matrix_residuals_jac
+    raise AttributeError("Could not find option 'error_residuals_jac'.  This option can be used in some cases for backwards compatability, but generally 'objective' should be used instead.")
+
+def default_objective(options):
+    if options.manually_entered("eval_func", "error_func", "error_jac", "error_residuals", "error_residuals_jac", operator="any"):
+        return objectives.BackwardsCompatibleObjective()
+    else:
+        return objectives.MatrixDistanceObjective()
 
 def stateprep_initial_state(options):
     v = np.zeros(options.target_state.shape,dtype='complex128')
@@ -89,6 +133,12 @@ standard_smart_defaults = {
         "logger" :default_logger,
         "checkpoint":default_checkpoint,
         "compiler_class" : default_compiler,
+        "objective" : default_objective,
+        "eval_func" : default_eval_func,
+        "error_func" : default_error_func,
+        "error_jac" : default_error_jac,
+        "error_residuals" : default_error_residuals,
+        "error_residuals_jac" : default_error_residuals_jac,
         }
 
 stateprep_defaults = {

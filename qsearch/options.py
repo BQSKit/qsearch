@@ -66,7 +66,7 @@ class Options():
             return retval
         elif name in self.defaults:
             return self.defaults[name]
-        raise AttributeError("Could not find option {}".format(name))
+        raise AttributeError("Could not find option '{}'".format(name))
 
     def __setattr__(self, name, value):
         if name not in _options_actual_parameters:
@@ -84,6 +84,29 @@ class Options():
             return True
         else:
             return False
+
+    def manually_entered(self, *names, location="dict", operator="all"):
+        if location == "dict":
+            for name in names:
+                if name in self.__dict__:
+                    if operator == "any":
+                        return True
+                elif operator == "all":
+                    return False
+        elif location == "defaults":
+            for name in names:
+                if name in self.defaults:
+                    if operator == "any":
+                        return True
+                elif operator == "all":
+                    return False
+        elif location == "smart_defaults":
+            for name in names:
+                if name in self.smart_defaults:
+                    if operator == "any":
+                        return True
+                elif operator == "all":
+                    return False
 
     def empty_copy(self):
         """Create an Options object with the same defaults but without any specific values."""
