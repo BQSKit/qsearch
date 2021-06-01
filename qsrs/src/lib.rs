@@ -62,7 +62,7 @@ pub type PySquareMatrix = PyArray2<Complex64>;
 #[cfg(feature = "python")]
 use circuits::{
     Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct,
-    GateSingleQutrit, GateU3, GateU2, GateU1, GateX, GateXZXZ, GateY, GateZ, QuantumGate,
+    GateSingleQutrit, GateU3, GateU2, GateU1, GateX, GateXZXZ, GateZXZXZ, GateY, GateZ, QuantumGate,
 };
 
 #[cfg(feature = "python")]
@@ -122,6 +122,10 @@ fn gate_to_object(
         }
         Gate::XZXZ(..) => {
             let gate: PyObject = gates.get("XZXZGate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::ZXZXZ(..) => {
+            let gate: PyObject = gates.get("ZXZXZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Kronecker(kron) => {
@@ -195,9 +199,22 @@ fn object_to_gate(
         "YGate" => Ok(GateY::new().into()),
         "ZGate" => Ok(GateZ::new().into()),
         "XZXZGate" => {
+            let unitaries = py.import("qsearch.unitaries")?;
+            let sx = unitaries.getattr("sqrt_x")?;
+            let pymat = sx.extract::<&PyArray2<Complex64>>()?;
+            let mat = unsafe { pymat.as_array() };
             let index = constant_gates.len();
-            constant_gates.push(crate::utils::rot_x(std::f64::consts::PI / 2.0));
+            constant_gates.push(SquareMatrix::from_ndarray(mat.to_owned()).T());
             Ok(GateXZXZ::new(index).into())
+        }
+        "ZXZXZGate" => {
+            let unitaries = py.import("qsearch.unitaries")?;
+            let sx = unitaries.getattr("sqrt_x")?;
+            let pymat = sx.extract::<&PyArray2<Complex64>>()?;
+            let mat = unsafe { pymat.as_array() };
+            let index = constant_gates.len();
+            constant_gates.push(SquareMatrix::from_ndarray(mat.to_owned()).T());
+            Ok(GateZXZXZ::new(index).into())
         }
         "ProductGate" => {
             let substeps: Vec<PyObject> = obj.getattr(py, "_subgates")?.extract(py)?;
@@ -307,6 +324,7 @@ impl PyGateWrapper {
             Gate::Y(..) => String::from("Y"),
             Gate::Z(..) => String::from("Z"),
             Gate::XZXZ(..) => String::from("XZXZ"),
+            Gate::ZXZXZ(..) => String::from("ZXZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
             Gate::Product(..) => String::from("Product"),
             Gate::ConstantUnitary(..) => String::from("ConstantUnitary"),

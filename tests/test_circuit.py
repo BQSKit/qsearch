@@ -21,11 +21,13 @@ def check_circuit(circ):
 
 u = U3Gate()
 xzxz = XZXZGate()
+zxzxz = ZXZXZGate()
 RUST_GATES = (
     XGate(),
     YGate(),
     ZGate(),
     XZXZGate(),
+    ZXZXZGate(),
     U3Gate(),
     U2Gate(),
     U1Gate(),
@@ -34,6 +36,8 @@ RUST_GATES = (
     CPIGate(),
     ProductGate(u, xzxz, u),
     KroneckerGate(u, xzxz, u),
+    ProductGate(u, zxzxz, u),
+    KroneckerGate(u, zxzxz, u),
     SingleQutritGate(),
 )
 

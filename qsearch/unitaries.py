@@ -101,6 +101,26 @@ full_adder = np.array([[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
                         [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0],
                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]],
                         dtype='complex128')
+
+
+pauli_x = np.array([[0,1],
+                    [1,0]],
+                    dtype='complex128')
+
+pauli_y = np.array([[0,-1j],
+                    [1j,0]],
+                    dtype='complex128')
+
+pauli_z = np.array([[1,0],
+                    [0,-1]],
+                    dtype='complex128')
+
+
+# This definition is designed to match IBM Qiskit https://qiskit.org/documentation/stubs/qiskit.circuit.library.SXGate.html#qiskit.circuit.library.SXGate
+sqrt_x = np.array([[0.5+0.5j,0.5-0.5j],
+                   [0.5-0.5j,0.5+0.5j]],
+                   dtype='complex128')
+
 # Full adder that converts ABC0 to ABCS.  Behavior is not well defined when the last input bit is a 1.
 
 def rot_z(theta: float):

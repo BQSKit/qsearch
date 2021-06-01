@@ -189,13 +189,29 @@ class ZGate(Gate):
     def __repr__(self):
         return "ZGate()"
 
+class SXGate(Gate):
+    """Represents a sqrt(X) rotation on one qubit, which is equivalent to XGate() with a paramter of pi/2, up to an overall phase."""
+    def __init__(self):
+        self.num_inputs = 1
+        self.qudits = 1
+        self.sx = unitaries.sqrt_x
+
+    def matrix(self, v):
+        return self.sx
+
+    def assemble(self, v, i=0):
+        return [("gate", "SX", (), (i,))]
+
+    def __repr__(self):
+        return "SXGate()"
+
 class ZXZXZGate(Gate):
     """Represents an arbitrary parameterized single-qubit gate, decomposed into 3 parameterized Z gates separated by X(PI/2) gates."""
     def __init__(self):
         self.num_inputs = 3
         self.qudits = 1
 
-        self._x90 = unitaries.rot_x(np.pi/2)
+        self._x90 = unitaries.sqrt_x
         self._rot_z = unitaries.rot_z(0)
         self._out = np.array(np.eye(2), dtype='complex128')
         self._buffer = np.array(np.eye(2), dtype = 'complex128')
@@ -242,9 +258,9 @@ class ZXZXZGate(Gate):
         out = []
         v = np.array(v)%(2*np.pi) # confine the range of what we print to come up with nicer numbers at no loss of generality
         out.append(("gate", "Z", (v[0],), (i,)))
-        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "SX", (), (i,)))
         out.append(("gate", "Z", (v[1],), (i,)))
-        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "SX", (), (i,)))
         out.append(("gate", "Z", (v[2],), (i,)))
         return [("block", out)]
  
@@ -257,7 +273,7 @@ class XZXZGate(Gate):
         self.num_inputs = 2
         self.qudits = 1
 
-        self._x90 = unitaries.rot_x(np.pi/2)
+        self._x90 = unitaries.sqrt_x
         self._rot_z = unitaries.rot_z(0)
         self._out = np.array(np.eye(2), dtype='complex128')
         self._buffer = np.array(np.eye(2), dtype = 'complex128')
@@ -290,9 +306,9 @@ class XZXZGate(Gate):
     def assemble(self, v, i=0):
         out = []
         v = np.array(v)%(2*np.pi) # confine the range of what we print to come up with nicer numbers at no loss of generality
-        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "SX", (), (i,)))
         out.append(("gate", "Z", (v[0],), (i,)))
-        out.append(("gate", "X", (np.pi/2,), (i,)))
+        out.append(("gate", "SX", (), (i,)))
         out.append(("gate", "Z", (v[1],), (i,)))
         return [("block", out)]
  

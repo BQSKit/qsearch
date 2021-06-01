@@ -85,6 +85,7 @@ assemblydict_qiskit = {
         "Y" : "qc.ry({}, {})\n",
         "Z" : "qc.rz({}, {})\n",
         "U3" : "qc.u({}, {}, {}, {})\n",
+        "SX" : "qc.sx({})\n",
         "CNOT" : "qc.cx({}, {})\n",
         "CZ": "qc.cz({}, {})\n",
         "XX": "qc.rxx({}, {})\n",
@@ -99,6 +100,7 @@ assemblydict_openqasm = {
         "X" : "U({}, -pi/2, pi/2) q[{}];\n",
         "Y" : "U({}, 0, 0) q[{}];\n",
         "Z" : "U(0, 0, {}) q[{}];\n",
+        "SX" : "U(pi/2, -pi/2, pi/2) q[{}];\n",
         "U3" : "U({}, {}, {}) q[{}];\n",
         "CNOT" : "CX q[{}], q[{}];\n",
         # these are based on the official definition of CZ/XX/ISWAP
@@ -114,6 +116,7 @@ assemblydict_ibmopenqasm = {
         "X" : "rx({}) q[{}];\n",
         "Y" : "ry({}) q[{}];\n",
         "Z" : "rz({}) q[{}];\n",
+        "SX" : "sx q[{}];\n",
         "U3" : "u3({}, {}, {}) q[{}];\n",
         "CNOT" : "cx q[{}], q[{}];\n",
         "CZ" : "cz q[{}], q[{}];\n",
