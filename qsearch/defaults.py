@@ -28,18 +28,6 @@ def default_logger(options):
 def default_checkpoint(options):
     return checkpoints.FileCheckpoint(options=options)
 
-def stateprep_error_func(options):
-    return partial(utils.distance_with_initial_state,options.target_state,options.initial_state)
-
-def stateprep_error_jac(options):
-    return partial(utils.distance_with_initial_state_jac,options.target_state,options.initial_state)
-
-def stateprep_error_resi(options):
-    return partial(utils.residuals_with_initial_state,options.target_state,options.initial_state)
-
-def stateprep_error_resi_jac(options):
-    return partial(utils.residuals_with_initial_state_jac,options.target_state,options.initial_state)
-
 def default_eval_func(options):
     if isinstance(options.objective, objectives.BackwardsCompatibleObjective):
         return options.error_func
@@ -92,14 +80,6 @@ def stateprep_initial_state(options):
 def stateprep_target(options):
     return np.eye(options.target_state.shape[0], dtype='complex128')
 
-def stateprep_default_solver(options):
-    opt = options.copy()
-    opt.make_required("error_jac", "error_func")
-    if "error_func" in opt and "error_jac" not in opt:
-        return solvers.COBYLA_Solver()
-    else:
-        return solvers.BFGS_Jac_Solver()
-
 def default_compiler(options):
     return compiler.SearchCompiler # this gets around some pesky import loops
 
@@ -143,5 +123,8 @@ standard_smart_defaults = {
 
 stateprep_defaults = {
         "objective" : objectives.StateprepObjective(),
-        "unitary_preprocessor": identity
+}
+stateprep_smart_defaults = {
+        "target" : stateprep_target,
+        "initial_state" : stateprep_initial_state,
 }

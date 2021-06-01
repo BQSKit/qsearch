@@ -64,28 +64,37 @@ class StateprepObjective(Objective):
         initial_state = options.initial_state
         target_state = options.target_state
         def generated_error_func(parameters):
-            return 1-np.real(np.vdot(np.dot(target, target_state), np.dot(circuit.matrix(parameters), options.initial_state)))
+            return comparison.distance_with_initial_state(target_state, initial_state, target, circuit.matrix(parameters)) 
+
         return generated_error_func
 
     def gen_error_jac(self, circuit, options):
-        return None # TODO
+        target = options.target
+        initial_state = options.initial_state
+        target_state = options.target_state
+        def generated_error_jac(parameters):
+            return comparison.distance_with_initial_state_jac(target_state, initial_state, target, *circuit.mat_jac(parameters))
+
+        return generated_error_jac
 
     def gen_error_residuals(self, circuit, options):
         target = options.target
         initial_state = options.initial_state
         target_state = options.target_state
+        I = np.eye(target.shape[0], dtype='float64')
+        return None
         def generated_error_residuals(parameters):
-            diff = np.dot(circuit.matrix(parameters), initial_state) - np.dot(target, target_state)
-            return np.append(np.real(diff), np.imag(diff))
+            return comparison.residuals_with_initial_state(target_state, initial_state, target, circuit.matrix(parameters), I)
+
         return generated_error_residuals
 
     def gen_error_residuals_jac(self, circuit, options):
         target = options.target
         initial_state = options.initial_state
         target_state = options.target_state
+        return None
         def generated_error_residuals_jac(parameters):
-            vecs = [np.dot(K, initial_state) for K in circuit.mat_jac(parameters)[1]]
-            return np.array([np.append(np.real(v), np.imag(v)) for v in vecs]).T
+            return comparison.residuals_with_initial_state_jac(target_state, initial_state, target, *circuit.mat_jac(parameters))
 
         return generated_error_residuals_jac
 

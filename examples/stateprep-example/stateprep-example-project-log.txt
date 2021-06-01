@@ -1,0 +1,6 @@
+2021-06-01 07:12:33.686931 > 	Started running project stateprep-example
+2021-06-01 07:12:33.686976 > 	toffoli_magic_state	Not started.
+2021-06-01 07:12:33.687050 > 	Starting compilation of toffoli_magic_state
+2021-06-01 07:12:33.863303 > 	Finished compilation of toffoli_magic_state
+2021-06-01 07:12:33.863669 > 	toffoli_magic_state	Complete!
+2021-06-01 07:12:33.863691 > 	Finished running project stateprep-example

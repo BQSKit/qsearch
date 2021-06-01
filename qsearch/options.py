@@ -137,18 +137,19 @@ class Options():
         newOptions = self.copy()
         if other is not None:
             newOptions._update_dict(other.__dict__)
-            newOptions.defaults.update(other.defaults)
-            newOptions.smart_defaults.update(other.smart_defaults)
+            newOptions.set_defaults(**other.defaults)
+            newOptions.set_smart_defaults(**other.smart_defaults)
             newOptions.required = self.required.union(other.required)
         newOptions._update_dict(xtraargs)
+        newOptions.cache = dict()
         return newOptions
 
     def update(self, other=None, **xtraargs):
         """Mutate the current Options object with the contents of other and xtraargs."""
         if other is not None:
             self._update_dict(other.__dict__)
-            self.defaults.update(other.defaults)
-            self.smart_defaults.update(other.smart_defaults)
+            self.set_defaults(**other.defaults)
+            self.set_smart_defaults(**other.smart_defaults)
             self.required.update(other.required)
         self._update_dict(xtraargs)
         self.cache = dict()
@@ -208,7 +209,10 @@ class Options():
     def generate_cache(self):
         """Caches valuesa for all functions in smart_defaults."""
         for key in self.smart_defaults:
-            getattr(self, key) 
+            try:
+                getattr(self, key) 
+            except:
+                pass
             # this may look weird, but calling getattr on these keys will populate
             # the cache with any keys that have not been already cached.
 

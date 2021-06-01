@@ -112,7 +112,7 @@ def matrix_residuals_blacklist_jac(badrows, badcols, A, B, J):
 
 
 def distance_with_initial_state(stateA, stateB, A, B):
-    return max([np.linalg.norm(x,ord=1) for x in A])
+    return np.abs(1-np.abs(np.vdot(A.dot(stateA),B.dot(stateB))))
 
 def distance_with_initial_state_jac(stateA,stateB,A,B,J):
     si = A.dot(stateA)

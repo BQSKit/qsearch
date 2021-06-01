@@ -21,7 +21,7 @@ def simulate_statevector(qc):
 
 
 def qsearch_stateprep(project, target_state, leap=False):
-    stateprep_options = qsearch.Options(target_state=target_state,smart_defaults=qsearch.defaults.stateprep_smart_defaults)
+    stateprep_options = qsearch.Options(target_state=target_state,defaults=qsearch.defaults.stateprep_defaults, smart_defaults=qsearch.defaults.stateprep_smart_defaults)
     project.add_compilation("stateprep",stateprep_options.target,options=stateprep_options)
     if leap:
         project['compiler_class'] = leap_compiler.LeapCompiler

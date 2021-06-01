@@ -9,8 +9,7 @@ p = qsearch.Project("stateprep-example")
 
 # configure the project with the stateprep defaults instead of the standard synthesis defaults
 
-stateprep_options = qsearch.Options(smart_defaults=qsearch.defaults.stateprep_smart_defaults)
-p.set_smart_defaults(qsearch.defaults.stateprep_smart_defaults)
+stateprep_options = qsearch.Options(defaults=qsearch.defaults.stateprep_defaults, smart_defaults=qsearch.defaults.stateprep_smart_defaults)
 
 
 # It may seem strange that we have to pass an identity.  Qsearch is still doing unitary synthesis;
@@ -21,7 +20,8 @@ p.set_smart_defaults(qsearch.defaults.stateprep_smart_defaults)
 # Note that you can specify the intiial state for the circuit as initial_state (the default state is
 # the zero state that matches target_state in number of qudits).
 toffoli_magic_state = np.array([0.5,0,0.5,0,0.5,0,0,0.5], dtype='complex128')
-p.add_compilation("toffoli_magic_state", np.eye(8,dtype='complex128'), target_state=toffoli_magic_state)
+
+p.add_compilation("toffoli_magic_state", np.eye(8,dtype='complex128'), target_state=toffoli_magic_state, options=stateprep_options)
 
 p.run()
 

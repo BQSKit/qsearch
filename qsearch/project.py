@@ -13,7 +13,7 @@ from multiprocessing import freeze_support
 from .compiler import SearchCompiler
 from . import solvers as scsolver
 from .options import Options
-from .defaults import standard_defaults, standard_smart_defaults
+from .defaults import standard_defaults, standard_smart_defaults, objectives
 from . import logging, utils, gatesets, heuristics, assemblers
 from time import time
 
