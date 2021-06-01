@@ -121,7 +121,7 @@ class BackwardsCompatibleObjective(Objective):
         if not "error_residuals" in options:
             return None
         error_residuals = options.error_residuals
-        I = np.eye(target.shape[0], dtype='complex128')
+        I = np.eye(target.shape[0], dtype='float64')
         def generated_error_residuals(parameters):
             return error_residuals(target, circuit.matrix(parameters), I)
 
@@ -132,7 +132,6 @@ class BackwardsCompatibleObjective(Objective):
         if not "error_residuals_jac" in options:
             return None
         error_residuals_jac = options.error_residuals_jac
-        I = np.eye(target.shape[0], dtype='complex128')
         def generated_error_residuals_jac(parameters):
             return error_residuals_jac(target, *circuit.mat_jac(parameters))
 
