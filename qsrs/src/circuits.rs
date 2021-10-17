@@ -26,6 +26,9 @@ pub enum Gate {
     X(GateX),
     Y(GateY),
     Z(GateZ),
+    RXX(GateRXX),
+    RYY(GateRYY),
+    RZZ(GateRZZ),
     XZXZ(GateXZXZ),
     ZXZXZ(GateZXZXZ),
     Kronecker(GateKronecker),
@@ -45,6 +48,9 @@ impl Gate {
             Gate::X(x) => x.data.dits,
             Gate::Y(y) => y.data.dits,
             Gate::Z(z) => z.data.dits,
+            Gate::RXX(x) => x.data.dits,
+            Gate::RYY(y) => y.data.dits,
+            Gate::RZZ(z) => z.data.dits,
             Gate::XZXZ(x) => x.data.dits,
             Gate::ZXZXZ(x) => x.data.dits,
             Gate::Kronecker(k) => k.data.dits,
@@ -268,8 +274,19 @@ impl QuantumGate for GateU2 {
         (
             SquareMatrix::from_vec(vec![phase, -phase * e1, phase * e2, phase * e3], 2),
             vec![
-                SquareMatrix::from_vec(vec![r!(0.0), r!(0.0), phase * i!(1.0) * e2, phase * i!(1.0) * e3], 2),
-                SquareMatrix::from_vec(vec![r!(0.0), phase * i!(-1.0) * e1, r!(0.0), phase * i!(1.0) * e3], 2),
+                SquareMatrix::from_vec(
+                    vec![r!(0.0), r!(0.0), phase * i!(1.0) * e2, phase * i!(1.0) * e3],
+                    2,
+                ),
+                SquareMatrix::from_vec(
+                    vec![
+                        r!(0.0),
+                        phase * i!(-1.0) * e1,
+                        r!(0.0),
+                        phase * i!(1.0) * e3,
+                    ],
+                    2,
+                ),
             ],
         )
     }
@@ -310,9 +327,7 @@ impl QuantumGate for GateU1 {
         let dphase = i!(1.0) / 2.0 * phase;
         (
             rot_z(v[0]) * phase,
-            vec![
-                rot_z(v[0]) * dphase + rot_z_jac(v[0]) * phase,
-            ],
+            vec![rot_z(v[0]) * dphase + rot_z_jac(v[0]) * phase],
         )
     }
 
@@ -420,6 +435,200 @@ impl QuantumGate for GateZ {
 
     fn inputs(&self) -> usize {
         1
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateRXX {
+    pub data: QuantumGateData,
+}
+
+impl GateRXX {
+    pub fn new() -> Self {
+        GateRXX {
+            data: QuantumGateData {
+                dits: 2,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateRXX {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let cos = r!((v[0] / 2.).cos());
+        let sin = i!(-(v[0] / 2.).sin());
+        let zero = r!(0.0);
+        SquareMatrix::from_vec(
+            vec![
+                cos, zero, zero, sin, zero, cos, sin, zero, zero, sin, cos, zero, sin, zero, zero,
+                cos,
+            ],
+            4,
+        )
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let cos = r!((v[0] / 2.).cos());
+        let sin = i!(-(v[0] / 2.).sin());
+        let dcos = -1. * r!(v[0] / 2.).sin() / 2.;
+        let dsin = i!(-(v[0] / 2.).cos() / 2.);
+        let zero = r!(0.0);
+        (
+            SquareMatrix::from_vec(
+                vec![
+                    cos, zero, zero, sin, zero, cos, sin, zero, zero, sin, cos, zero, sin, zero,
+                    zero, cos,
+                ],
+                4,
+            ),
+            vec![SquareMatrix::from_vec(
+                vec![
+                    dcos, zero, zero, dsin, zero, dcos, dsin, zero, zero, dsin, dcos, zero, dsin,
+                    zero, zero, dcos,
+                ],
+                4,
+            )],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateRYY {
+    pub data: QuantumGateData,
+}
+
+impl GateRYY {
+    pub fn new() -> Self {
+        GateRYY {
+            data: QuantumGateData {
+                dits: 2,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateRYY {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let cos = r!((v[0] / 2.).cos());
+        let nsin = i!(-1.0) * (v[0] / 2.).sin();
+        let psin = i!(1.0) * (v[0] / 2.).sin();
+        let zero = r!(0.0);
+        SquareMatrix::from_vec(
+            vec![
+                cos, zero, zero, psin, zero, cos, nsin, zero, zero, nsin, cos, zero, psin, zero,
+                zero, cos,
+            ],
+            4,
+        )
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let cos = r!((v[0] / 2.).cos());
+        let nsin = i!(-1.0) * (v[0] / 2.).sin();
+        let psin = i!(1.0) * (v[0] / 2.).sin();
+        let zero = r!(0.0);
+        let dcos = -1. * r!(v[0] / 2.).sin() / 2.;
+        let dnsin = i!(-1.0) * (v[0] / 2.).cos() / 2.;
+        let dpsin = i!(1.0) * (v[0] / 2.).cos() / 2.;
+
+        (
+            SquareMatrix::from_vec(
+                vec![
+                    cos, zero, zero, psin, zero, cos, nsin, zero, zero, nsin, cos, zero, psin,
+                    zero, zero, cos,
+                ],
+                4,
+            ),
+            vec![SquareMatrix::from_vec(
+                vec![
+                    dcos, zero, zero, dpsin, zero, dcos, dnsin, zero, zero, dnsin, dcos, zero,
+                    dpsin, zero, zero, dcos,
+                ],
+                4,
+            )],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateRZZ {
+    pub data: QuantumGateData,
+}
+
+impl GateRZZ {
+    pub fn new() -> Self {
+        GateRZZ {
+            data: QuantumGateData {
+                dits: 2,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateRZZ {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let pos = (i!(1.) * v[0] / 2.).exp();
+        let neg = (i!(-1.) * v[0] / 2.).exp();
+        let zero = r!(0.0);
+        SquareMatrix::from_vec(
+            vec![
+                neg, zero, zero, zero, zero, pos, zero, zero, zero, zero, pos, zero, zero, zero,
+                zero, neg,
+            ],
+            4,
+        )
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let pos = (i!(1.) * v[0] / 2.).exp();
+        let neg = (i!(-1.) * v[0] / 2.).exp();
+        let zero = r!(0.0);
+        let dpos = i!(1. / 2.) * (i!(1.) * v[0] / 2.).exp();
+        let dneg = i!(-1. / 2.) * (i!(-1.) * v[0] / 2.).exp();
+
+        (
+            SquareMatrix::from_vec(
+                vec![
+                    neg, zero, zero, zero, zero, pos, zero, zero, zero, zero, pos, zero, zero,
+                    zero, zero, neg,
+                ],
+                4,
+            ),
+            vec![SquareMatrix::from_vec(
+                vec![
+                    dneg, zero, zero, zero, zero, dpos, zero, zero, zero, zero, dpos, zero, zero,
+                    zero, zero, dneg,
+                ],
+                4,
+            )],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
     }
 }
 
