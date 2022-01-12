@@ -12,17 +12,21 @@ accelerate = ["accelerate-src", "blas-src/accelerate"]
 mkl = ["intel-mkl-src", "blas-src/intel-mkl"]
 
 [dependencies]
-num-complex = "0.3.0"
-cblas = "0.3.0"
-ndarray = { version = "0.14.0", features = ["blas"] }
+num-complex = "0.4.0"
+cblas = "0.4.0"
+ndarray = { version = "0.15.4", features = ["blas"] }
 blas-src = { version = "0.8.0", default-features = false }
 openblas-src = { version = "0.10.4", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
-intel-mkl-src = { version = "0.5.0", optional = true }
-libc = "0.2.93"
+intel-mkl-src = { version = "0.6.0+mkl2020.1", optional = true, features = ["mkl-static-lp64-seq"] }
+libc = "0.2.112"
+
 
 [patch.crates-io]
-openblas-src = { git = "https://github.com/blas-lapack-rs/openblas-src"}
+# remove once https://github.com/blas-lapack-rs/blas-src/pull/9 is merged
+blas-src = { git="https://github.com/ethanhs/blas-src", branch="patch-1" }
+# Waiting on openblas-src to make a new 0.11 release...
+openblas-src = { git="https://github.com/blas-lapack-rs/openblas-src" }
 
 [lib]
 name = "squaremat"

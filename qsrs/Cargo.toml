@@ -17,27 +17,31 @@ python = ["numpy"]
 rustopt = ["nlopt", "ceres"]
 
 [dependencies]
-num-complex = { version = "0.3.0", features = ["serde"] }
-ndarray = { version = "0.14.0", features = ["blas"] }
+num-complex = { version = "0.4.0", features = ["serde"] }
+ndarray = { version = "0.15.4", features = ["blas"] }
 blas-src = { version = "0.8.0", default-features = false }
 openblas-src = { version = "0.10.4", default-features = false, optional = true }
 accelerate-src = { version = "0.3.2", optional = true }
-intel-mkl-src = { version = "0.5.0", optional = true }
-enum_dispatch = "0.3.5"
-numpy = { version = "0.13.1", optional = true }
-libc = "0.2.93"
+intel-mkl-src = { version = "0.6.0+mkl2020.1", optional = true, features = ["mkl-static-lp64-seq"] }
+enum_dispatch = "0.3.7"
+numpy = { version = "0.15.1", optional = true }
+libc = "0.2.112"
 num-traits = "0.2.14"
 better-panic = "0.2.0"
 squaremat = { path = "./squaremat" }
 md5 = "0.7.0"
-rand = "0.8.3"
-nlopt = { version = "0.5.3", optional = true }
+rand = "0.8.4"
+nlopt = { version = "0.5.4", optional = true }
 ceres = { path = "./ceres", optional = true }
-num_cpus = "1.13.0"
-pyo3 = { version = "0.13.2", features = ["extension-module", "abi3-py37"] }
+num_cpus = "1.13.1"
+pyo3 = { version = "0.15.1", features = ["extension-module", "abi3-py37"] }
+
 
 [patch.crates-io]
-openblas-src = { git = "https://github.com/blas-lapack-rs/openblas-src" }
+# remove once https://github.com/blas-lapack-rs/blas-src/pull/9 is merged
+blas-src = { git="https://github.com/ethanhs/blas-src", branch="patch-1" }
+# Waiting on openblas-src to make a new 0.11 release...
+openblas-src = { git="https://github.com/blas-lapack-rs/openblas-src" }
 
 [lib]
 name = "qsrs"
