@@ -88,11 +88,11 @@ fn gate_to_object(
 ) -> PyResult<PyObject> {
     Ok(match gate {
         Gate::CNOT(..) => {
-            let gate: PyObject = gates.get("CNOTGate")?.extract()?;
+            let gate: PyObject = gates.getattr("CNOTGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Identity(id) => {
-            let gate: PyObject = gates.get("IdentityGate")?.extract()?;
+            let gate: PyObject = gates.getattr("IdentityGate")?.extract()?;
             let args = PyTuple::new(
                 py,
                 vec![log_2(constant_gates[id.index].size), id.data.dits as usize],
@@ -100,51 +100,51 @@ fn gate_to_object(
             gate.call1(py, args)?
         }
         Gate::U3(..) => {
-            let gate: PyObject = gates.get("U3Gate")?.extract()?;
+            let gate: PyObject = gates.getattr("U3Gate")?.extract()?;
             gate.call0(py)?
         }
         Gate::U2(..) => {
-            let gate: PyObject = gates.get("U2Gate")?.extract()?;
+            let gate: PyObject = gates.getattr("U2Gate")?.extract()?;
             gate.call0(py)?
         }
         Gate::U1(..) => {
-            let gate: PyObject = gates.get("U1Gate")?.extract()?;
+            let gate: PyObject = gates.getattr("U1Gate")?.extract()?;
             gate.call0(py)?
         }
         Gate::X(..) => {
-            let gate: PyObject = gates.get("XGate")?.extract()?;
+            let gate: PyObject = gates.getattr("XGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Y(..) => {
-            let gate: PyObject = gates.get("YGate")?.extract()?;
+            let gate: PyObject = gates.getattr("YGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Z(..) => {
-            let gate: PyObject = gates.get("ZGate")?.extract()?;
+            let gate: PyObject = gates.getattr("ZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::RXX(..) => {
-            let gate: PyObject = gates.get("RXXGate")?.extract()?;
+            let gate: PyObject = gates.getattr("RXXGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::RYY(..) => {
-            let gate: PyObject = gates.get("RYYGate")?.extract()?;
+            let gate: PyObject = gates.getattr("RYYGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::RZZ(..) => {
-            let gate: PyObject = gates.get("RZZGate")?.extract()?;
+            let gate: PyObject = gates.getattr("RZZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::XZXZ(..) => {
-            let gate: PyObject = gates.get("XZXZGate")?.extract()?;
+            let gate: PyObject = gates.getattr("XZXZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::ZXZXZ(..) => {
-            let gate: PyObject = gates.get("ZXZXZGate")?.extract()?;
+            let gate: PyObject = gates.getattr("ZXZXZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::Kronecker(kron) => {
-            let gate: PyObject = gates.get("KroneckerGate")?.extract()?;
+            let gate: PyObject = gates.getattr("KroneckerGate")?.extract()?;
             let steps: Vec<PyObject> = kron
                 .substeps
                 .iter()
@@ -154,7 +154,7 @@ fn gate_to_object(
             gate.call1(py, substeps)?
         }
         Gate::Product(prod) => {
-            let gate: PyObject = gates.get("ProductGate")?.extract()?;
+            let gate: PyObject = gates.getattr("ProductGate")?.extract()?;
             let steps: Vec<PyObject> = prod
                 .substeps
                 .iter()
@@ -164,12 +164,12 @@ fn gate_to_object(
             gate.call1(py, substeps)?
         }
         Gate::SingleQutrit(..) => {
-            let gate: PyObject = gates.get("SingleQutritGate")?.extract()?;
+            let gate: PyObject = gates.getattr("SingleQutritGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::ConstantUnitary(u) => {
             let mat = constant_gates[u.index].clone();
-            let gate: PyObject = gates.get("UGate")?.extract()?;
+            let gate: PyObject = gates.getattr("UGate")?.extract()?;
             let tup = PyTuple::new(
                 py,
                 [PySquareMatrix::from_array(py, &mat.into_ndarray()).to_owned()].iter(),
@@ -557,14 +557,16 @@ fn native_from_object(obj: PyObject, py: Python) -> PyResult<Py<PyGateWrapper>> 
 #[pymodule]
 fn qsrs(_py: Python, m: &PyModule) -> PyResult<()> {
     install();
-    #[pyfn(m, "matrix_distance_squared")]
+    #[pyfn(m)]
+    #[pyo3(name = "matrix_distance_squared")]
     fn matrix_distance_squared_py(a: &PySquareMatrix, b: &PySquareMatrix) -> f64 {
         matrix_distance_squared(
             &SquareMatrix::from_ndarray(a.to_owned_array()),
             &SquareMatrix::from_ndarray(b.to_owned_array()),
         )
     }
-    #[pyfn(m, "matrix_distance_squared_jac")]
+    #[pyfn(m)]
+    #[pyo3(name = "matrix_distance_squared_jac")]
     fn matrix_distance_squared_jac_py(
         a: &PySquareMatrix,
         b: &PySquareMatrix,
@@ -578,7 +580,8 @@ fn qsrs(_py: Python, m: &PyModule) -> PyResult<()> {
                 .collect(),
         )
     }
-    #[pyfn(m, "matrix_residuals")]
+    #[pyfn(m)]
+    #[pyo3(name = "matrix_residuals")]
     fn matrix_residuals_py(
         a: &PySquareMatrix,
         b: &PySquareMatrix,
@@ -590,7 +593,8 @@ fn qsrs(_py: Python, m: &PyModule) -> PyResult<()> {
             &eye.to_owned_array(),
         )
     }
-    #[pyfn(m, "matrix_residuals_jac")]
+    #[pyfn(m)]
+    #[pyo3(name = "matrix_residuals_jac")]
     fn matrix_residuals_jac_py(
         py: Python,
         u: &PySquareMatrix,
@@ -611,7 +615,8 @@ fn qsrs(_py: Python, m: &PyModule) -> PyResult<()> {
         )
         .to_owned()
     }
-    #[pyfn(m, "qft")]
+    #[pyfn(m)]
+    #[pyo3(name = "qft")]
     fn qft_py(py: Python, n: usize) -> Py<PySquareMatrix> {
         PySquareMatrix::from_array(py, &crate::utils::qft(n).into_ndarray()).to_owned()
     }
