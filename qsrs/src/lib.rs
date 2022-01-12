@@ -61,8 +61,9 @@ pub type PySquareMatrix = PyArray2<Complex64>;
 
 #[cfg(feature = "python")]
 use circuits::{
-    Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct,
-    GateSingleQutrit, GateU3, GateU2, GateU1, GateX, GateXZXZ, GateZXZXZ, GateY, GateZ, QuantumGate,
+    Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct, GateRXX,
+    GateRYY, GateRZZ, GateSingleQutrit, GateU1, GateU2, GateU3, GateX, GateXZXZ, GateY, GateZ,
+    GateZXZXZ, QuantumGate,
 };
 
 #[cfg(feature = "python")]
@@ -70,7 +71,9 @@ use utils::{
     matrix_distance_squared, matrix_distance_squared_jac, matrix_residuals, matrix_residuals_jac,
 };
 
-const fn num_bits<T>() -> usize { std::mem::size_of::<T>() * 8 }
+const fn num_bits<T>() -> usize {
+    std::mem::size_of::<T>() * 8
+}
 
 fn log_2(x: usize) -> usize {
     num_bits::<usize>() - x.leading_zeros() as usize - 1
@@ -118,6 +121,18 @@ fn gate_to_object(
         }
         Gate::Z(..) => {
             let gate: PyObject = gates.get("ZGate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::RXX(..) => {
+            let gate: PyObject = gates.get("RXXGate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::RYY(..) => {
+            let gate: PyObject = gates.get("RYYGate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::RZZ(..) => {
+            let gate: PyObject = gates.get("RZZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::XZXZ(..) => {
@@ -198,6 +213,9 @@ fn object_to_gate(
         "XGate" => Ok(GateX::new().into()),
         "YGate" => Ok(GateY::new().into()),
         "ZGate" => Ok(GateZ::new().into()),
+        "RXXGate" => Ok(GateRXX::new().into()),
+        "RYYGate" => Ok(GateRYY::new().into()),
+        "RZZGate" => Ok(GateRZZ::new().into()),
         "XZXZGate" => {
             let unitaries = py.import("qsearch.unitaries")?;
             let sx = unitaries.getattr("sqrt_x")?;
@@ -259,7 +277,7 @@ fn object_to_gate(
 }
 
 #[cfg(feature = "python")]
-#[pyclass(name="Gate", module = "qsrs")]
+#[pyclass(name = "Gate", module = "qsrs")]
 struct PyGateWrapper {
     #[pyo3(get)]
     dits: u8,
@@ -323,6 +341,9 @@ impl PyGateWrapper {
             Gate::X(..) => String::from("X"),
             Gate::Y(..) => String::from("Y"),
             Gate::Z(..) => String::from("Z"),
+            Gate::RXX(..) => String::from("RXX"),
+            Gate::RYY(..) => String::from("RYY"),
+            Gate::RZZ(..) => String::from("RZZ"),
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::ZXZXZ(..) => String::from("ZXZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
@@ -367,7 +388,7 @@ impl<'a> PyObjectProtocol<'a> for PyGateWrapper {
 }
 
 #[cfg(all(feature = "python", feature = "rustopt"))]
-#[pyclass(name="BFGS_Jac_SolverNative", module = "qsrs")]
+#[pyclass(name = "BFGS_Jac_SolverNative", module = "qsrs")]
 struct PyBfgsJacSolver {
     size: usize,
     #[pyo3(get)]
@@ -436,7 +457,7 @@ impl PyBfgsJacSolver {
 }
 
 #[cfg(all(feature = "python", feature = "rustopt"))]
-#[pyclass(name="LeastSquares_Jac_SolverNative", module = "qsrs")]
+#[pyclass(name = "LeastSquares_Jac_SolverNative", module = "qsrs")]
 struct PyLeastSquaresJacSolver {
     #[pyo3(get)]
     distance_metric: String,
