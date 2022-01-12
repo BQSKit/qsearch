@@ -458,12 +458,12 @@ impl PyLeastSquaresJacSolver {
         let ftol = if let Some(ftol) = ftol {
             ftol
         } else {
-            1e-6 // Ceres documented default
+            5e-16
         };
         let gtol = if let Some(gtol) = gtol {
             gtol
         } else {
-            1e-10 // Ceres documented default
+            1e-15
         };
         Self {
             distance_metric: String::from("Residuals"),
