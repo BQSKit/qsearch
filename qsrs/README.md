@@ -103,7 +103,7 @@ You can check via `pip -V` and upgrade via `python3 -m pip install -U pip`.
 First, install the dependencies. We use homebrew here, which is what we build the official package against.
 
 ```
-brew install gcc ceres-solver
+brew install gcc eigen
 ```
 
 Once that is complete you should then install Rust like as follows:
@@ -121,13 +121,13 @@ rustup default nightly
 Then you can enter the `qsrs` directory and run the following to build a wheel linking to Apple's Accelerate
 
 ```
-maturin build -i python --cargo-extra-args="--no-default-features --features=accelerate,python,rustopt,ceres/system" --release --no-sdist
+maturin build -i python --cargo-extra-args="--no-default-features --features=accelerate,python,rustopt,ceres/static" --release --no-sdist
 ```
 
 This will take a while. Once it is done, install the wheel like
 
 ```
-pip3 install target/wheels/qsrs-0.15.1-cp38-cp38-macosx_10_7_x86_64.whl
+pip3 install target/wheels/qsrs-2.0.0-cp38-cp38-macosx_10_7_x86_64.whl
 ```
 
 Note the name of the wheel may be slightly different depending on your Python version, but it should be the only wheel in the `target/wheels/` folder.
