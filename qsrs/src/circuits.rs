@@ -29,6 +29,7 @@ pub enum Gate {
     RXX(GateRXX),
     RYY(GateRYY),
     RZZ(GateRZZ),
+    CRZ(GateCRZ),
     XZXZ(GateXZXZ),
     ZXZXZ(GateZXZXZ),
     Kronecker(GateKronecker),
@@ -51,6 +52,7 @@ impl Gate {
             Gate::RXX(x) => x.data.dits,
             Gate::RYY(y) => y.data.dits,
             Gate::RZZ(z) => z.data.dits,
+            Gate::CRZ(c) => c.data.dits,
             Gate::XZXZ(x) => x.data.dits,
             Gate::ZXZXZ(x) => x.data.dits,
             Gate::Kronecker(k) => k.data.dits,
@@ -621,6 +623,72 @@ impl QuantumGate for GateRZZ {
                 vec![
                     dneg, zero, zero, zero, zero, dpos, zero, zero, zero, zero, dpos, zero, zero,
                     zero, zero, dneg,
+                ],
+                4,
+            )],
+        )
+    }
+
+    fn inputs(&self) -> usize {
+        self.data.num_inputs
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct GateCRZ {
+    pub data: QuantumGateData,
+}
+
+impl GateCRZ {
+    pub fn new() -> Self {
+        GateCRZ {
+            data: QuantumGateData {
+                dits: 2,
+                num_inputs: 1,
+            },
+        }
+    }
+}
+
+impl QuantumGate for GateCRZ {
+    fn mat(&self, v: &[f64], _constant_gates: &[SquareMatrix]) -> SquareMatrix {
+        let pos = (i!(1.) * v[0] / 2.).exp();
+        let neg = (i!(-1.) * v[0] / 2.).exp();
+        let zero = r!(0.0);
+        let one = r!(1.0);
+        SquareMatrix::from_vec(
+            vec![
+                one, zero, zero, zero, zero, one, zero, zero, zero, zero, neg, zero, zero, zero,
+                zero, pos,
+            ],
+            4,
+        )
+    }
+
+    fn mat_jac(
+        &self,
+        v: &[f64],
+        _constant_gates: &[SquareMatrix],
+    ) -> (SquareMatrix, Vec<SquareMatrix>) {
+        let pos = (i!(1.) * v[0] / 2.).exp();
+        let neg = (i!(-1.) * v[0] / 2.).exp();
+        let zero = r!(0.0);
+        let dpos = i!(1. / 2.) * (i!(1.) * v[0] / 2.).exp();
+        let dneg = i!(-1. / 2.) * (i!(-1.) * v[0] / 2.).exp();
+        let one = r!(1.0);
+
+        (
+            SquareMatrix::from_vec(
+                vec![
+                    one, zero, zero, zero, zero, one, zero, zero, zero, zero, neg, zero, zero,
+                    zero, zero, pos,
+                ],
+                4,
+            ),
+            vec![SquareMatrix::from_vec(
+                vec![
+                    zero, zero, zero, zero, zero, zero, zero, zero, zero, zero, dneg, zero, zero,
+                    zero, zero, dpos,
                 ],
                 4,
             )],

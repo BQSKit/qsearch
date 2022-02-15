@@ -61,9 +61,9 @@ pub type PySquareMatrix = PyArray2<Complex64>;
 
 #[cfg(feature = "python")]
 use circuits::{
-    Gate, GateCNOT, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct, GateRXX,
-    GateRYY, GateRZZ, GateSingleQutrit, GateU1, GateU2, GateU3, GateX, GateXZXZ, GateY, GateZ,
-    GateZXZXZ, QuantumGate,
+    Gate, GateCNOT, GateCRZ, GateConstantUnitary, GateIdentity, GateKronecker, GateProduct,
+    GateRXX, GateRYY, GateRZZ, GateSingleQutrit, GateU1, GateU2, GateU3, GateX, GateXZXZ, GateY,
+    GateZ, GateZXZXZ, QuantumGate,
 };
 
 #[cfg(feature = "python")]
@@ -133,6 +133,10 @@ fn gate_to_object(
         }
         Gate::RZZ(..) => {
             let gate: PyObject = gates.getattr("RZZGate")?.extract()?;
+            gate.call0(py)?
+        }
+        Gate::CRZ(..) => {
+            let gate: PyObject = gates.getattr("CRZGate")?.extract()?;
             gate.call0(py)?
         }
         Gate::XZXZ(..) => {
@@ -216,6 +220,7 @@ fn object_to_gate(
         "RXXGate" => Ok(GateRXX::new().into()),
         "RYYGate" => Ok(GateRYY::new().into()),
         "RZZGate" => Ok(GateRZZ::new().into()),
+        "CRZGate" => Ok(GateCRZ::new().into()),
         "XZXZGate" => {
             let unitaries = py.import("qsearch.unitaries")?;
             let sx = unitaries.getattr("sqrt_x")?;
@@ -344,6 +349,7 @@ impl PyGateWrapper {
             Gate::RXX(..) => String::from("RXX"),
             Gate::RYY(..) => String::from("RYY"),
             Gate::RZZ(..) => String::from("RZZ"),
+            Gate::CRZ(..) => String::from("CRZ"),
             Gate::XZXZ(..) => String::from("XZXZ"),
             Gate::ZXZXZ(..) => String::from("ZXZXZ"),
             Gate::Kronecker(..) => String::from("Kronecker"),
@@ -476,16 +482,8 @@ impl PyLeastSquaresJacSolver {
         } else {
             1
         };
-        let ftol = if let Some(ftol) = ftol {
-            ftol
-        } else {
-            5e-16
-        };
-        let gtol = if let Some(gtol) = gtol {
-            gtol
-        } else {
-            1e-15
-        };
+        let ftol = if let Some(ftol) = ftol { ftol } else { 5e-16 };
+        let gtol = if let Some(gtol) = gtol { gtol } else { 1e-15 };
         Self {
             distance_metric: String::from("Residuals"),
             num_threads: threads,
