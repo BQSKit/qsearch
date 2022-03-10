@@ -218,9 +218,12 @@ class SubCompiler(Compiler):
                         best_depth = new_depth
                         logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
                         if len(previous_bests_values) > 1:
-                            with np.errstate(invalid='ignore', divide='ignore'):
-                                slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
-                            predicted_best = slope * new_depth + intercept
+                            try:
+                                with np.errstate(invalid='ignore', divide='ignore'):
+                                    slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                                predicted_best = slope * new_depth + intercept
+                            except:
+                                predicted_best = float("nan")
                             delta = predicted_best - best_value
                             logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
                             if not np.isnan(predicted_best) and best_value < options.overall_best_value and delta < 0 and ('min_depth' not in options or new_depth >= options.min_depth):
