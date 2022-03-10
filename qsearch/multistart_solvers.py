@@ -125,9 +125,10 @@ class NaiveMultiStart_Solver(Solver):
         initial_samples = [np.random.uniform((i - 1)/self.threads, i/self.threads, (circuit.num_inputs,)) for i in range(1, self.threads+1)]
         q = self.ctx.Queue()
         processes = []
+        error_func = options.objective.gen_error_func(circuit, options)
         rets = []
         for x0 in initial_samples:
-            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, x0))
+            p = self.ctx.Process(target=optimize_worker, args=(circuit, options, q, x0, error_func))
             processes.append(p)
             p.start()
         for p in processes:
