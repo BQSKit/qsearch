@@ -22,8 +22,10 @@ class Objective:
         generated_error_residuals_jac = self.gen_error_residuals_jac(circuit, options)
         if generated_error_residuals_jac is None:
             return None
+        generated_error_residuals_func = self.gen_error_residuals(circuit, options)
         def generated_error_jac(parameters):
-            return 2*np.sum(generated_error_residuals_jac(parameters, axis=1))
+            result = generated_error_residuals_func(parameters)
+            return (np.sum(np.square(result), 2*np.sum(result * generated_error_residuals_jac(parameters), axis=1)))
 
     def gen_error_residuals(self, circuit, options):
         return None
