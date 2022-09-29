@@ -139,7 +139,7 @@ class BFGS_Jac_Solver(Solver):
     """A solver based on the BFGS implementation in scipy.  It requires gradients."""
     def solve_for_unitary(self, circuit, options, x0=None):
         error_jac = options.objective.gen_error_jac(circuit, options)
-        result = sp.optimize.minimize(error_jac, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True)
+        result = sp.optimize.minimize(error_jac, np.random.rand(circuit.num_inputs)*2*np.pi if x0 is None else x0, method='BFGS', jac=True, tol=options.threshold)
         xopt = result.x
         return (circuit.matrix(xopt), xopt)
 
