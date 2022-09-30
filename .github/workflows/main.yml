@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7,3.8,3.9]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
       fail-fast: false
     steps:
         - name: checkout
@@ -81,7 +81,7 @@ jobs:
             CC: "gcc-10"
           if: startsWith(matrix.os, 'macOS')
         - name: Build Windows wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/system,squaremat/openblas-system" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          run: cd qsrs && pip install 'maturin<0.11' && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt,openblas-src/system,squaremat/openblas-system" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
           if: startsWith(matrix.os, 'Windows')
