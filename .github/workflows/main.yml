@@ -75,7 +75,7 @@ jobs:
         - name: install test dependencies
           run: pip install -r test-requirements.txt
         - name: Build macOS wheels
-          run: cd qsrs && pip install maturin && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
+          run: cd qsrs && pip install 'maturin<0.11' && maturin build --cargo-extra-args="--no-default-features --features python,static,rustopt" --release --no-sdist && pip install --no-index --find-links=target/wheels qsrs
           env:
             RUST_BACKTRACE: 1
             CC: "gcc-10"
