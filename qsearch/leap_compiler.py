@@ -219,7 +219,10 @@ class SubCompiler(Compiler):
                         logger.logprint("New best! score: {} at depth: {}".format(best_value, new_depth))
                         if len(previous_bests_values) > 1:
                             with np.errstate(invalid='ignore', divide='ignore'):
-                                slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                                try:
+                                    slope, intercept, _rval, _pval, _stderr = linregress(previous_bests_depths, previous_bests_values)
+                                except:
+                                    continue
                             predicted_best = slope * new_depth + intercept
                             delta = predicted_best - best_value
                             logger.logprint(f"Predicted best value {predicted_best} for new best with delta {delta}", verbosity=2)
