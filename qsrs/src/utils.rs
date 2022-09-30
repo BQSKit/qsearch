@@ -147,7 +147,7 @@ pub fn matrix_distance_squared_jac(
     let jus: Vec<Complex64> = j.iter().map(|ji| u.multiply(&ji.conj()).sum()).collect();
     let jacs = jus
         .iter()
-        .map(|jusi| -(jusi.re * s.re + jusi.im * s.im) * u.size as f64 / s.norm())
+        .map(|jusi| -(jusi.re * s.re + jusi.im * s.im) / (u.size as f64 * s.norm()))
         .collect();
     (dsq, jacs)
 }

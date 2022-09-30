@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-    "maturin>=0.9.0",
+    "maturin>=0.10,<0.11",
     "oldest-supported-numpy",
 ]
 build-backend = "maturin"
