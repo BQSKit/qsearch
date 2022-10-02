@@ -756,10 +756,7 @@ class UGate(Gate):
         return [("gate", gatename, gateparams, indices)]
 
     def __repr__(self):
-        if self.d == 2:
-            return "UGate({})".format(repr(U))
-        else:
-            return "UGate({}, d={})".format(repr(U), self.d)
+        return f"UGate({repr(self.U)}, {repr(self.d)}, {repr(self.gatename)}, {repr(self.gateparams)}, {repr(self.gateindices)})"
 
 class UpgradedConstantGate(Gate):
     """Represents a constant gate, based on the Gate passed to its initializer, but upgraded to act on qudits of a larger size."""
