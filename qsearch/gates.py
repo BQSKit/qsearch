@@ -192,7 +192,7 @@ class ZGate(Gate):
 class SXGate(Gate):
     """Represents a sqrt(X) rotation on one qubit, which is equivalent to XGate() with a paramter of pi/2, up to an overall phase."""
     def __init__(self):
-        self.num_inputs = 1
+        self.num_inputs = 0
         self.qudits = 1
         self.sx = unitaries.sqrt_x
 
