@@ -1,5 +1,13 @@
 ![run tests](https://github.com/BQSKit/qsearch/workflows/run%20tests/badge.svg?branch=master)
 
+# Deprecation
+
+qsearch is no longer being actively maintained.  The successor to qsearch is [BQSKit](https://github.com/BQSKit/bqskit).
+
+BQSKit combines several quantum synthesis projects, including the main synthesis algorithm implemented by qsearch, [QFAST](https://github.com/BQSKit/qfast), and a circuit partitioning and reoptimization project. BQSKit is being actively developed and with new features and bug fixes, including updates based on feedback from users.
+
+BQSKit does have a different API, so moving an existing project to BQSKit may take some effort. In the meantime, qsearch isn't going anywhere, but is not longer actively maintained, will not receive any new features, and may not receive bugfix or compatability updates.
+
 # qsearch
 An implementation of a quantum gate synthesis algorithm based on A* and numerical optimization.  It relies on [NumPy](https://numpy.org) and [SciPy](https://www.scipy.org).  It can export code for [Qiskit](https://qiskit.org) and [OpenQASM](https://github.com/Qiskit/OpenQASM).
 
